@@ -317,6 +317,24 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 600px) {
   .topbar {
     padding: 14px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 17px;
+    line-height: 1.3;
+  }
+
+  .topbar .sub {
+    font-size: 11.5px;
+  }
+
+  .top-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
@@ -487,6 +505,8 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
 .stat-card::before {
@@ -499,6 +519,8 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 50%;
   background: var(--accent, var(--teal));
   opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .stat-label {
