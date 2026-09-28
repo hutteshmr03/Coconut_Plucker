@@ -291,7 +291,7 @@ export const SuperAdminAdmins = () => {
             <Input
               label="Mobile Phone (for Login)"
               type="tel"
-              placeholder="e.g. 9876543210"
+              placeholder="e.g. 984253XXX4"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required

@@ -282,7 +282,7 @@ export const RazorpayPaymentModal = ({
                   <div>
                     <Input
                       label="Enter Your Virtual Payment Address (UPI ID)"
-                      placeholder="e.g. 9888251332@paytm or name@okhdfcbank"
+                      placeholder="e.g. 984253XXX4@paytm or name@okhdfcbank"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       required
