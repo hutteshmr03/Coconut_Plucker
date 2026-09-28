@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { getDisplayName } from '../../utils/helpers';
 import { useApp } from '../../context/AppContext';
 import {
@@ -24,6 +25,7 @@ import {
 export const Sidebar = () => {
   const { currentUser, logout, role, adminAccounts } = useAuth();
   const { bookings, professionals, incidents, currentView, setCurrentView } = useApp();
+  const { t } = useLanguage();
 
   // Customer navigation items (CustomerRateCard and CustomerHome removed per instruction)
   const safeBookings = bookings || [];
@@ -35,10 +37,10 @@ export const Sidebar = () => {
     {
       group: 'Bookings',
       items: [
-        { id: 'cust-book', label: 'Book a Service', icon: CalendarPlus },
+        { id: 'cust-book', label: t('nav_book_service'), icon: CalendarPlus },
         {
           id: 'cust-bookings',
-          label: 'My Bookings',
+          label: t('nav_my_bookings'),
           icon: BookOpen,
           count: safeBookings.filter(
             (b) =>
@@ -53,7 +55,7 @@ export const Sidebar = () => {
     {
       group: 'My Account',
       items: [
-        { id: 'cust-profile', label: 'Profile', icon: User }
+        { id: 'cust-profile', label: t('nav_profile'), icon: User }
       ]
     }
   ];
@@ -63,10 +65,10 @@ export const Sidebar = () => {
     {
       group: 'Workforce',
       items: [
-        { id: 'work-dash', label: 'My Dashboard', icon: LayoutDashboard },
+        { id: 'work-dash', label: t('nav_dashboard'), icon: LayoutDashboard },
         {
           id: 'work-jobs',
-          label: 'Assigned Jobs',
+          label: t('nav_assigned_jobs'),
           icon: ClipboardList,
           count: safeBookings.filter(
             (b) =>
@@ -75,7 +77,7 @@ export const Sidebar = () => {
               (b.status === 'assigned' || b.status === 'in_progress')
           ).length
         },
-        { id: 'work-profile', label: 'Skills & Safety Profile', icon: ShieldCheck }
+        { id: 'work-profile', label: t('nav_skills_safety'), icon: ShieldCheck }
       ]
     }
   ];
@@ -85,9 +87,9 @@ export const Sidebar = () => {
     {
       group: 'Overview',
       items: [
-        { id: 'adm-overview', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'sadm-scheduling', label: 'Region Scheduling', icon: Sliders },
-        { id: 'adm-reports', label: 'Analytics & Reports', icon: FileBarChart }
+        { id: 'adm-overview', label: t('nav_dashboard'), icon: LayoutDashboard },
+        { id: 'sadm-scheduling', label: t('nav_scheduling'), icon: Sliders },
+        { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart }
       ]
     },
     {
@@ -95,20 +97,20 @@ export const Sidebar = () => {
       items: [
         {
           id: 'adm-bookings',
-          label: 'All Bookings',
+          label: t('nav_all_bookings'),
           icon: BookOpen,
           count: safeBookings.filter((b) => b && b.status === 'requested').length
         },
         {
           id: 'adm-workforce',
-          label: 'Professionals',
+          label: t('nav_workforce'),
           icon: Users,
           count: safeProfessionals.filter((p) => p && p.status === 'pending_verification').length
         },
-        { id: 'adm-services', label: 'Service Catalog', icon: Briefcase },
+        { id: 'adm-services', label: t('nav_catalog'), icon: Briefcase },
         {
           id: 'adm-safety',
-          label: 'Safety & Incidents',
+          label: t('nav_safety_incidents'),
           icon: AlertTriangle,
           count: safeIncidents.filter((i) => i && i.status === 'open').length
         }
@@ -123,39 +125,39 @@ export const Sidebar = () => {
       items: [
         {
           id: 'sadm-admins',
-          label: 'Manage Admins',
+          label: t('nav_admin_management'),
           icon: ShieldAlert,
           count: safeAdminAccounts.length
         },
-        { id: 'sadm-scheduling', label: 'Region Scheduling', icon: Sliders },
-        { id: 'sadm-audit', label: 'Platform Audit Log', icon: FileCheck },
-        { id: 'sadm-profile', label: 'Security & Password', icon: KeyRound }
+        { id: 'sadm-scheduling', label: t('nav_scheduling'), icon: Sliders },
+        { id: 'sadm-audit', label: t('nav_audit_trail'), icon: FileCheck },
+        { id: 'sadm-profile', label: t('nav_super_profile'), icon: KeyRound }
       ]
     },
     {
       group: 'Platform Operations (Full Authority)',
       items: [
-        { id: 'adm-overview', label: 'Dashboard Overview', icon: LayoutDashboard },
+        { id: 'adm-overview', label: t('nav_dashboard'), icon: LayoutDashboard },
         {
           id: 'adm-bookings',
-          label: 'All Bookings',
+          label: t('nav_all_bookings'),
           icon: BookOpen,
           count: safeBookings.filter((b) => b && b.status === 'requested').length
         },
         {
           id: 'adm-workforce',
-          label: 'Professionals',
+          label: t('nav_workforce'),
           icon: Users,
           count: safeProfessionals.filter((p) => p && p.status === 'pending_verification').length
         },
-        { id: 'adm-services', label: 'Service Catalog', icon: Briefcase },
+        { id: 'adm-services', label: t('nav_catalog'), icon: Briefcase },
         {
           id: 'adm-safety',
-          label: 'Safety & Incidents',
+          label: t('nav_safety_incidents'),
           icon: AlertTriangle,
           count: safeIncidents.filter((i) => i && i.status === 'open').length
         },
-        { id: 'adm-reports', label: 'Analytics & Reports', icon: FileBarChart }
+        { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart }
       ]
     }
   ];
@@ -280,7 +282,7 @@ export const Sidebar = () => {
           onClick={logout}
         >
           <LogOut size={16} />
-          <span>Sign Out</span>
+          <span>{t('sign_out')}</span>
         </button>
       </div>
     </aside>

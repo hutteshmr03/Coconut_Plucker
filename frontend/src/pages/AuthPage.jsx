@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
+import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone, ShieldCheck } from 'lucide-react';
 import { authAPI } from '../services/api';
 
@@ -15,6 +17,7 @@ const TALUKAS = [
 
 export const AuthPage = () => {
   const { registeredUsers, login, registerUser } = useAuth();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [error, setError] = useState('');
@@ -238,10 +241,26 @@ export const AuthPage = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '30px 16px',
+        padding: '40px 16px 30px',
+        position: 'relative',
         background: 'linear-gradient(135deg, var(--navy-deep), var(--navy) 60%, var(--navy-mid))'
       }}
     >
+      {/* Top Header Bar with Language Switcher */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '18px',
+          right: '20px',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}
+      >
+        <LanguageSwitcher theme="dark" />
+      </div>
+
       <div style={{ maxWidth: '520px', width: '100%', margin: 'auto' }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -252,10 +271,10 @@ export const AuthPage = () => {
             🌴
           </div>
           <h2 style={{ color: '#FFFFFF', fontSize: '26px', letterSpacing: '-0.2px', fontWeight: '700' }}>
-            Coconut Plucker
+            {t('brand_name')}
           </h2>
           <p style={{ color: '#8FB0C0', fontSize: '12px', marginTop: '4px', letterSpacing: '0.05em', fontWeight: '600' }}>
-            SKILLED HEIGHT WORK, ON DEMAND
+            {t('brand_tagline')}
           </p>
         </div>
 
@@ -283,7 +302,7 @@ export const AuthPage = () => {
                 cursor: 'pointer'
               }}
             >
-              Log In
+              {t('tab_login')}
             </button>
             <button
               type="button"
@@ -299,7 +318,7 @@ export const AuthPage = () => {
                 cursor: 'pointer'
               }}
             >
-              Sign Up
+              {t('tab_signup')}
             </button>
           </div>
 
@@ -325,19 +344,19 @@ export const AuthPage = () => {
               {loginType === 'phone_otp' && loginStep === 'phone' && (
                 <form onSubmit={handleLoginPhoneSubmit} autoComplete="off">
                   <p className="cell-muted" style={{ marginBottom: '20px', fontSize: '13.5px' }}>
-                    Enter your registered <b>Mobile Phone Number</b> for instant OTP login.
+                    {t('auth_otp_login_desc')}
                   </p>
 
                   <Input
-                    label="Mobile Phone Number"
+                    label={t('auth_mobile_label')}
                     name="login_phone"
                     type="tel"
                     autoComplete="tel"
-                    placeholder="e.g. 9822100001"
+                    placeholder={t('auth_mobile_placeholder')}
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
                     required
-                    hint="A 4-digit verification code will be sent to your mobile"
+                    hint={t('auth_mobile_hint')}
                   />
 
                   <div style={{ marginTop: '24px' }}>
@@ -348,7 +367,7 @@ export const AuthPage = () => {
                       type="submit"
                       icon={Smartphone}
                     >
-                      Send Login OTP
+                      {t('auth_btn_send_otp')}
                     </Button>
                   </div>
 
@@ -369,7 +388,7 @@ export const AuthPage = () => {
                         textDecoration: 'underline'
                       }}
                     >
-                      Administrator & Super Admin Password Login
+                      {t('auth_switch_to_admin')}
                     </button>
                   </div>
                 </form>
@@ -379,10 +398,10 @@ export const AuthPage = () => {
               {loginType === 'phone_otp' && loginStep === 'otp' && (
                 <form onSubmit={handleVerifyLoginOTP} autoComplete="off">
                   <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
-                    Login OTP Verification
+                    {t('auth_otp_step_title')}
                   </h3>
                   <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                    A 4-digit verification OTP was sent to <b>+91 {loginPhone}</b>
+                    {t('auth_otp_sent_to')} <b>+91 {loginPhone}</b>
                   </p>
 
                   {pendingLoginUser && (
@@ -405,7 +424,7 @@ export const AuthPage = () => {
                   )}
 
                   <Input
-                    label="Enter 4-Digit One-Time Password"
+                    label={t('auth_otp_step_title')}
                     type="text"
                     autoComplete="one-time-code"
                     placeholder="1 2 3 4"
@@ -413,7 +432,7 @@ export const AuthPage = () => {
                     value={loginOtp}
                     onChange={(e) => setLoginOtp(e.target.value)}
                     required
-                    hint="Enter any 4 digits (e.g. 1234)"
+                    hint={t('auth_otp_hint')}
                   />
 
                   <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
@@ -427,7 +446,7 @@ export const AuthPage = () => {
                         setLoginOtp('');
                       }}
                     >
-                      Back
+                      {t('auth_btn_back')}
                     </Button>
                     <Button
                       variant="primary"
@@ -436,7 +455,7 @@ export const AuthPage = () => {
                       type="submit"
                       icon={LogIn}
                     >
-                      Verify OTP & Log In
+                      {t('auth_btn_verify')}
                     </Button>
                   </div>
                 </form>
@@ -447,28 +466,28 @@ export const AuthPage = () => {
                 <form onSubmit={handleAdminPasswordLogin} autoComplete="off">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                     <ShieldCheck size={18} color="var(--teal)" />
-                    <b style={{ fontSize: '14px', color: 'var(--ink)' }}>Administrator Portal Sign In</b>
+                    <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{t('auth_admin_title')}</b>
                   </div>
                   <p className="cell-muted" style={{ marginBottom: '18px', fontSize: '13px' }}>
-                    Authorized personnel credentials login (Platform Admin / Super Admin).
+                    {t('auth_admin_desc')}
                   </p>
 
                   <Input
-                    label="Administrator Mobile Number or Username"
+                    label={t('auth_admin_user_label')}
                     name="admin_user_field"
                     autoComplete="username"
-                    placeholder="e.g. 9800000001, admin, or superadmin"
+                    placeholder={t('auth_admin_user_placeholder')}
                     value={adminUsername}
                     onChange={(e) => setAdminUsername(e.target.value)}
                     required
                   />
 
                   <Input
-                    label="Password"
+                    label={t('auth_admin_pass_label')}
                     name="admin_password_field"
                     type="password"
                     autoComplete="current-password"
-                    placeholder="Enter password (e.g. admin123 or tempPassword123!)"
+                    placeholder={t('auth_admin_pass_placeholder')}
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
                     required
@@ -482,7 +501,7 @@ export const AuthPage = () => {
                       type="submit"
                       icon={LogIn}
                     >
-                      Log In as Administrator
+                      {t('auth_btn_admin_login')}
                     </Button>
                   </div>
 
@@ -503,7 +522,7 @@ export const AuthPage = () => {
                         textDecoration: 'underline'
                       }}
                     >
-                      Back to Customer & Climber Mobile OTP Login
+                      {t('auth_switch_to_mobile')}
                     </button>
                   </div>
                 </form>
@@ -515,41 +534,41 @@ export const AuthPage = () => {
           {mode === 'signup' && signupStep === 'details' && (
             <form onSubmit={handleSignupDetailsSubmit} autoComplete="off">
               <Input
-                label="Your Full Name"
+                label={t('signup_full_name')}
                 name="signup_fullname"
                 autoComplete="name"
-                placeholder="e.g. Ramesh Prabhu"
+                placeholder={t('signup_full_name_placeholder')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
 
               <Input
-                label="Mobile Phone Number"
+                label={t('signup_phone')}
                 name="signup_phone"
                 type="tel"
                 autoComplete="tel"
-                placeholder="e.g. 9822100004"
+                placeholder={t('signup_phone_placeholder')}
                 value={signupPhone}
                 onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, ''))}
                 required
-                hint="OTP will be sent to this number"
+                hint={t('auth_mobile_hint')}
               />
 
               <div className="field-row">
                 <Select
-                  label="Account Role"
+                  label={t('signup_i_am')}
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   options={[
-                    { value: 'customer', label: 'Customer (Tree Owner)' },
-                    { value: 'professional', label: 'Professional (Climber)' }
+                    { value: 'customer', label: t('signup_role_customer') },
+                    { value: 'professional', label: t('signup_role_climber') }
                   ]}
                   required
                 />
 
                 <Select
-                  label="Taluka"
+                  label={t('signup_taluka')}
                   value={taluka}
                   onChange={(e) => setTaluka(e.target.value)}
                   options={TALUKAS}
@@ -559,10 +578,10 @@ export const AuthPage = () => {
 
               {role === 'customer' ? (
                 <Input
-                  label="Property / Street Address"
+                  label={t('signup_address')}
                   name="signup_address"
                   autoComplete="street-address"
-                  placeholder="e.g. House No. 42, Near Market, Porvorim"
+                  placeholder={t('signup_address_placeholder')}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   required
@@ -570,15 +589,15 @@ export const AuthPage = () => {
               ) : (
                 <div className="field-row">
                   <Input
-                    label="Experience (Years)"
+                    label={t('signup_exp')}
                     type="number"
                     value={experienceYears}
                     onChange={(e) => setExperienceYears(e.target.value)}
                     required
                   />
                   <Input
-                    label="Certification / Training"
-                    placeholder="e.g. CPCRI Certified"
+                    label={t('signup_safety')}
+                    placeholder={t('signup_safety_placeholder')}
                     value={safetyCert}
                     onChange={(e) => setSafetyCert(e.target.value)}
                   />
@@ -593,7 +612,7 @@ export const AuthPage = () => {
                   type="submit"
                   icon={ArrowRight}
                 >
-                  Continue & Send OTP
+                  {t('signup_btn_continue')}
                 </Button>
               </div>
             </form>
@@ -603,10 +622,10 @@ export const AuthPage = () => {
           {mode === 'signup' && signupStep === 'otp' && (
             <form onSubmit={handleVerifySignupOTP} autoComplete="off">
               <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
-                Sign Up OTP Verification
+                {t('auth_otp_step_title')}
               </h3>
               <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                A 4-digit SMS code was sent to <b>+91 {signupPhone}</b>
+                {t('auth_otp_sent_to')} <b>+91 {signupPhone}</b>
               </p>
 
               {pendingSignupData && (
@@ -623,12 +642,12 @@ export const AuthPage = () => {
                 >
                   <div>Name: <b>{pendingSignupData.full_name}</b></div>
                   <div>Mobile Number: <b>+91 {pendingSignupData.phone}</b> · Taluka: <b>{pendingSignupData.taluka}</b></div>
-                  <div style={{ textTransform: 'capitalize' }}>Role: <b>{pendingSignupData.role === 'customer' ? 'Customer (Tree Owner)' : 'Professional (Climber)'}</b></div>
+                  <div style={{ textTransform: 'capitalize' }}>Role: <b>{pendingSignupData.role === 'customer' ? t('signup_role_customer') : t('signup_role_climber')}</b></div>
                 </div>
               )}
 
               <Input
-                label="Enter 4-Digit One-Time Password"
+                label={t('auth_otp_step_title')}
                 type="text"
                 autoComplete="one-time-code"
                 placeholder="1 2 3 4"
@@ -636,7 +655,7 @@ export const AuthPage = () => {
                 value={signupOtp}
                 onChange={(e) => setSignupOtp(e.target.value)}
                 required
-                hint="Enter any 4 digits (e.g. 1234)"
+                hint={t('auth_otp_hint')}
               />
 
               <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
@@ -650,7 +669,7 @@ export const AuthPage = () => {
                     setSignupStep('details');
                   }}
                 >
-                  Back
+                  {t('btn_back')}
                 </Button>
                 <Button
                   variant="gold"
@@ -659,7 +678,7 @@ export const AuthPage = () => {
                   type="submit"
                   icon={KeyRound}
                 >
-                  Verify OTP & Create Account
+                  {t('signup_btn_complete')}
                 </Button>
               </div>
             </form>

@@ -1,105 +1,108 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { getDisplayName } from '../../utils/helpers';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../common/Button';
+import { LanguageSwitcher } from '../common/LanguageSwitcher';
 import { Plus, User, ShieldCheck, LogOut, ShieldAlert } from 'lucide-react';
 
 export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
   const { currentUser, role, logout } = useAuth();
   const { currentView, setCurrentView } = useApp();
+  const { t } = useLanguage();
 
   const getPageMeta = () => {
     switch (currentView) {
       // Super Admin Exclusive Views
       case 'sadm-admins':
         return {
-          title: 'Administrator Management',
-          sub: 'Provision, configure, and deactivate platform administrator accounts'
+          title: t('top_adm_admins_title'),
+          sub: t('top_adm_admins_sub')
         };
       case 'sadm-scheduling':
         return {
-          title: 'Regional Scheduling Governance',
-          sub: 'Manage Taluka schedule day mappings and daily dispatch capacity limits'
+          title: t('top_adm_scheduling_title'),
+          sub: t('top_adm_scheduling_sub')
         };
       case 'sadm-audit':
         return {
-          title: 'Platform-Wide Audit Trail',
-          sub: 'Searchable log of all administrator operations and compliance events'
+          title: t('top_adm_audit_title'),
+          sub: t('top_adm_audit_sub')
         };
       case 'sadm-profile':
         return {
-          title: 'Super Admin Security & Password',
+          title: t('nav_super_profile'),
           sub: 'Manage singleton Super Admin credentials and change access password'
         };
 
       // Customer Views
       case 'cust-book':
         return {
-          title: 'Book a Service',
-          sub: 'Standardized rates, safety-certified climbers & instant quote'
+          title: t('top_book_service_title'),
+          sub: t('top_book_service_sub')
         };
       case 'cust-bookings':
         return {
-          title: 'My Bookings',
-          sub: 'Track active bookings, payment, and submit professional reviews'
+          title: t('top_my_bookings_title'),
+          sub: t('top_my_bookings_sub')
         };
       case 'cust-profile':
         return {
-          title: 'Customer Profile',
-          sub: 'Manage your contact details and default Taluka'
+          title: t('top_cust_profile_title'),
+          sub: t('top_cust_profile_sub')
         };
 
       // Professional Views
       case 'work-dash':
         return {
-          title: 'Professional Dashboard',
-          sub: 'Assigned bookings, pre-climb safety checklists, and job management'
+          title: t('top_pro_dash_title'),
+          sub: t('top_pro_dash_sub')
         };
       case 'work-jobs':
         return {
-          title: 'Assigned Bookings',
-          sub: 'Perform pre-climb safety checklists, start jobs, and mark completion'
+          title: t('top_pro_jobs_title'),
+          sub: t('top_pro_jobs_sub')
         };
       case 'work-profile':
         return {
-          title: 'Skills & Safety Profile',
-          sub: 'Manage experience, safety certification, and service capabilities'
+          title: t('top_pro_profile_title'),
+          sub: t('top_pro_profile_sub')
         };
 
       // Admin Views (Also accessible by Super Admin)
       case 'adm-overview':
         return {
-          title: role === 'super_admin' ? 'Operations Overview (Full Authority)' : 'Admin Operations Overview',
-          sub: 'Live overview of bookings, workforce verification, and service metrics'
+          title: role === 'super_admin' ? `${t('top_adm_overview_title')} (Full Authority)` : t('top_adm_overview_title'),
+          sub: t('top_adm_overview_sub')
         };
       case 'adm-bookings':
         return {
-          title: 'Booking Management',
+          title: t('nav_all_bookings'),
           sub: 'Review customer requests and assign skilled professionals'
         };
       case 'adm-workforce':
         return {
-          title: 'Professional Workforce',
+          title: t('nav_workforce'),
           sub: 'Manage verification status and professional skills'
         };
       case 'adm-services':
         return {
-          title: 'Service Catalog Management',
+          title: t('nav_catalog'),
           sub: 'Configure base rates, units, and height category requirements'
         };
       case 'adm-safety':
         return {
-          title: 'Safety & Incident Reports',
-          sub: 'Track near-misses, equipment audits, and field safety logs'
+          title: t('top_adm_safety_title'),
+          sub: t('top_adm_safety_sub')
         };
       case 'adm-reports':
         return {
-          title: 'Analytics & Revenue Reports',
-          sub: 'Volume breakdown, revenue realization, and service demand'
+          title: t('top_adm_reports_title'),
+          sub: t('top_adm_reports_sub')
         };
       default:
-        return { title: 'Coconut Plucker', sub: 'Skilled height work on demand' };
+        return { title: t('brand_name'), sub: t('brand_sub') };
     }
   };
 
@@ -112,7 +115,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
         <div className="sub">{meta.sub}</div>
       </div>
 
-      <div className="top-actions">
+      <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {role === 'customer' && currentView !== 'cust-book' && (
           <Button
             variant="gold"
@@ -120,7 +123,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
             icon={Plus}
             onClick={() => setCurrentView('cust-book')}
           >
-            Book a Service
+            {t('nav_book_service')}
           </Button>
         )}
 
@@ -145,6 +148,9 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
             Log Safety Incident
           </Button>
         )}
+
+        {/* Global Language Switcher */}
+        <LanguageSwitcher theme="light" />
 
         {/* User Pill */}
         <div
@@ -178,7 +184,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
               }}
             >
               <ShieldAlert size={12} color="#6D28D9" strokeWidth={2.5} />
-              Super Admin
+              {t('super_admin_badge')}
             </span>
           )}
 
@@ -197,7 +203,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
               }}
             >
               <ShieldCheck size={12} color="#8a6a1f" strokeWidth={2.5} />
-              Verified
+              {t('verified')}
             </span>
           )}
 
@@ -216,7 +222,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
               }}
             >
               <ShieldCheck size={12} color="var(--navy-mid)" strokeWidth={2.5} />
-              Admin
+              {t('admin_badge')}
             </span>
           )}
 
@@ -228,7 +234,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
         {/* Sign Out Button */}
         <button
           className="icon-btn"
-          title="Sign Out"
+          title={t('sign_out')}
           onClick={logout}
           style={{ color: 'var(--amber)' }}
         >
