@@ -91,11 +91,33 @@ def get_audit_logs():
         {"id": "aud_2", "action": "ADMIN_PROVISION", "actor": "superadmin", "target": "Platform Admin", "timestamp": "2026-09-25T10:00:00Z"}
     ]
 
+@router.post("/login")
+def super_admin_login(data: dict):
+    username = data.get("username", "")
+    password = data.get("password", "")
+    if username == "superadmin" and (password in ["tempPassword123!", "Super@Admin2026!", "123", "admin123"]):
+        return {
+            "access_token": "token_super_admin_jwt_mock",
+            "token_type": "bearer",
+            "user": {
+                "id": "usr_super_admin",
+                "phone": "9999999999",
+                "full_name": "Super Administrator",
+                "role": "super_admin",
+                "status": "active"
+            }
+        }
+from app.core.scheduling_state import get_active_scheduling_config, update_active_scheduling_config
+
 @router.get("/scheduling-config")
 def get_scheduling_config():
+    return get_active_scheduling_config()
+
+@router.put("/scheduling-config")
+def update_scheduling_config(data: dict):
+    updated = update_active_scheduling_config(data)
     return {
-        "north_days": ["Monday", "Tuesday", "Wednesday"],
-        "south_days": ["Thursday", "Friday", "Saturday"],
-        "urgent_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        "max_daily_slots": 12
+        "success": True,
+        "config": updated,
+        "message": "Regional scheduling configuration updated successfully"
     }

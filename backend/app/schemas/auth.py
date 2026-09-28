@@ -29,6 +29,16 @@ class LoginRequest(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    taluka: Optional[str] = None
+    address: Optional[str] = None
+    experience_years: Optional[int] = None
+    safety_cert: Optional[str] = None
+    skills: Optional[List[str]] = None
+
 class UserOut(BaseModel):
     id: str
     phone: str

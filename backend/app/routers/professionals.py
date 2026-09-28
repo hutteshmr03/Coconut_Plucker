@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.booking import Booking
 from app.models.professional import ProfessionalProfile
 from app.models.service import ProfessionalSkill
-from app.schemas.auth import UserOut
+from app.schemas.auth import UserOut, UserUpdate
 from app.routers.auth import format_user_out
 
 router = APIRouter(prefix="/professionals", tags=["Professionals"])
@@ -21,6 +21,34 @@ def get_professional_me(db: Session = Depends(get_db)):
     user = db.query(User).filter(User.role == "professional").first()
     if not user:
         raise HTTPException(status_code=404, detail="Professional not found")
+    return format_user_out(user, db)
+
+@router.put("/me", response_model=UserOut)
+def update_professional_me(req: UserUpdate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.role == "professional").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Professional not found")
+
+    if req.full_name is not None:
+        user.full_name = req.full_name
+    if req.phone is not None:
+        user.phone = req.phone
+    if req.email is not None:
+        user.email = req.email
+    if req.taluka is not None:
+        user.taluka = req.taluka
+    if req.address is not None:
+        user.address = req.address
+    
+    prof = db.query(ProfessionalProfile).filter(ProfessionalProfile.user_id == user.id).first()
+    if prof:
+        if req.experience_years is not None:
+            prof.experience_years = req.experience_years
+        if req.safety_cert is not None:
+            prof.safety_cert = req.safety_cert
+
+    db.commit()
+    db.refresh(user)
     return format_user_out(user, db)
 
 @router.put("/me/skills")
@@ -84,3 +112,23 @@ def complete_booking(booking_id: str, db: Session = Depends(get_db)):
     booking.status = "completed"
     db.commit()
     return {"success": True, "status": "completed", "message": "Job marked as completed"}
+
+@router.get("/me/bookings/{booking_id}")
+def get_professional_booking_detail(booking_id: str, db: Session = Depends(get_db)):
+    try:
+        bid = uuid.UUID(booking_id)
+        booking = db.query(Booking).filter(Booking.id == bid).first()
+    except Exception:
+        booking = db.query(Booking).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    return {
+        "id": str(booking.id),
+        "customer_name": booking.customer.full_name if booking.customer else "Customer",
+        "service_name": booking.service.name if booking.service else "Harvesting",
+        "taluka": "North Goa",
+        "scheduled_at": booking.scheduled_at.isoformat() if booking.scheduled_at else None,
+        "status": booking.status,
+        "quote_amount": float(booking.quote_amount) if booking.quote_amount else 0.0
+    }

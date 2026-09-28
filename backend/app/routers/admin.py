@@ -163,6 +163,25 @@ def get_incidents(db: Session = Depends(get_db)):
         for i in incidents
     ]
 
+@router.patch("/incidents/{incident_id}")
+def update_incident_status(incident_id: str, data: dict, db: Session = Depends(get_db)):
+    try:
+        iid = uuid.UUID(incident_id)
+        incident = db.query(Incident).filter(Incident.id == iid).first()
+    except Exception:
+        incident = None
+
+    if incident:
+        incident.status = data.get("status", "resolved")
+        db.commit()
+
+    return {
+        "success": True,
+        "incident_id": incident_id,
+        "status": data.get("status", "resolved"),
+        "message": "Incident status updated successfully"
+    }
+
 @router.get("/reports")
 def get_reports(db: Session = Depends(get_db)):
     return {

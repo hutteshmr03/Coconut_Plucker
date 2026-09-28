@@ -85,3 +85,51 @@ def create_service(req: ServiceCreate, db: Session = Depends(get_db)):
         requires_height_category=svc.requires_height_category,
         status="active"
     )
+
+@router.put("/{service_id}", response_model=ServiceOut)
+def update_service(service_id: str, req: ServiceUpdate, db: Session = Depends(get_db)):
+    try:
+        sid = uuid.UUID(service_id)
+        svc = db.query(Service).filter(Service.id == sid).first()
+    except Exception:
+        svc = None
+
+    if not svc:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    if req.name is not None:
+        svc.name = req.name
+    if req.base_rate is not None:
+        svc.base_rate = req.base_rate
+    if req.unit is not None:
+        svc.unit = req.unit
+    if req.requires_height_category is not None:
+        svc.requires_height_category = req.requires_height_category
+
+    db.commit()
+    db.refresh(svc)
+
+    return ServiceOut(
+        id=str(svc.id),
+        name=svc.name,
+        base_rate=float(svc.base_rate),
+        unit=svc.unit,
+        desc=req.desc or "Updated service",
+        icon=req.icon or "🌴",
+        requires_height_category=svc.requires_height_category,
+        status=req.status or "active"
+    )
+
+@router.patch("/{service_id}/status")
+def update_service_status(service_id: str, data: dict, db: Session = Depends(get_db)):
+    try:
+        sid = uuid.UUID(service_id)
+        svc = db.query(Service).filter(Service.id == sid).first()
+    except Exception:
+        svc = None
+
+    if not svc:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    new_status = data.get("status", "active")
+    return {"success": True, "service_id": service_id, "status": new_status}

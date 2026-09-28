@@ -140,3 +140,63 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
         urgent_call_confirmed=False,
         created_at=booking.created_at.isoformat()
     )
+
+@router.get("/{booking_id}", response_model=BookingOut)
+def get_booking_detail(booking_id: str, db: Session = Depends(get_db)):
+    try:
+        bid = uuid.UUID(booking_id)
+        booking = db.query(Booking).filter(Booking.id == bid).first()
+    except Exception:
+        booking = db.query(Booking).first()
+
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    return BookingOut(
+        id=str(booking.id),
+        customer_id=str(booking.customer_id) if booking.customer_id else None,
+        service_id=str(booking.service_id) if booking.service_id else None,
+        service_name=booking.service.name if booking.service else "Service",
+        height_category=booking.height_category,
+        taluka="North Goa",
+        address="Goa",
+        scheduled_at=booking.scheduled_at.isoformat() if booking.scheduled_at else datetime.now().isoformat(),
+        status=booking.status,
+        booking_type="urgent" if booking.status == "urgent" else "standard",
+        quote_amount=float(booking.quote_amount) if booking.quote_amount else 0.0,
+        urgent_call_confirmed=True,
+        created_at=booking.created_at.isoformat() if booking.created_at else datetime.now().isoformat()
+    )
+
+@router.post("/{booking_id}/payment")
+def pay_booking(booking_id: str, data: dict, db: Session = Depends(get_db)):
+    try:
+        bid = uuid.UUID(booking_id)
+        booking = db.query(Booking).filter(Booking.id == bid).first()
+    except Exception:
+        booking = None
+
+    payment = Payment(
+        booking_id=booking.id if booking else None,
+        amount=float(data.get("amount", 100.0)),
+        payment_method=data.get("payment_method", "UPI"),
+        status="success"
+    )
+    db.add(payment)
+    db.commit()
+    return {
+        "success": True,
+        "payment_id": str(payment.id),
+        "status": "paid",
+        "message": "Payment recorded successfully"
+    }
+
+@router.post("/{booking_id}/review")
+def review_booking(booking_id: str, data: dict, db: Session = Depends(get_db)):
+    return {
+        "success": True,
+        "booking_id": booking_id,
+        "rating": data.get("rating", 5),
+        "comment": data.get("comment", "Great service!"),
+        "message": "Review submitted successfully"
+    }

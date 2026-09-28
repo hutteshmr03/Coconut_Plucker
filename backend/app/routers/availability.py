@@ -24,19 +24,52 @@ class AvailabilityResponse(BaseModel):
     next_available_date: Optional[str] = None
     message: str
 
+from app.core.scheduling_state import get_active_scheduling_config, DAY_NAME_TO_JS_WEEKDAY
+
 @router.get("", response_model=AvailabilityResponse)
 def get_availability(
     taluka: str = "North Goa",
     service_id: Optional[str] = None,
-    booking_type: str = "standard"
+    booking_type: str = "standard",
+    north_days: Optional[str] = None,
+    south_days: Optional[str] = None,
+    kushavati_days: Optional[str] = None,
 ):
     is_urgent = booking_type == "urgent"
-    is_north = "north" in (taluka or "").lower()
+    clean_taluka = (taluka or "").lower()
+    is_north = "north" in clean_taluka
+    is_kushavati = "kushavati" in clean_taluka
 
-    # Urgent allows Mon(1) to Sat(6)
-    # Standard North: Mon(1), Tue(2), Wed(3)
-    # Standard South/Kushavati: Thu(4), Fri(5), Sat(6)
-    allowed_days = [1, 2, 3, 4, 5, 6] if is_urgent else ([1, 2, 3] if is_north else [4, 5, 6])
+    cfg = get_active_scheduling_config()
+
+    if is_urgent:
+        allowed_day_names = cfg.get("urgent_days", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
+    elif is_north:
+        if north_days:
+            allowed_day_names = [d.strip() for d in north_days.split(",") if d.strip()]
+        else:
+            allowed_day_names = cfg.get("north_days", ["Monday", "Tuesday", "Wednesday"])
+    elif is_kushavati:
+        if kushavati_days:
+            allowed_day_names = [d.strip() for d in kushavati_days.split(",") if d.strip()]
+        else:
+            allowed_day_names = cfg.get("kushavati_days", ["Saturday"])
+    else:
+        # South Goa
+        if south_days:
+            allowed_day_names = [d.strip() for d in south_days.split(",") if d.strip()]
+        else:
+            allowed_day_names = cfg.get("south_days", ["Thursday", "Friday"])
+
+    allowed_days = [
+        DAY_NAME_TO_JS_WEEKDAY[d]
+        for d in allowed_day_names
+        if d in DAY_NAME_TO_JS_WEEKDAY
+    ]
+    if not allowed_days:
+        allowed_days = [4, 5]
+        allowed_day_names = ["Thursday", "Friday"]
+
     day_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
     available_dates = []
@@ -44,8 +77,7 @@ def get_availability(
 
     for i in range(1, 15):
         candidate = today + timedelta(days=i)
-        day_of_week = candidate.weekday() + 1 # Monday is 1, Sunday is 7 in python weekday()
-        # Python weekday: Mon=0 -> let's map: Sunday=0, Mon=1, ..., Sat=6
+        # Map: Sunday=0, Mon=1, ..., Sat=6
         js_day = (candidate.weekday() + 1) % 7
 
         if js_day in allowed_days:
@@ -76,7 +108,7 @@ def get_availability(
         taluka=taluka,
         service_id=service_id,
         booking_type=booking_type,
-        allowed_days=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] if is_urgent else (["Monday", "Tuesday", "Wednesday"] if is_north else ["Thursday", "Friday", "Saturday"]),
+        allowed_days=allowed_day_names,
         available_dates=available_dates,
         next_available_date=next_avail.date if next_avail else None,
         message=msg
