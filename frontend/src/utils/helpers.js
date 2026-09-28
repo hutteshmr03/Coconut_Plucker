@@ -34,7 +34,17 @@ export const normalizeTaluka = (taluka) => {
   return 'North Goa';
 };
 
-export const getTalukaDayConfig = (talukaName, bookingType = 'standard') => {
+const DAY_NAME_TO_INDEX = {
+  'Sunday': 0,
+  'Monday': 1,
+  'Tuesday': 2,
+  'Wednesday': 3,
+  'Thursday': 4,
+  'Friday': 5,
+  'Saturday': 6
+};
+
+export const getTalukaDayConfig = (talukaName, bookingType = 'standard', customScheduling = null) => {
   if (bookingType === 'urgent') {
     return {
       allowedIndices: [1, 2, 3, 4, 5, 6], // Mon, Tue, Wed, Thu, Fri, Sat (All days except Sunday 0)
@@ -42,18 +52,35 @@ export const getTalukaDayConfig = (talukaName, bookingType = 'standard') => {
       description: 'Monday to Saturday (All days except Sunday)'
     };
   }
-  const isNorth = (talukaName || '').toLowerCase().includes('north');
-  if (isNorth) {
-    return {
-      allowedIndices: [1, 2, 3], // Mon, Tue, Wed
-      dayNames: ['Monday', 'Tuesday', 'Wednesday'],
-      description: 'Monday, Tuesday, Wednesday'
-    };
+
+  let sched = customScheduling;
+  if (!sched) {
+    try {
+      const saved = localStorage.getItem('coconut_plucker_state_v6_scheduling');
+      if (saved) sched = JSON.parse(saved);
+    } catch {}
   }
+
+  const clean = (talukaName || '').toLowerCase();
+  let days = [];
+
+  if (clean.includes('north')) {
+    days = sched?.northDays || ['Monday', 'Tuesday', 'Wednesday'];
+  } else if (clean.includes('kushavati')) {
+    days = sched?.kushavatiDays || ['Saturday'];
+  } else {
+    // South Goa
+    days = sched?.southDays || ['Thursday', 'Friday'];
+  }
+
+  const allowedIndices = days
+    .map((d) => DAY_NAME_TO_INDEX[d])
+    .filter((idx) => typeof idx === 'number');
+
   return {
-    allowedIndices: [4, 5, 6], // Thu, Fri, Sat
-    dayNames: ['Thursday', 'Friday', 'Saturday'],
-    description: 'Thursday, Friday, Saturday'
+    allowedIndices: allowedIndices.length > 0 ? allowedIndices : [4, 5],
+    dayNames: days,
+    description: days.join(', ')
   };
 };
 

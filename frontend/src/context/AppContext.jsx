@@ -8,6 +8,7 @@ import {
   INITIAL_INCIDENTS
 } from '../services/mockData';
 import { normalizeTaluka } from '../utils/helpers';
+import { superAdminAPI } from '../services/api';
 
 export { normalizeTaluka };
 
@@ -77,6 +78,21 @@ export const AppProvider = ({ children }) => {
     }
   });
 
+  const DEFAULT_SCHEDULING = {
+    northDays: ['Monday', 'Tuesday', 'Wednesday'],
+    southDays: ['Thursday', 'Friday'],
+    kushavatiDays: ['Saturday'],
+    maxDailyBookings: 15
+  };
+
+  const [schedulingConfig, setSchedulingConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY + "_scheduling");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_SCHEDULING;
+  });
+
   const [currentRole, setCurrentRole] = useState("customer"); // 'customer' | 'professional' | 'admin'
   const [currentCustomerId, setCurrentCustomerId] = useState(currentUser?.id || "cus_001");
   const [currentProfessionalId, setCurrentProfessionalId] = useState(currentUser?.id || "wrk_001");
@@ -136,6 +152,19 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY + "_incidents", JSON.stringify(incidents));
   }, [incidents]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY + "_scheduling", JSON.stringify(schedulingConfig));
+  }, [schedulingConfig]);
+
+  const updateSchedulingConfig = (newConfig) => {
+    setSchedulingConfig((prev) => {
+      const merged = { ...prev, ...newConfig };
+      superAdminAPI.updateSchedulingConfig(merged).catch(() => {});
+      return merged;
+    });
+    showToast("Regional scheduling configuration updated and applied to customer booking!", "success");
+  };
 
   // Toast Notification helper
   const showToast = (message, type = "info") => {
@@ -379,7 +408,9 @@ export const AppProvider = ({ children }) => {
         addIncident,
         resolveIncident,
         updateCustomerProfile,
-        updateProfessionalProfile
+        updateProfessionalProfile,
+        schedulingConfig,
+        updateSchedulingConfig
       }}
     >
       {children}

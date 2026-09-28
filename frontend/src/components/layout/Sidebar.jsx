@@ -86,6 +86,7 @@ export const Sidebar = () => {
       group: 'Overview',
       items: [
         { id: 'adm-overview', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'sadm-scheduling', label: 'Region Scheduling', icon: Sliders },
         { id: 'adm-reports', label: 'Analytics & Reports', icon: FileBarChart }
       ]
     },

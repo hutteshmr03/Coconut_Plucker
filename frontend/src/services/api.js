@@ -91,24 +91,75 @@ export const bookingsAPI = {
 
 // Section B.3: Server-driven Taluka Availability
 export const availabilityAPI = {
-  getAvailability: async (taluka, serviceId, bookingType = 'standard') => {
+  getAvailability: async (taluka, serviceId, bookingType = 'standard', customScheduling = null) => {
+    let sched = customScheduling;
+    if (!sched) {
+      try {
+        const saved = localStorage.getItem('coconut_plucker_state_v6_scheduling');
+        if (saved) sched = JSON.parse(saved);
+      } catch {}
+    }
+
+    const queryParams = new URLSearchParams({
+      taluka: taluka || '',
+      service_id: serviceId || '',
+      booking_type: bookingType
+    });
+
+    if (sched?.northDays?.length) queryParams.set('north_days', sched.northDays.join(','));
+    if (sched?.southDays?.length) queryParams.set('south_days', sched.southDays.join(','));
+    if (sched?.kushavatiDays?.length) queryParams.set('kushavati_days', sched.kushavatiDays.join(','));
+
     try {
-      return await request(`/availability?taluka=${encodeURIComponent(taluka)}&service_id=${encodeURIComponent(serviceId || '')}&booking_type=${encodeURIComponent(bookingType)}`);
+      return await request(`/availability?${queryParams.toString()}`);
     } catch {
       // Fallback server calculation simulation until live FastAPI route is invoked
-      return getSimulatedServerAvailability(taluka, serviceId, bookingType);
+      return getSimulatedServerAvailability(taluka, serviceId, bookingType, sched);
     }
   }
 };
 
 // Server-side availability simulation contract
-function getSimulatedServerAvailability(taluka = 'North Goa', serviceId = '', bookingType = 'standard') {
+function getSimulatedServerAvailability(taluka = 'North Goa', serviceId = '', bookingType = 'standard', customScheduling = null) {
   const isUrgent = bookingType === 'urgent';
-  const isNorth = (taluka || '').toLowerCase().includes('north');
-  // Urgent: Mon-Sat (all days except Sunday 0)
-  // Standard North Taluka: Mon (1), Tue (2), Wed (3)
-  // Standard South and Kushavati Taluka: Thu (4), Fri (5), Sat (6)
-  const allowedDays = isUrgent ? [1, 2, 3, 4, 5, 6] : (isNorth ? [1, 2, 3] : [4, 5, 6]);
+  let sched = customScheduling;
+  if (!sched) {
+    try {
+      const saved = localStorage.getItem('coconut_plucker_state_v6_scheduling');
+      if (saved) sched = JSON.parse(saved);
+    } catch {}
+  }
+
+  const clean = (taluka || '').toLowerCase();
+  const isNorth = clean.includes('north');
+  const isKushavati = clean.includes('kushavati');
+
+  let allowedDayNames = [];
+  if (isUrgent) {
+    allowedDayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  } else if (isNorth) {
+    allowedDayNames = sched?.northDays || ['Monday', 'Tuesday', 'Wednesday'];
+  } else if (isKushavati) {
+    allowedDayNames = sched?.kushavatiDays || ['Saturday'];
+  } else {
+    // South Goa
+    allowedDayNames = sched?.southDays || ['Thursday', 'Friday'];
+  }
+
+  const DAY_NAME_TO_INDEX = {
+    'Sunday': 0,
+    'Monday': 1,
+    'Tuesday': 2,
+    'Wednesday': 3,
+    'Thursday': 4,
+    'Friday': 5,
+    'Saturday': 6
+  };
+
+  const allowedDays = allowedDayNames
+    .map((d) => DAY_NAME_TO_INDEX[d])
+    .filter((idx) => typeof idx === 'number');
+
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const availableDates = [];
@@ -148,9 +199,7 @@ function getSimulatedServerAvailability(taluka = 'North Goa', serviceId = '', bo
     taluka,
     service_id: serviceId,
     booking_type: bookingType,
-    allowed_days: isUrgent
-      ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-      : (isNorth ? ['Monday', 'Tuesday', 'Wednesday'] : ['Thursday', 'Friday', 'Saturday']),
+    allowed_days: allowedDayNames,
     available_dates: availableDates,
     next_available_date: nextAvailable ? nextAvailable.date : null,
     message

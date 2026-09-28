@@ -201,6 +201,14 @@ export const AdminDashboard = () => {
                 variant="ghost"
                 className="btn-block"
                 style={{ justifyContent: 'flex-start' }}
+                onClick={() => setCurrentView('sadm-scheduling')}
+              >
+                🗓️ Regional Scheduling Governance
+              </Button>
+              <Button
+                variant="ghost"
+                className="btn-block"
+                style={{ justifyContent: 'flex-start' }}
                 onClick={() => setCurrentView('adm-workforce')}
               >
                 👥 Verify Professional Profiles ({pendingVerifications.length})

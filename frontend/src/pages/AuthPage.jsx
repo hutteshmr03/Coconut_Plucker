@@ -4,7 +4,8 @@ import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
-import { LogIn, KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
+import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone, ShieldCheck } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 const TALUKAS = [
   { value: 'North Goa', label: 'North Goa' },
@@ -16,60 +17,123 @@ export const AuthPage = () => {
   const { registeredUsers, login, registerUser } = useAuth();
 
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
-  const [signupStep, setSignupStep] = useState('details'); // 'details' | 'otp'
   const [error, setError] = useState('');
 
-  // Login form fields
-  const [loginIdentifier, setLoginIdentifier] = useState(''); // User ID, Email, or Phone
-  const [loginPassword, setLoginPassword] = useState('');
+  // Login state: 'phone_otp' (default for Customer/Professional) or 'admin_password'
+  const [loginType, setLoginType] = useState('phone_otp'); // 'phone_otp' | 'admin_password'
+  const [loginStep, setLoginStep] = useState('phone'); // 'phone' | 'otp'
+  const [loginPhone, setLoginPhone] = useState('');
+  const [loginOtp, setLoginOtp] = useState('');
+  const [pendingLoginUser, setPendingLoginUser] = useState(null);
 
-  // Sign Up form fields
+  // Admin Login fields
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+
+  // Sign Up form fields (Only Full Name, Phone Number, Role, Taluka, and Address/Experience)
+  const [signupStep, setSignupStep] = useState('details'); // 'details' | 'otp'
   const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [role, setRole] = useState('customer'); // 'customer' | 'professional'
   const [taluka, setTaluka] = useState('North Goa');
   const [address, setAddress] = useState('');
   const [experienceYears, setExperienceYears] = useState('5');
   const [safetyCert, setSafetyCert] = useState('');
-
-  // Sign Up OTP field
   const [signupOtp, setSignupOtp] = useState('');
   const [pendingSignupData, setPendingSignupData] = useState(null);
 
   // Switch between Login and Sign Up
   const switchMode = (newMode) => {
     setMode(newMode);
+    setLoginStep('phone');
     setSignupStep('details');
     setError('');
+    setLoginOtp('');
     setSignupOtp('');
   };
 
-  // Handle Unified Login (Customers, Climbers, Admins, Super Admin)
-  const handleLoginSubmit = (e) => {
+  // ===================== 1. LOGIN: STEP 1 (PHONE -> SEND OTP) =====================
+  const handleLoginPhoneSubmit = async (e) => {
     e.preventDefault();
-    const idClean = loginIdentifier.trim().toLowerCase();
-    const passClean = loginPassword.trim();
+    const pClean = loginPhone.replace(/\D/g, '');
 
-    if (!idClean) {
-      setError('Please enter your User ID, Email, or Mobile Number');
-      return;
-    }
-    if (!passClean) {
-      setError('Please enter your password');
+    if (!pClean || pClean.length < 10) {
+      setError('Please enter a valid 10-digit mobile phone number');
       return;
     }
 
+    // Check if account exists
     const found = registeredUsers.find(
-      (u) =>
-        (u.username && u.username.toLowerCase() === idClean) ||
-        (u.email && u.email.toLowerCase() === idClean) ||
-        (u.phone && u.phone.replace(/\D/g, '') === idClean.replace(/\D/g, ''))
+      (u) => u.phone && u.phone.replace(/\D/g, '') === pClean
     );
 
     if (!found) {
-      setError(`Account "${loginIdentifier}" not found. Please click Sign Up to create your account.`);
+      setError(`Mobile number +91 ${pClean} is not registered yet. Please click "Sign Up" above to create an account.`);
+      return;
+    }
+
+    try {
+      await authAPI.requestOTP(pClean);
+    } catch {
+      // Offline / demo fallback
+    }
+
+    setError('');
+    setPendingLoginUser(found);
+    setLoginStep('otp');
+  };
+
+  // ===================== 2. LOGIN: STEP 2 (VERIFY OTP & LOG IN) =====================
+  const handleVerifyLoginOTP = async (e) => {
+    e.preventDefault();
+    if (!loginOtp || loginOtp.length < 4) {
+      setError('Please enter the 4-digit OTP verification code (e.g. 1234)');
+      return;
+    }
+
+    const pClean = loginPhone.replace(/\D/g, '');
+    let authedUser = pendingLoginUser;
+
+    try {
+      const res = await authAPI.verifyOTP(pClean, loginOtp);
+      if (res?.user) {
+        authedUser = { ...pendingLoginUser, ...res.user };
+      }
+    } catch {
+      // Offline / simulated fallback
+    }
+
+    setError('');
+    login(authedUser);
+  };
+
+  // ===================== 3. ADMIN LOGIN (PASSWORD) =====================
+  const handleAdminPasswordLogin = async (e) => {
+    e.preventDefault();
+    const rawInput = adminUsername.trim();
+    const uClean = rawInput.toLowerCase();
+    const digitsOnly = rawInput.replace(/\D/g, '');
+    const passClean = adminPassword.trim();
+
+    if (!rawInput) {
+      setError('Please enter your Administrator Mobile Number or Username');
+      return;
+    }
+    if (!passClean) {
+      setError('Please enter your administrator password');
+      return;
+    }
+
+    const found = registeredUsers.find((u) => {
+      const matchUsername = u.username && u.username.toLowerCase() === uClean;
+      const matchEmail = u.email && u.email.toLowerCase() === uClean;
+      const userDigits = u.phone ? u.phone.replace(/\D/g, '') : '';
+      const matchPhone = digitsOnly.length >= 10 && userDigits && (userDigits === digitsOnly || userDigits.endsWith(digitsOnly) || digitsOnly.endsWith(userDigits));
+      return matchUsername || matchEmail || matchPhone;
+    });
+
+    if (!found) {
+      setError(`Administrator account "${adminUsername}" not found.`);
       return;
     }
 
@@ -80,68 +144,60 @@ export const AuthPage = () => {
       passClean !== 'admin123' &&
       passClean !== 'tempPassword123!'
     ) {
-      setError('Incorrect password. Please try again.');
+      setError('Incorrect administrator password. Please try again.');
       return;
+    }
+
+    try {
+      const res = await authAPI.login({ username: uClean, password: passClean });
+      if (res?.user) {
+        login({ ...found, ...res.user });
+        return;
+      }
+    } catch {
+      // Offline fallback
     }
 
     setError('');
     login(found);
   };
 
-  // Sign Up Step 1: Validate details & proceed to OTP Verification
-  const handleSignupDetailsSubmit = (e) => {
+  // ===================== 4. SIGN UP: STEP 1 (DETAILS) =====================
+  const handleSignupDetailsSubmit = async (e) => {
     e.preventDefault();
-
-    const uClean = username.trim().toLowerCase();
     const pClean = signupPhone.replace(/\D/g, '');
 
     if (!fullName.trim()) {
       setError('Please enter your full name');
       return;
     }
-    if (!uClean) {
-      setError('Please create a unique User ID or enter your email');
-      return;
-    }
-    if (!signupPassword || signupPassword.length < 3) {
-      setError('Please enter a password with at least 3 characters');
-      return;
-    }
     if (!pClean || pClean.length < 10) {
-      setError('Please enter a valid 10-digit mobile number');
+      setError('Please enter a valid 10-digit mobile phone number');
       return;
     }
     if (!taluka) {
       setError('Please select your Taluka');
       return;
     }
+    if (role === 'customer' && !address.trim()) {
+      setError('Please enter your property address');
+      return;
+    }
 
-    // Check for duplicate username, email or phone
+    // Check for duplicate phone
     const existing = registeredUsers.find(
-      (u) =>
-        (u.username && u.username.toLowerCase() === uClean) ||
-        (u.email && u.email.toLowerCase() === uClean) ||
-        (u.phone && u.phone.replace(/\D/g, '') === pClean)
+      (u) => u.phone && u.phone.replace(/\D/g, '') === pClean
     );
 
     if (existing) {
-      if (
-        (existing.username && existing.username.toLowerCase() === uClean) ||
-        (existing.email && existing.email.toLowerCase() === uClean)
-      ) {
-        setError(`User ID / Email "${uClean}" is already registered. Please choose another or log in.`);
-      } else {
-        setError(`Mobile number +91 ${pClean} is already registered. Please log in.`);
-      }
+      setError(`Mobile phone number +91 ${pClean} is already registered. Please log in.`);
       return;
     }
 
     const userData = {
       full_name: fullName.trim(),
-      username: uClean,
-      email: uClean.includes('@') ? uClean : undefined,
-      password: signupPassword.trim(),
       phone: pClean,
+      username: pClean,
       role: role,
       taluka: taluka,
       address: role === 'customer' ? address.trim() || `${taluka}, Goa` : undefined,
@@ -151,24 +207,19 @@ export const AuthPage = () => {
       skills: role === 'professional' ? ['svc_coconut', 'svc_palm'] : undefined
     };
 
+    try {
+      await authAPI.requestOTP(pClean);
+    } catch {
+      // Fallback
+    }
+
     setError('');
     setPendingSignupData(userData);
     setSignupStep('otp');
   };
 
-  // Back button from Sign Up OTP
-  const handleBackToDetails = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setError('');
-    setSignupOtp('');
-    setSignupStep('details');
-  };
-
-  // Sign Up Step 2: Verify OTP and create account
-  const handleVerifySignupOTP = (e) => {
+  // ===================== 5. SIGN UP: STEP 2 (OTP VERIFICATION) =====================
+  const handleVerifySignupOTP = async (e) => {
     e.preventDefault();
     if (!signupOtp || signupOtp.length < 4) {
       setError('Please enter the 4-digit OTP verification code (e.g. 1234)');
@@ -176,7 +227,7 @@ export const AuthPage = () => {
     }
 
     setError('');
-    registerUser(pendingSignupData);
+    await registerUser(pendingSignupData);
   };
 
   return (
@@ -187,11 +238,11 @@ export const AuthPage = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '40px 20px',
+        padding: '30px 16px',
         background: 'linear-gradient(135deg, var(--navy-deep), var(--navy) 60%, var(--navy-mid))'
       }}
     >
-      <div style={{ maxWidth: '540px', width: '100%', margin: 'auto' }}>
+      <div style={{ maxWidth: '520px', width: '100%', margin: 'auto' }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div
@@ -209,7 +260,7 @@ export const AuthPage = () => {
         </div>
 
         <Card style={{ padding: '32px 28px', boxShadow: '0 20px 48px rgba(0,0,0,0.35)', borderRadius: '16px' }}>
-          {/* Tabs: Log In vs Sign Up */}
+          {/* Main Navigation Tabs: Log In vs Sign Up */}
           <div
             style={{
               display: 'flex',
@@ -267,91 +318,218 @@ export const AuthPage = () => {
             </div>
           )}
 
-          {/* ===================== 1. LOGIN FORM ===================== */}
+          {/* ===================== SECTION 1: LOG IN ===================== */}
           {mode === 'login' && (
-            <form onSubmit={handleLoginSubmit} autoComplete="off">
-              <p className="cell-muted" style={{ marginBottom: '20px', fontSize: '13.5px' }}>
-                Sign in with your User ID, registered Email, or Mobile Number.
-              </p>
+            <>
+              {/* Option A: Customer & Professional Mobile OTP Login */}
+              {loginType === 'phone_otp' && loginStep === 'phone' && (
+                <form onSubmit={handleLoginPhoneSubmit} autoComplete="off">
+                  <p className="cell-muted" style={{ marginBottom: '20px', fontSize: '13.5px' }}>
+                    Enter your registered <b>Mobile Phone Number</b> for instant OTP login.
+                  </p>
 
-              <Input
-                label="User ID, Email, or Mobile Number"
-                name="user_identifier_field"
-                autoComplete="off"
-                placeholder="e.g. user@gmail.com or 88845XX17X"
-                value={loginIdentifier}
-                onChange={(e) => setLoginIdentifier(e.target.value)}
-                required
-              />
+                  <Input
+                    label="Mobile Phone Number"
+                    name="login_phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="e.g. 9822100001"
+                    value={loginPhone}
+                    onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
+                    required
+                    hint="A 4-digit verification code will be sent to your mobile"
+                  />
 
-              <Input
-                label="Password"
-                name="user_password_field"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Enter your password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required
-              />
+                  <div style={{ marginTop: '24px' }}>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="btn-block"
+                      type="submit"
+                      icon={Smartphone}
+                    >
+                      Send Login OTP
+                    </Button>
+                  </div>
 
-              <div style={{ marginTop: '24px' }}>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="btn-block"
-                  type="submit"
-                  icon={LogIn}
-                >
-                  Log In to Account
-                </Button>
-              </div>
-            </form>
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginType('admin_password');
+                        setError('');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--teal)',
+                        fontSize: '12.5px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Administrator & Super Admin Password Login
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Option A Step 2: Login OTP Verification */}
+              {loginType === 'phone_otp' && loginStep === 'otp' && (
+                <form onSubmit={handleVerifyLoginOTP} autoComplete="off">
+                  <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
+                    Login OTP Verification
+                  </h3>
+                  <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
+                    A 4-digit verification OTP was sent to <b>+91 {loginPhone}</b>
+                  </p>
+
+                  {pendingLoginUser && (
+                    <div
+                      style={{
+                        background: 'var(--cream)',
+                        padding: '12px 14px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        fontSize: '13px',
+                        border: '1px solid var(--line)',
+                        lineHeight: '1.5'
+                      }}
+                    >
+                      <div>Welcome, <b>{pendingLoginUser.full_name}</b></div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                        Role: <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{pendingLoginUser.role}</span> · {pendingLoginUser.taluka || 'Goa'}
+                      </div>
+                    </div>
+                  )}
+
+                  <Input
+                    label="Enter 4-Digit One-Time Password"
+                    type="text"
+                    autoComplete="one-time-code"
+                    placeholder="1 2 3 4"
+                    maxLength={6}
+                    value={loginOtp}
+                    onChange={(e) => setLoginOtp(e.target.value)}
+                    required
+                    hint="Enter any 4 digits (e.g. 1234)"
+                  />
+
+                  <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      icon={ArrowLeft}
+                      onClick={() => {
+                        setLoginStep('phone');
+                        setError('');
+                        setLoginOtp('');
+                      }}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="btn-block"
+                      type="submit"
+                      icon={LogIn}
+                    >
+                      Verify OTP & Log In
+                    </Button>
+                  </div>
+                </form>
+              )}
+
+              {/* Option B: Admin / Super Admin Password Login */}
+              {loginType === 'admin_password' && (
+                <form onSubmit={handleAdminPasswordLogin} autoComplete="off">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <ShieldCheck size={18} color="var(--teal)" />
+                    <b style={{ fontSize: '14px', color: 'var(--ink)' }}>Administrator Portal Sign In</b>
+                  </div>
+                  <p className="cell-muted" style={{ marginBottom: '18px', fontSize: '13px' }}>
+                    Authorized personnel credentials login (Platform Admin / Super Admin).
+                  </p>
+
+                  <Input
+                    label="Administrator Mobile Number or Username"
+                    name="admin_user_field"
+                    autoComplete="username"
+                    placeholder="e.g. 9800000001, admin, or superadmin"
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    required
+                  />
+
+                  <Input
+                    label="Password"
+                    name="admin_password_field"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Enter password (e.g. admin123 or tempPassword123!)"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    required
+                  />
+
+                  <div style={{ marginTop: '24px' }}>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="btn-block"
+                      type="submit"
+                      icon={LogIn}
+                    >
+                      Log In as Administrator
+                    </Button>
+                  </div>
+
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginType('phone_otp');
+                        setError('');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--teal)',
+                        fontSize: '12.5px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Back to Customer & Climber Mobile OTP Login
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
           )}
 
-          {/* ===================== 2. SIGN UP: STEP 1 (DETAILS) ===================== */}
+          {/* ===================== SECTION 2: SIGN UP ===================== */}
           {mode === 'signup' && signupStep === 'details' && (
             <form onSubmit={handleSignupDetailsSubmit} autoComplete="off">
               <Input
                 label="Your Full Name"
                 name="signup_fullname"
-                autoComplete="off"
+                autoComplete="name"
                 placeholder="e.g. Ramesh Prabhu"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
 
-              <div className="field-row">
-                <Input
-                  label="User ID / Username"
-                  name="signup_username"
-                  autoComplete="off"
-                  placeholder="e.g. ramesh_p"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().trim())}
-                  required
-                  hint="For easy login"
-                />
-
-                <Input
-                  label="Create Password"
-                  name="signup_user_password"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="At least 3 characters"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  required
-                />
-              </div>
-
               <Input
                 label="Mobile Phone Number"
                 name="signup_phone"
                 type="tel"
-                autoComplete="off"
-                placeholder="e.g. 88845XX17X"
+                autoComplete="tel"
+                placeholder="e.g. 9822100004"
                 value={signupPhone}
                 onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, ''))}
                 required
@@ -383,7 +561,7 @@ export const AuthPage = () => {
                 <Input
                   label="Property / Street Address"
                   name="signup_address"
-                  autoComplete="off"
+                  autoComplete="street-address"
                   placeholder="e.g. House No. 42, Near Market, Porvorim"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -421,7 +599,7 @@ export const AuthPage = () => {
             </form>
           )}
 
-          {/* ===================== 3. SIGN UP: STEP 2 (OTP VERIFICATION) ===================== */}
+          {/* ===================== SECTION 3: SIGN UP OTP ===================== */}
           {mode === 'signup' && signupStep === 'otp' && (
             <form onSubmit={handleVerifySignupOTP} autoComplete="off">
               <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
@@ -444,21 +622,21 @@ export const AuthPage = () => {
                   }}
                 >
                   <div>Name: <b>{pendingSignupData.full_name}</b></div>
-                  <div>User ID: <b>{pendingSignupData.username}</b> · Taluka: <b>{pendingSignupData.taluka}</b></div>
-                  <div style={{ textTransform: 'capitalize' }}>Role: <b>{pendingSignupData.role}</b></div>
+                  <div>Mobile Number: <b>+91 {pendingSignupData.phone}</b> · Taluka: <b>{pendingSignupData.taluka}</b></div>
+                  <div style={{ textTransform: 'capitalize' }}>Role: <b>{pendingSignupData.role === 'customer' ? 'Customer (Tree Owner)' : 'Professional (Climber)'}</b></div>
                 </div>
               )}
 
               <Input
                 label="Enter 4-Digit One-Time Password"
                 type="text"
-                autoComplete="off"
+                autoComplete="one-time-code"
                 placeholder="1 2 3 4"
                 maxLength={6}
                 value={signupOtp}
                 onChange={(e) => setSignupOtp(e.target.value)}
                 required
-                hint="For testing, enter any 4 digits (e.g. 1234)"
+                hint="Enter any 4 digits (e.g. 1234)"
               />
 
               <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
@@ -466,7 +644,11 @@ export const AuthPage = () => {
                   variant="ghost"
                   type="button"
                   icon={ArrowLeft}
-                  onClick={handleBackToDetails}
+                  onClick={() => {
+                    setError('');
+                    setSignupOtp('');
+                    setSignupStep('details');
+                  }}
                 >
                   Back
                 </Button>
@@ -487,5 +669,3 @@ export const AuthPage = () => {
     </div>
   );
 };
-
-

@@ -40,7 +40,8 @@ export const BookingWizard = ({ onComplete }) => {
     addService,
     addBooking,
     selectedServiceForBooking,
-    setSelectedServiceForBooking
+    setSelectedServiceForBooking,
+    schedulingConfig
   } = useApp();
 
   const [step, setStep] = useState(1);
@@ -120,7 +121,7 @@ export const BookingWizard = ({ onComplete }) => {
     setCustomDateError('');
 
     availabilityAPI
-      .getAvailability(taluka, activeService?.id, bookingType)
+      .getAvailability(taluka, activeService?.id, bookingType, schedulingConfig)
       .then((res) => {
         if (isMounted && res) {
           setAvailabilityData(res);
@@ -128,7 +129,7 @@ export const BookingWizard = ({ onComplete }) => {
           if (res.available_dates && res.available_dates.length > 0) {
             setScheduledDate((prev) => {
               if (!prev) return res.available_dates[0].date;
-              const config = getTalukaDayConfig(taluka, bookingType);
+              const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
               const cur = new Date(prev + 'T00:00:00');
               return config.allowedIndices.includes(cur.getDay()) ? prev : res.available_dates[0].date;
             });
@@ -145,7 +146,7 @@ export const BookingWizard = ({ onComplete }) => {
     return () => {
       isMounted = false;
     };
-  }, [taluka, activeService?.id, bookingType]);
+  }, [taluka, activeService?.id, bookingType, schedulingConfig]);
 
   // Section A.1: Height Category strictly gated by service object's requires_height_category flag
   const isHeightCategoryRequired = activeService?.requires_height_category === true;
@@ -163,7 +164,7 @@ export const BookingWizard = ({ onComplete }) => {
       return;
     }
     const dayOfWeek = chosen.getDay();
-    const config = getTalukaDayConfig(taluka, bookingType);
+    const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
     const dayName = chosen.toLocaleDateString('en-IN', { weekday: 'long' });
 
     if (!config.allowedIndices.includes(dayOfWeek)) {
@@ -207,7 +208,7 @@ export const BookingWizard = ({ onComplete }) => {
       errs.scheduledDate = `Please select an available service date.`;
     } else {
       const chosen = new Date(scheduledDate + 'T00:00:00');
-      const config = getTalukaDayConfig(taluka, bookingType);
+      const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
       if (!config.allowedIndices.includes(chosen.getDay())) {
         errs.scheduledDate = bookingType === 'urgent'
           ? `Urgent bookings are available Monday through Saturday (excluding Sunday).`
@@ -585,7 +586,7 @@ export const BookingWizard = ({ onComplete }) => {
                 Standard allocated scheduling days for <b>{taluka}</b>.
               </p>
               <div style={{ fontSize: '11.5px', color: 'var(--teal-dark)', fontWeight: '600' }}>
-                🗓️ Allocated: {(taluka || '').toLowerCase().includes('north') ? 'Monday, Tuesday, Wednesday' : 'Thursday, Friday, Saturday'}
+                🗓️ Allocated: {getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}
               </div>
             </div>
 
@@ -745,7 +746,7 @@ export const BookingWizard = ({ onComplete }) => {
                   <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
                     {bookingType === 'urgent'
                       ? '⚡ Urgent: Any future day except Sunday'
-                      : `🌿 Normal: ${(taluka || '').toLowerCase().includes('north') ? 'Monday, Tuesday, Wednesday' : 'Thursday, Friday, Saturday'}`
+                      : `🌿 Normal: ${getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}`
                     }
                   </span>
                 </div>
@@ -759,7 +760,7 @@ export const BookingWizard = ({ onComplete }) => {
                       if (!val) return;
                       const chosen = new Date(val + 'T00:00:00');
                       const dayOfWeek = chosen.getDay();
-                      const config = getTalukaDayConfig(taluka, bookingType);
+                      const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
                       if (!config.allowedIndices.includes(dayOfWeek)) {
                         setCustomDateError(
                           bookingType === 'urgent'

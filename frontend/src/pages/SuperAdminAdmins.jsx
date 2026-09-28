@@ -37,7 +37,6 @@ export const SuperAdminAdmins = () => {
   // Create Admin form state
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [taluka, setTaluka] = useState('All Talukas');
   const [password, setPassword] = useState('admin123');
 
@@ -47,7 +46,7 @@ export const SuperAdminAdmins = () => {
     return (
       (admin.full_name && admin.full_name.toLowerCase().includes(q)) ||
       (admin.phone && admin.phone.includes(q)) ||
-      (admin.email && admin.email.toLowerCase().includes(q)) ||
+      (admin.username && admin.username.toLowerCase().includes(q)) ||
       (admin.taluka && admin.taluka.toLowerCase().includes(q))
     );
   });
@@ -62,7 +61,6 @@ export const SuperAdminAdmins = () => {
       createAdminAccount({
         full_name: name.trim(),
         phone: phone.replace(/\D/g, ''),
-        email: email.trim() || undefined,
         taluka,
         password: password.trim() || 'admin123'
       });
@@ -73,7 +71,6 @@ export const SuperAdminAdmins = () => {
       // Reset form
       setName('');
       setPhone('');
-      setEmail('');
       setTaluka('All Talukas');
       setPassword('admin123');
       setIsCreateModalOpen(false);
@@ -309,24 +306,15 @@ export const SuperAdminAdmins = () => {
             />
           </div>
 
-          <div className="field-row">
-            <Input
-              label="Admin Email (Optional)"
-              type="email"
-              placeholder="e.g. snaik@coconutplucker.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Input
-              label="Initial Password"
-              type="password"
-              placeholder="Temporary password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              hint="Default: admin123"
-            />
-          </div>
+          <Input
+            label="Initial Password"
+            type="password"
+            placeholder="Temporary password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            hint="Default: admin123"
+          />
         </form>
       </Modal>
 
