@@ -216,7 +216,7 @@ export const AppProvider = ({ children }) => {
     return newBooking;
   };
 
-  const confirmBookingCall = (bookingId) => {
+  const confirmBookingCall = (bookingId, custObj) => {
     setBookings((prev) =>
       prev.map((b) =>
         b.id === bookingId
@@ -224,7 +224,9 @@ export const AppProvider = ({ children }) => {
           : b
       )
     );
-    showToast("Customer confirmation call recorded. Booking ready for assignment.", "success");
+    const displayName = custObj ? getDisplayName(custObj) : 'Customer';
+    const phoneInfo = custObj?.phone ? ` (${custObj.phone})` : '';
+    showToast(`📞 Connecting to ${displayName}${phoneInfo}... Call confirmation recorded.`, "success");
   };
 
   const assignBooking = (bookingId, professionalId) => {

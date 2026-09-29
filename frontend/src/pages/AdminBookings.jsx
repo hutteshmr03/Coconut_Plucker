@@ -4,7 +4,7 @@ import { getDisplayName } from '../utils/helpers';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { AssignWorkerModal } from '../components/admin/AssignWorkerModal';
-import { Search, UserPlus, PhoneCall, Check, Zap } from 'lucide-react';
+import { Search, UserPlus, PhoneCall, Phone, Check, Zap } from 'lucide-react';
 
 export const AdminBookings = () => {
   const {
@@ -141,8 +141,18 @@ export const AdminBookings = () => {
 
                     <td>
                       <div className="cell-strong">{getDisplayName(cust)}</div>
-                      <div className="cell-muted" style={{ fontSize: '11.5px' }}>
-                        {cust?.phone} · <b>{b.taluka}</b>
+                      <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {cust?.phone ? (
+                          <a
+                            href={`tel:${String(cust.phone).replace(/[^0-9+]/g, '')}`}
+                            className="phone-link-pill"
+                            title={`Click to call ${getDisplayName(cust)} (${cust.phone})`}
+                          >
+                            <Phone size={10} />
+                            <span>{cust.phone}</span>
+                          </a>
+                        ) : '—'}
+                        <span>· <b>{b.taluka}</b></span>
                       </div>
                     </td>
 
@@ -221,8 +231,15 @@ export const AdminBookings = () => {
                             variant="gold"
                             size="sm"
                             icon={PhoneCall}
-                            onClick={() => confirmBookingCall(b.id)}
-                            title="Call customer to verify and confirm urgent request"
+                            onClick={() => {
+                              const rawPhone = cust?.phone || b.customer_phone || b.phone || '';
+                              const cleanPhone = String(rawPhone).replace(/[^0-9+]/g, '');
+                              if (cleanPhone) {
+                                window.location.href = `tel:${cleanPhone}`;
+                              }
+                              confirmBookingCall(b.id, cust);
+                            }}
+                            title={`Call customer (${cust?.phone || 'Customer'}) to verify and confirm urgent request`}
                           >
                             Confirm via Call
                           </Button>

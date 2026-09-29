@@ -4,7 +4,7 @@ import { getDisplayName } from '../utils/helpers';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { VerificationModal } from '../components/admin/VerificationModal';
-import { Search, UserCheck } from 'lucide-react';
+import { Search, UserCheck, Phone } from 'lucide-react';
 
 export const AdminWorkforce = () => {
   const { professionals, services, verifyProfessional } = useApp();
@@ -77,7 +77,18 @@ export const AdminWorkforce = () => {
               <tr key={pro.id}>
                 <td>
                   <div className="cell-strong">{getDisplayName(pro)}</div>
-                  <div className="cell-muted">{pro.phone}</div>
+                  <div className="cell-muted" style={{ marginTop: '3px' }}>
+                    {pro?.phone ? (
+                      <a
+                        href={`tel:${String(pro.phone).replace(/[^0-9+]/g, '')}`}
+                        className="phone-link-pill"
+                        title={`Click to call ${getDisplayName(pro)} (${pro.phone})`}
+                      >
+                        <Phone size={10} />
+                        <span>{pro.phone}</span>
+                      </a>
+                    ) : '—'}
+                  </div>
                 </td>
                 <td>
                   <span className="cell-strong">{pro.taluka}</span>

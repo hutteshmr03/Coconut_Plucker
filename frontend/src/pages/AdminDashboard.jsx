@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  PhoneCall,
+  Phone
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -23,7 +25,8 @@ export const AdminDashboard = () => {
     professionals,
     incidents,
     customers,
-    setCurrentView
+    setCurrentView,
+    confirmBookingCall
   } = useApp();
 
   const totalBookings = bookings.length;
@@ -98,29 +101,76 @@ export const AdminDashboard = () => {
                   const svc = services.find((s) => s.id === b.service_id);
                   const cust = customers.find((c) => c.id === b.customer_id);
 
+                  const isCallPending = b.booking_type === 'urgent' && !b.call_confirmed;
+
                   return (
                     <div
                       key={b.id}
                       className="list-item"
                       style={{ padding: '12px 0' }}
                     >
-                      <div className="li-dot amber" />
+                      <div className={`li-dot ${isCallPending ? 'gold' : 'amber'}`} />
                       <div className="li-main">
-                        <div className="li-title">
-                          {svc?.icon} {svc?.name} · {b.booking_number}
+                        <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{svc?.icon} {svc?.name} · {b.booking_number}</span>
+                          {b.booking_type === 'urgent' && (
+                            <span
+                              style={{
+                                padding: '1px 6px',
+                                borderRadius: '10px',
+                                backgroundColor: '#FEF3C7',
+                                color: '#D97706',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                border: '1px solid #FDE68A'
+                              }}
+                            >
+                              ⚡ URGENT
+                            </span>
+                          )}
                         </div>
-                        <div className="li-sub">
-                          Customer: {getDisplayName(cust)} · Taluka: <b>{b.taluka}</b> · {b.tree_count} trees
+                        <div className="li-sub" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                          <span>Customer: <b>{getDisplayName(cust)}</b></span>
+                          {cust?.phone && (
+                            <a
+                              href={`tel:${String(cust.phone).replace(/[^0-9+]/g, '')}`}
+                              className="phone-link-pill"
+                              title={`Click to call ${getDisplayName(cust)} (${cust.phone})`}
+                            >
+                              <Phone size={10} />
+                              <span>{cust.phone}</span>
+                            </a>
+                          )}
+                          <span>· Taluka: <b>{b.taluka}</b> · {b.tree_count} trees</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => setCurrentView('adm-bookings')}
-                        >
-                          Assign Pro
-                        </Button>
+                        {isCallPending ? (
+                          <Button
+                            variant="gold"
+                            size="sm"
+                            icon={PhoneCall}
+                            onClick={() => {
+                              const rawPhone = cust?.phone || b.customer_phone || b.phone || '';
+                              const cleanPhone = String(rawPhone).replace(/[^0-9+]/g, '');
+                              if (cleanPhone) {
+                                window.location.href = `tel:${cleanPhone}`;
+                              }
+                              confirmBookingCall(b.id, cust);
+                            }}
+                            title={`Call customer (${cust?.phone || 'Customer'}) to verify and confirm`}
+                          >
+                            Confirm via Call
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setCurrentView('adm-bookings')}
+                          >
+                            Assign Pro
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
