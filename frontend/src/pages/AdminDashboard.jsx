@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { getDisplayName } from '../utils/helpers';
 import { Card } from '../components/common/Card';
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
+  const { role } = useAuth();
   const {
     bookings,
     services,
@@ -220,6 +222,14 @@ export const AdminDashboard = () => {
                 onClick={() => setCurrentView('adm-safety')}
               >
                 ⚠️ Safety & Incident Log ({openIncidents.length})
+              </Button>
+              <Button
+                variant="ghost"
+                className="btn-block"
+                style={{ justifyContent: 'flex-start' }}
+                onClick={() => setCurrentView(role === 'super_admin' ? 'sadm-profile' : 'adm-profile')}
+              >
+                🔑 Security & Credentials
               </Button>
             </div>
           </Card>
