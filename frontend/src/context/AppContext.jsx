@@ -14,7 +14,7 @@ export { normalizeTaluka };
 
 const AppContext = createContext();
 
-const STORAGE_KEY = "coconut_plucker_state_v6";
+const STORAGE_KEY = "coconut_plucker_state_v7";
 
 export const AppProvider = ({ children }) => {
   const { currentUser, role: authRole } = useAuth();
@@ -23,8 +23,15 @@ export const AppProvider = ({ children }) => {
   const [services, setServices] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + "_services");
-      const list = saved ? JSON.parse(saved) : INITIAL_SERVICES;
-      if (!Array.isArray(list)) return INITIAL_SERVICES;
+      let list = saved ? JSON.parse(saved) : INITIAL_SERVICES;
+      if (!Array.isArray(list)) list = INITIAL_SERVICES;
+      // Filter out legacy discontinued services
+      list = list.filter((s) => s.id !== 'svc_orchard' && s.id !== 'svc_waste');
+      // Ensure Jackfruit Plucking is present
+      if (!list.some((s) => s.id === 'svc_jackfruit')) {
+        const jackfruitSvc = INITIAL_SERVICES.find((s) => s.id === 'svc_jackfruit');
+        if (jackfruitSvc) list.push(jackfruitSvc);
+      }
       return list.map((s) => ({
         ...s,
         requires_height_category: s.id === 'svc_trim' ? true : (s.id === 'svc_coconut' ? false : Boolean(s.requires_height_category))

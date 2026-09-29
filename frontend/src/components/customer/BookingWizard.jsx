@@ -26,6 +26,23 @@ import {
 } from 'lucide-react';
 import { getTalukaDayConfig, formatScheduledDateLabel } from '../../utils/helpers';
 
+// Service Background Images
+import coconutImg from '../../assets/services/coconut.png';
+import arecaImg from '../../assets/services/areca.png';
+import mangoImg from '../../assets/services/mango.png';
+import jackfruitImg from '../../assets/services/jackfruit.jpg';
+import palmImg from '../../assets/services/palm.jpg';
+import trimImg from '../../assets/services/trim.jpg';
+
+export const SERVICE_IMAGES = {
+  svc_coconut: coconutImg,
+  svc_areca: arecaImg,
+  svc_mango: mangoImg,
+  svc_jackfruit: jackfruitImg,
+  svc_palm: palmImg,
+  svc_trim: trimImg,
+};
+
 const TALUKAS = [
   { value: '', label: '-- Select one --' },
   { value: 'North Goa', label: 'North Goa' },
@@ -340,29 +357,46 @@ export const BookingWizard = ({ onComplete }) => {
               .filter((s) => s.status === 'active')
               .map((svc) => {
                 const isSelected = selectedServiceId === svc.id;
+                const bgImg =
+                  SERVICE_IMAGES[svc.id] ||
+                  (svc.name?.toLowerCase().includes('coconut')
+                    ? coconutImg
+                    : svc.name?.toLowerCase().includes('jackfruit')
+                    ? jackfruitImg
+                    : svc.name?.toLowerCase().includes('mango')
+                    ? mangoImg
+                    : svc.name?.toLowerCase().includes('supari') || svc.name?.toLowerCase().includes('areca')
+                    ? arecaImg
+                    : svc.name?.toLowerCase().includes('trim')
+                    ? trimImg
+                    : palmImg);
+
                 return (
                   <div
                     key={svc.id}
                     className={`svc-pick ${isSelected ? 'selected' : ''}`}
                     onClick={() => setSelectedServiceId(svc.id)}
                   >
-                    <div className="svc-ic">{svc.icon}</div>
-                    <h4>{svc.name}</h4>
-                    <span>
-                      ₹{svc.base_rate} / {svc.unit.replace('per ', '')}
-                    </span>
-                    {svc.requires_height_category && (
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          color: 'var(--amber)',
-                          marginTop: '6px',
-                          fontWeight: '700'
-                        }}
-                      >
-                        *Height Category Required
+                    <div className="svc-pick-thumb-wrap">
+                      <img src={bgImg} alt={svc.name} className="svc-pick-thumb" />
+                      {isSelected && (
+                        <span className="svc-pick-selected-badge">
+                          <Check size={14} strokeWidth={3} />
+                        </span>
+                      )}
+                      {svc.requires_height_category && (
+                        <span className="svc-pick-height-chip">
+                          *Height Tier Applies
+                        </span>
+                      )}
+                    </div>
+                    <div className="svc-pick-body">
+                      <h4>{svc.name}</h4>
+                      <div className="svc-pick-rate">
+                        <span className="rate-num">₹{svc.base_rate}</span>
+                        <span className="rate-unit">/{svc.unit.replace('per ', '')}</span>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}

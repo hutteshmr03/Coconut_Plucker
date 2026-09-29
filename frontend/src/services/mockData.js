@@ -33,6 +33,17 @@ export const INITIAL_SERVICES = [
     status: "active"
   },
   {
+    id: "svc_jackfruit",
+    name: "Jackfruit Plucking",
+    icon: "🍈",
+    unit: "per tree",
+    base_rate: 140.0,
+    requires_height_category: false,
+    risk: "high",
+    desc: "Specialized climbing and gentle rope-lowering of heavy, mature jackfruits from tall canopy branches without fruit damage.",
+    status: "active"
+  },
+  {
     id: "svc_palm",
     name: "Palm Leaf Cutting & Crown Care",
     icon: "🌿",
@@ -52,28 +63,6 @@ export const INITIAL_SERVICES = [
     requires_height_category: true, // Only Canopy / Tree Trimming requires Height Category per spec A.1
     risk: "high",
     desc: "Chainsaw-assisted branch clearance and canopy reduction near roofs, overhead wires, and compound walls.",
-    status: "active"
-  },
-  {
-    id: "svc_orchard",
-    name: "Orchard Bulk Harvesting",
-    icon: "🌾",
-    unit: "per tree",
-    base_rate: 80.0,
-    requires_height_category: false,
-    risk: "high",
-    desc: "High-volume harvest operations for large plantations with multi-climber coordination.",
-    status: "active"
-  },
-  {
-    id: "svc_waste",
-    name: "Husk & Frond Waste Disposal",
-    icon: "🗑️",
-    unit: "per visit",
-    base_rate: 600.0,
-    requires_height_category: false,
-    risk: "low",
-    desc: "Full ground cleanup, husk stacking, and organic garden waste clearance after plucking.",
     status: "active"
   }
 ];

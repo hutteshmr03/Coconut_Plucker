@@ -244,15 +244,17 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
           )}
         </div>
 
-        {/* Sign Out Button */}
-        <button
-          className="icon-btn"
-          title={t('sign_out')}
-          onClick={logout}
-          style={{ color: 'var(--amber)' }}
-        >
-          <LogOut size={16} />
-        </button>
+        {/* Sign Out Button (Admins only; Customers & Climbers stay permanently signed in) */}
+        {(role === 'admin' || role === 'super_admin') && (
+          <button
+            className="icon-btn"
+            title={t('sign_out')}
+            onClick={logout}
+            style={{ color: 'var(--amber)' }}
+          >
+            <LogOut size={16} />
+          </button>
+        )}
       </div>
     </header>
   );

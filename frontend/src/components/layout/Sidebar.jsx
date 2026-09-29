@@ -299,20 +299,22 @@ export const Sidebar = () => {
           ))}
         </nav>
 
-        {/* Footer & Sign Out */}
-        <div className="sidebar-foot">
-          <button
-            className="nav-item"
-            style={{ width: '100%', color: '#E4A15E' }}
-            onClick={() => {
-              logout();
-              setIsMobileSidebarOpen(false);
-            }}
-          >
-            <LogOut size={16} />
-            <span>{t('sign_out')}</span>
-          </button>
-        </div>
+        {/* Footer & Sign Out (Admins only; Customers & Climbers stay permanently signed in) */}
+        {(role === 'admin' || role === 'super_admin') && (
+          <div className="sidebar-foot">
+            <button
+              className="nav-item"
+              style={{ width: '100%', color: '#E4A15E' }}
+              onClick={() => {
+                logout();
+                setIsMobileSidebarOpen(false);
+              }}
+            >
+              <LogOut size={16} />
+              <span>{t('sign_out')}</span>
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

@@ -573,7 +573,7 @@ export const AuthPage = () => {
                 />
               </div>
 
-              {role === 'customer' ? (
+              {role === 'customer' && (
                 <Input
                   label={t('signup_address')}
                   name="signup_address"
@@ -583,22 +583,6 @@ export const AuthPage = () => {
                   onChange={(e) => setAddress(e.target.value)}
                   required
                 />
-              ) : (
-                <div className="field-row">
-                  <Input
-                    label={t('signup_exp')}
-                    type="number"
-                    value={experienceYears}
-                    onChange={(e) => setExperienceYears(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label={t('signup_safety')}
-                    placeholder={t('signup_safety_placeholder')}
-                    value={safetyCert}
-                    onChange={(e) => setSafetyCert(e.target.value)}
-                  />
-                </div>
               )}
 
               <div style={{ marginTop: '24px' }}>
