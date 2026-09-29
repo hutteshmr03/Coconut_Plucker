@@ -97,6 +97,7 @@ export const AppProvider = ({ children }) => {
   const [currentCustomerId, setCurrentCustomerId] = useState(currentUser?.id || "cus_001");
   const [currentProfessionalId, setCurrentProfessionalId] = useState(currentUser?.id || "wrk_001");
   const [currentView, setCurrentView] = useState("cust-book");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [selectedServiceForBooking, setSelectedServiceForBooking] = useState(null);
 
@@ -389,6 +390,8 @@ export const AppProvider = ({ children }) => {
         currentProfessional,
         currentView,
         setCurrentView,
+        isMobileSidebarOpen,
+        setIsMobileSidebarOpen,
         toasts,
         showToast,
         selectedServiceForBooking,

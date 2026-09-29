@@ -19,12 +19,13 @@ import {
   ShieldAlert,
   Sliders,
   FileCheck,
-  KeyRound
+  KeyRound,
+  X
 } from 'lucide-react';
 
 export const Sidebar = () => {
   const { currentUser, logout, role, adminAccounts } = useAuth();
-  const { bookings, professionals, incidents, currentView, setCurrentView } = useApp();
+  const { bookings, professionals, incidents, currentView, setCurrentView, isMobileSidebarOpen, setIsMobileSidebarOpen } = useApp();
   const { t } = useLanguage();
 
   // Customer navigation items (CustomerRateCard and CustomerHome removed per instruction)
@@ -173,119 +174,146 @@ export const Sidebar = () => {
       : adminNav;
 
   return (
-    <aside className="sidebar">
-      {/* Brand Header */}
-      <div className="brand">
-        <div className="brand-mark">🌴</div>
-        <div className="brand-text">
-          <div className="t1">Coconut Plucker</div>
-          <div className="t2">SKILLED HEIGHT WORK, ON DEMAND</div>
-        </div>
-      </div>
+    <>
+      {/* Mobile Drawer Overlay Backdrop */}
+      <div
+        className={`sidebar-backdrop ${isMobileSidebarOpen ? 'active' : ''}`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+        aria-hidden="true"
+      />
 
-      {/* User Info Badge (Hidden for Professional role per instruction) */}
-      {role !== 'professional' && (
-        <div
-          style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '10px',
-            padding: '12px 14px',
-            marginBottom: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}
-        >
-          {currentUser?.avatar_url ? (
-            <img
-              src={currentUser.avatar_url}
-              alt={currentUser.full_name || 'User'}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '2px solid var(--gold)',
-                flexShrink: 0
-              }}
-            />
-          ) : (
-            <div
-              className="worker-avatar"
-              style={{ width: '36px', height: '36px', fontSize: '13px', flexShrink: 0 }}
-            >
-              {getDisplayName(currentUser)
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: '13px',
-                fontWeight: '700',
-                color: '#FFFFFF',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}
-            >
-              {getDisplayName(currentUser)}
-            </div>
-            <div
-              style={{
-                fontSize: '11px',
-                color: '#8CAABB',
-                textTransform: 'capitalize'
-              }}
-            >
-              {currentUser?.role} {currentUser?.taluka ? `· ${currentUser.taluka}` : ''}
+      <aside className={`sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+        {/* Brand Header */}
+        <div className="brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="brand-mark">🌴</div>
+            <div className="brand-text">
+              <div className="t1">Coconut Plucker</div>
+              <div className="t2">SKILLED HEIGHT WORK, ON DEMAND</div>
             </div>
           </div>
+
+          {/* Mobile Close Button */}
+          <button
+            className="sidebar-close-btn"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close navigation"
+            title="Close"
+          >
+            <X size={18} />
+          </button>
         </div>
-      )}
 
-      {/* Role-Specific Navigation */}
-      <nav style={{ flex: 1 }}>
-        {activeNav.map((group, gIdx) => (
-          <div key={gIdx} className="nav-group">
-            <div className="nav-label">{group.group}</div>
-            {group.items.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentView === item.id;
-              return (
-                <div
-                  key={item.id}
-                  className={`nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => setCurrentView(item.id)}
-                >
-                  <span className="nav-ic">
-                    <Icon size={16} />
-                  </span>
-                  <span>{item.label}</span>
-                  {item.count > 0 && <span className="nav-count">{item.count}</span>}
-                </div>
-              );
-            })}
+        {/* User Info Badge (Hidden for Professional role per instruction) */}
+        {role !== 'professional' && (
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '10px',
+              padding: '12px 14px',
+              marginBottom: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}
+          >
+            {currentUser?.avatar_url ? (
+              <img
+                src={currentUser.avatar_url}
+                alt={currentUser.full_name || 'User'}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--gold)',
+                  flexShrink: 0
+                }}
+              />
+            ) : (
+              <div
+                className="worker-avatar"
+                style={{ width: '36px', height: '36px', fontSize: '13px', flexShrink: 0 }}
+              >
+                {getDisplayName(currentUser)
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  color: '#FFFFFF',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+              >
+                {getDisplayName(currentUser)}
+              </div>
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: '#8CAABB',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {currentUser?.role} {currentUser?.taluka ? `· ${currentUser.taluka}` : ''}
+              </div>
+            </div>
           </div>
-        ))}
-      </nav>
+        )}
 
-      {/* Footer & Sign Out */}
-      <div className="sidebar-foot">
-        <button
-          className="nav-item"
-          style={{ width: '100%', color: '#E4A15E' }}
-          onClick={logout}
-        >
-          <LogOut size={16} />
-          <span>{t('sign_out')}</span>
-        </button>
-      </div>
-    </aside>
+        {/* Role-Specific Navigation */}
+        <nav style={{ flex: 1 }}>
+          {activeNav.map((group, gIdx) => (
+            <div key={gIdx} className="nav-group">
+              <div className="nav-label">{group.group}</div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentView === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className={`nav-item ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                      setCurrentView(item.id);
+                      setIsMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span className="nav-ic">
+                      <Icon size={16} />
+                    </span>
+                    <span>{item.label}</span>
+                    {item.count > 0 && <span className="nav-count">{item.count}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer & Sign Out */}
+        <div className="sidebar-foot">
+          <button
+            className="nav-item"
+            style={{ width: '100%', color: '#E4A15E' }}
+            onClick={() => {
+              logout();
+              setIsMobileSidebarOpen(false);
+            }}
+          >
+            <LogOut size={16} />
+            <span>{t('sign_out')}</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };

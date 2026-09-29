@@ -5,11 +5,11 @@ import { getDisplayName } from '../../utils/helpers';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../common/Button';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
-import { Plus, User, ShieldCheck, LogOut, ShieldAlert } from 'lucide-react';
+import { Plus, User, ShieldCheck, LogOut, ShieldAlert, Menu } from 'lucide-react';
 
 export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
   const { currentUser, role, logout } = useAuth();
-  const { currentView, setCurrentView } = useApp();
+  const { currentView, setCurrentView, setIsMobileSidebarOpen } = useApp();
   const { t } = useLanguage();
 
   const getPageMeta = () => {
@@ -113,9 +113,19 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
 
   return (
     <header className="topbar">
-      <div>
-        <h1>{meta.title}</h1>
-        <div className="sub">{meta.sub}</div>
+      <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setIsMobileSidebarOpen(true)}
+          aria-label="Open Navigation Menu"
+          title="Open Menu"
+        >
+          <Menu size={22} />
+        </button>
+        <div>
+          <h1>{meta.title}</h1>
+          <div className="sub">{meta.sub}</div>
+        </div>
       </div>
 
       <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
