@@ -229,26 +229,19 @@ export const AuthProvider = ({ children }) => {
     setRegisteredUsers((prev) => prev.filter((u) => u.id !== adminId || u.role !== 'admin'));
   };
 
-  // Super Admin: Profile Password Reset
-  const changeSuperAdminPassword = (currentPassword, newPassword) => {
-    if (currentUser?.role !== 'super_admin') {
-      throw new Error('Unauthorized: Password change is only for Super Admin profile.');
+  // Admin & Super Admin: Profile Password Reset
+  const changeAccountPassword = (currentPassword, newPassword) => {
+    if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'admin') {
+      throw new Error('Unauthorized: Password change is only for Administrator profiles.');
     }
 
     const curClean = (currentPassword || '').trim();
     const newClean = (newPassword || '').trim();
 
-    const VALID_SUPER_PASSWORDS = [
-      currentUser?.password,
-      'tempPassword123!',
-      'Super@Admin2026!',
-      '123',
-      'admin123'
-    ].filter(Boolean);
-
     const isMatch =
-      VALID_SUPER_PASSWORDS.includes(curClean) ||
-      (currentUser?.password && currentUser.password === curClean);
+      currentUser?.password === curClean ||
+      (currentUser?.role === 'super_admin' && currentUser?.must_reset_password && ['tempPassword123!', 'admin123', 'Super@Admin2026!'].includes(curClean)) ||
+      (currentUser?.role === 'admin' && !currentUser?.password_updated_at && (curClean === 'admin123' || curClean === '123'));
 
     if (!isMatch) {
       throw new Error('Current password does not match.');
@@ -271,6 +264,8 @@ export const AuthProvider = ({ children }) => {
     updateCurrentUser(updates);
     return { success: true };
   };
+
+  const changeSuperAdminPassword = changeAccountPassword;
 
   const logout = () => {
     setCurrentUser(null);
@@ -298,6 +293,7 @@ export const AuthProvider = ({ children }) => {
         toggleAdminStatus,
         deleteAdminAccount,
         changeSuperAdminPassword,
+        changeAccountPassword,
         logout,
         SUPER_ADMIN_USER,
         ADMIN_USER,

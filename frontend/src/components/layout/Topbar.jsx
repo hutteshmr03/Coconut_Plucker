@@ -31,9 +31,12 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
           sub: t('top_adm_audit_sub')
         };
       case 'sadm-profile':
+      case 'adm-profile':
         return {
           title: t('nav_super_profile'),
-          sub: 'Manage singleton Super Admin credentials and change access password'
+          sub: role === 'super_admin'
+            ? 'Manage singleton Super Admin credentials and change access password'
+            : 'Manage administrator credentials and change access password'
         };
 
       // Customer Views

@@ -71,16 +71,18 @@ def test_regional_scheduling_and_availability(client):
         assert d["day_name"] == "Saturday"
 
 def test_super_admin_admin_provisioning_without_email(client):
+    import time
+    test_phone = f"98{int(time.time()) % 100000000:08d}"
     # Provision new admin without email
     res = client.post("/api/super-admin/admins", json={
         "full_name": "Test Regional Admin",
-        "phone": "9842539999",
+        "phone": test_phone,
         "taluka": "South Goa",
         "password": "admin123"
     })
     assert res.status_code == 200
     data = res.json()
-    assert data["phone"] == "9842539999"
+    assert data["phone"] == test_phone
     assert data["role"] == "admin"
 
 def test_scheduling_config_endpoints(client):

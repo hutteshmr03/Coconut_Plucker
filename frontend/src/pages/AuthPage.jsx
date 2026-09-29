@@ -140,13 +140,10 @@ export const AuthPage = () => {
       return;
     }
 
-    if (
-      found.password &&
-      found.password !== passClean &&
-      passClean !== '123' &&
-      passClean !== 'admin123' &&
-      passClean !== 'tempPassword123!'
-    ) {
+    const isInitialSeed = found.must_reset_password && (passClean === 'tempPassword123!' || passClean === 'admin123');
+    const isPasswordValid = found.password ? (found.password === passClean || isInitialSeed) : (passClean === 'admin123');
+
+    if (!isPasswordValid) {
       setError('Incorrect administrator password. Please try again.');
       return;
     }

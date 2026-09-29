@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const SuperAdminProfile = () => {
-  const { currentUser, changeSuperAdminPassword } = useAuth();
+  const { currentUser, role, changeAccountPassword, changeSuperAdminPassword } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -29,7 +29,8 @@ export const SuperAdminProfile = () => {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isForceReset = currentUser?.must_reset_password === true;
+  const isSuperAdmin = role === 'super_admin';
+  const isForceReset = isSuperAdmin && currentUser?.must_reset_password === true;
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
@@ -58,8 +59,9 @@ export const SuperAdminProfile = () => {
 
     setIsSubmitting(true);
     try {
-      changeSuperAdminPassword(currentPassword, newPassword);
-      setSuccess('Super Admin password successfully updated! Platform access is now fully verified.');
+      const fn = changeAccountPassword || changeSuperAdminPassword;
+      fn(currentPassword, newPassword);
+      setSuccess(`${isSuperAdmin ? 'Super Admin' : 'Administrator'} password successfully updated! Please use your new password for all future logins.`);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -102,7 +104,9 @@ export const SuperAdminProfile = () => {
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <KeyRound size={20} color="var(--teal)" />
-          <h3 style={{ margin: 0 }}>Reset Super Admin Password</h3>
+          <h3 style={{ margin: 0 }}>
+            {isSuperAdmin ? 'Reset Super Admin Password' : 'Reset Administrator Password'}
+          </h3>
         </div>
 
         <p className="cell-muted" style={{ marginBottom: '20px', fontSize: '13px' }}>

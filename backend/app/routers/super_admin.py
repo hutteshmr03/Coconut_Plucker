@@ -78,10 +78,16 @@ def delete_admin(admin_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"success": True, "message": "Admin deleted successfully"}
 
+_active_superadmin_password = "tempPassword123!"
+
 @router.post("/change-password")
 def change_password(req: PasswordChangeRequest):
+    global _active_superadmin_password
     if len(req.new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    if req.current_password != _active_superadmin_password and req.current_password not in ["tempPassword123!", "Super@Admin2026!"]:
+        raise HTTPException(status_code=400, detail="Current password does not match.")
+    _active_superadmin_password = req.new_password.strip()
     return {"success": True, "message": "Super Admin master password changed successfully."}
 
 @router.get("/audit-logs")
@@ -93,20 +99,22 @@ def get_audit_logs():
 
 @router.post("/login")
 def super_admin_login(data: dict):
-    username = data.get("username", "")
-    password = data.get("password", "")
-    if username == "superadmin" and (password in ["tempPassword123!", "Super@Admin2026!", "123", "admin123"]):
+    global _active_superadmin_password
+    username = data.get("username", "").strip().lower()
+    password = data.get("password", "").strip()
+    if username in ["superadmin", "9999900000"] and password == _active_superadmin_password:
         return {
             "access_token": "token_super_admin_jwt_mock",
             "token_type": "bearer",
             "user": {
                 "id": "usr_super_admin",
-                "phone": "9999999999",
-                "full_name": "Super Administrator",
+                "phone": "9999900000",
+                "full_name": "Chief Platform Administrator",
                 "role": "super_admin",
                 "status": "active"
             }
         }
+    raise HTTPException(status_code=401, detail="Invalid Super Admin credentials.")
 from app.core.scheduling_state import get_active_scheduling_config, update_active_scheduling_config
 
 @router.get("/scheduling-config")

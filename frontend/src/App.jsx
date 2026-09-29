@@ -68,7 +68,7 @@ const MainLayout = () => {
       setCurrentView('cust-book');
     } else if (role === 'professional' && !['work-dash', 'work-jobs', 'work-profile'].includes(currentView)) {
       setCurrentView('work-dash');
-    } else if (role === 'admin' && !['adm-overview', 'sadm-scheduling', 'adm-bookings', 'adm-workforce', 'adm-services', 'adm-safety', 'adm-reports'].includes(currentView)) {
+    } else if (role === 'admin' && !['adm-overview', 'sadm-scheduling', 'adm-bookings', 'adm-workforce', 'adm-services', 'adm-safety', 'adm-reports', 'adm-profile'].includes(currentView)) {
       setCurrentView('adm-overview');
     }
   }, [role, currentView, setCurrentView, currentUser?.must_reset_password]);
@@ -85,6 +85,7 @@ const MainLayout = () => {
       case 'sadm-admins':
         return <SuperAdminAdmins />;
       case 'sadm-profile':
+      case 'adm-profile':
         return <SuperAdminProfile />;
       case 'sadm-scheduling':
         return <SuperAdminScheduling />;

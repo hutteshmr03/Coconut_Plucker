@@ -89,7 +89,8 @@ export const Sidebar = () => {
       items: [
         { id: 'adm-overview', label: t('nav_dashboard'), icon: LayoutDashboard },
         { id: 'sadm-scheduling', label: t('nav_scheduling'), icon: Sliders },
-        { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart }
+        { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart },
+        { id: 'adm-profile', label: t('nav_super_profile'), icon: KeyRound }
       ]
     },
     {
