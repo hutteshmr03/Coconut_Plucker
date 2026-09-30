@@ -3,8 +3,9 @@ import { useApp } from '../context/AppContext';
 import { getDisplayName } from '../utils/helpers';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
 import { AssignWorkerModal } from '../components/admin/AssignWorkerModal';
-import { Search, UserPlus, PhoneCall, Phone, Check, Zap } from 'lucide-react';
+import { Search, UserPlus, PhoneCall, Phone, Check, Zap, Camera, Eye } from 'lucide-react';
 
 export const AdminBookings = () => {
   const {
@@ -19,6 +20,7 @@ export const AdminBookings = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [assigningBooking, setAssigningBooking] = useState(null);
+  const [previewPhotoBooking, setPreviewPhotoBooking] = useState(null);
 
   const filteredBookings = bookings
     .filter((b) => {
@@ -161,9 +163,32 @@ export const AdminBookings = () => {
                         {svc?.icon} {svc?.name}
                       </div>
                       <div className="cell-muted" style={{ fontSize: '11.5px' }}>
-                        {b.tree_count} {svc?.unit.replace('per ', '')}s
+                        {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s
                         {b.height_category ? ` · Height: ${b.height_category}` : ''}
                       </div>
+                      {b.tree_photo && (
+                        <div style={{ marginTop: '4px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewPhotoBooking(b)}
+                            style={{
+                              background: 'rgba(31, 138, 130, 0.08)',
+                              border: '1px solid var(--teal)',
+                              color: 'var(--teal-dark)',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Camera size={11} /> View Snap
+                          </button>
+                        </div>
+                      )}
                     </td>
 
                     <td>
@@ -286,6 +311,35 @@ export const AdminBookings = () => {
         services={services}
         onAssign={assignBooking}
       />
+
+      {/* Tree Snapshot Lightbox Modal for Admin */}
+      {previewPhotoBooking && (
+        <Modal
+          isOpen={!!previewPhotoBooking}
+          onClose={() => setPreviewPhotoBooking(null)}
+          title={`Tree Photo · ${previewPhotoBooking.booking_number}`}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <img
+              src={previewPhotoBooking.tree_photo}
+              alt="Customer tree photo"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
+              }}
+            />
+            <div style={{ marginTop: '14px', fontSize: '13px', color: 'var(--ink)' }}>
+              Location: <b>{previewPhotoBooking.address}, {previewPhotoBooking.taluka}</b>
+              {previewPhotoBooking.height_category && (
+                <div>Height Category: <b style={{ color: 'var(--amber)' }}>{previewPhotoBooking.height_category} altitude</b></div>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

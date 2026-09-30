@@ -32,7 +32,7 @@ import {
   Trash2,
   Edit3
 } from 'lucide-react';
-import { getTalukaDayConfig, formatScheduledDateLabel, getServiceImage, SERVICE_IMAGES } from '../../utils/helpers';
+import { getTalukaDayConfig, formatScheduledDateLabel, getServiceImage, SERVICE_IMAGES, compressImageFile } from '../../utils/helpers';
 
 export const BookingWizard = ({ onComplete }) => {
   const { currentUser } = useAuth();
@@ -91,15 +91,23 @@ export const BookingWizard = ({ onComplete }) => {
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
   const [upiId, setUpiId] = useState('user@okhdfcbank');
   const [treePhoto, setTreePhoto] = useState(null);
+  const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setTreePhoto(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setIsCompressingPhoto(true);
+      setPhotoError('');
+      try {
+        const compressed = await compressImageFile(file, 800, 800, 0.72);
+        setTreePhoto(compressed);
+      } catch (err) {
+        console.error('Tree photo compression error:', err);
+        setPhotoError('Could not process photo. Please try choosing a smaller image.');
+      } finally {
+        setIsCompressingPhoto(false);
+      }
     }
   };
 
@@ -753,12 +761,29 @@ export const BookingWizard = ({ onComplete }) => {
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   id="tree-photo-input"
                   style={{ display: 'none' }}
                   onChange={handlePhotoUpload}
+                  disabled={isCompressingPhoto}
                 />
-                {!treePhoto ? (
+                {isCompressingPhoto ? (
+                  <span
+                    style={{
+                      background: 'rgba(31, 138, 130, 0.08)',
+                      border: '1px solid var(--teal)',
+                      color: 'var(--teal-dark)',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    ⏳ Optimizing photo...
+                  </span>
+                ) : !treePhoto ? (
                   <label
                     htmlFor="tree-photo-input"
                     style={{
@@ -802,6 +827,11 @@ export const BookingWizard = ({ onComplete }) => {
                 )}
               </div>
             </div>
+            {photoError && (
+              <div style={{ color: 'var(--danger)', fontSize: '11.5px', marginTop: '6px', fontWeight: '600' }}>
+                {photoError}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>

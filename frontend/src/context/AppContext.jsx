@@ -325,6 +325,12 @@ export const AppProvider = ({ children }) => {
     showToast("Service status updated", "info");
   };
 
+  const deleteService = (serviceId) => {
+    const target = services.find((s) => s.id === serviceId);
+    setServices((prev) => prev.filter((s) => s.id !== serviceId));
+    showToast(`Service "${target?.name || 'Item'}" deleted from catalog`, "warning");
+  };
+
   const verifyProfessional = (proId, decision) => {
     setProfessionals((prev) =>
       prev.map((p) =>
@@ -427,6 +433,7 @@ export const AppProvider = ({ children }) => {
         addService,
         updateService,
         toggleServiceStatus,
+        deleteService,
         verifyProfessional,
         addProfessional,
         addIncident,

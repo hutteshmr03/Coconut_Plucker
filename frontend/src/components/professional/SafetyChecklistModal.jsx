@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Camera } from 'lucide-react';
 
 const SAFETY_ITEMS = [
   'Full-body climbing harness, lanyards, and carabiners inspected for wear',
@@ -49,6 +49,42 @@ export const SafetyChecklistModal = ({ isOpen, onClose, onConfirm, booking }) =>
         </>
       }
     >
+      {booking.tree_photo && (
+        <div
+          style={{
+            marginBottom: '16px',
+            background: 'var(--cream)',
+            border: '1px solid var(--line)',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}
+        >
+          <img
+            src={booking.tree_photo}
+            alt="Tree Snapshot"
+            style={{
+              width: '60px',
+              height: '60px',
+              objectFit: 'cover',
+              borderRadius: '6px',
+              border: '1px solid var(--line)',
+              flexShrink: 0
+            }}
+          />
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--teal-dark)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Camera size={14} /> Customer Tree Photo
+            </div>
+            <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+              Check for overhead power lines, proximity to walls/roofs, and trunk condition before climbing.
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         style={{
           background: 'rgba(31, 138, 130, 0.08)',

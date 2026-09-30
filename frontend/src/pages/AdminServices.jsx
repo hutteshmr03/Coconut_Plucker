@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
 import { ServiceFormModal } from '../components/admin/ServiceFormModal';
 import { getServiceImage } from '../utils/helpers';
-import { Plus, Edit2, Power, Ruler } from 'lucide-react';
+import { Plus, Edit2, Power, Ruler, Trash2, AlertTriangle } from 'lucide-react';
 
 export const AdminServices = () => {
-  const { services, addService, updateService, toggleServiceStatus } = useApp();
+  const { services, addService, updateService, toggleServiceStatus, deleteService } = useApp();
 
   const [editingService, setEditingService] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingService, setDeletingService] = useState(null);
 
   const handleOpenAdd = () => {
     setEditingService(null);
@@ -20,6 +22,13 @@ export const AdminServices = () => {
   const handleOpenEdit = (svc) => {
     setEditingService(svc);
     setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingService) {
+      deleteService(deletingService.id);
+      setDeletingService(null);
+    }
   };
 
   const handleSave = (serviceData) => {
@@ -116,6 +125,14 @@ export const AdminServices = () => {
                     >
                       <Power size={14} />
                     </button>
+                    <button
+                      className="icon-btn del"
+                      title="Delete Service"
+                      onClick={() => setDeletingService(svc)}
+                      style={{ color: 'var(--danger)' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -131,6 +148,82 @@ export const AdminServices = () => {
         onSave={handleSave}
         service={editingService}
       />
+
+      {/* Custom Delete Confirmation Modal */}
+      {deletingService && (
+        <Modal
+          isOpen={!!deletingService}
+          onClose={() => setDeletingService(null)}
+          title="Delete Service from Catalog"
+          maxWidth="480px"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setDeletingService(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                icon={Trash2}
+                onClick={handleConfirmDelete}
+              >
+                Delete Service
+              </Button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div
+              style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+            >
+              <AlertTriangle size={22} color="var(--danger)" style={{ flexShrink: 0 }} />
+              <div style={{ fontSize: '13px', color: 'var(--ink)' }}>
+                Are you sure you want to permanently delete this service? This action cannot be undone.
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: 'var(--cream)',
+                border: '1px solid var(--line)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <img
+                src={getServiceImage(deletingService)}
+                alt={deletingService.name}
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '6px',
+                  objectFit: 'cover',
+                  border: '1px solid var(--line)',
+                  flexShrink: 0
+                }}
+              />
+              <div>
+                <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ink)' }}>
+                  {deletingService.name}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                  Rate: <b>₹{Number(deletingService.base_rate).toFixed(2)}</b> / {deletingService.unit?.replace('per ', '') || 'tree'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

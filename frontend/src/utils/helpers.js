@@ -251,46 +251,76 @@ export const getServiceImage = (svc) => {
 };
 
 /**
- * Compresses an image file to a lightweight data URL (<50KB) to prevent localStorage quota overflow.
+ * Compresses an image file using lightweight Blob Object URLs and HTML5 Canvas.
+ * Prevents mobile memory exhaustion and localStorage quota overflow.
  */
-export const compressImageFile = (file, maxWidth = 500, maxHeight = 500, quality = 0.75) => {
+export const compressImageFile = (file, maxWidth = 800, maxHeight = 800, quality = 0.72) => {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith('image/')) {
       return reject(new Error('Selected file is not an image'));
     }
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
 
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
+    let objectUrl = null;
+    try {
+      objectUrl = URL.createObjectURL(file);
+    } catch (e) {
+      // Fallback if createObjectURL is unavailable
+    }
+
+    const img = new Image();
+    
+    const cleanup = () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+
+    img.onerror = () => {
+      cleanup();
+      reject(new Error('Failed to load image for compression'));
+    };
+
+    img.onload = () => {
+      try {
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        // Scale proportionally to fit within bounding box
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
         }
 
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+        
+        // Clean high quality drawing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'medium';
         ctx.drawImage(img, 0, 0, width, height);
 
         const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        cleanup();
         resolve(compressedDataUrl);
-      };
-      img.src = e.target.result;
+      } catch (err) {
+        cleanup();
+        reject(err);
+      }
     };
-    reader.readAsDataURL(file);
+
+    if (objectUrl) {
+      img.src = objectUrl;
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    }
   });
 };
 

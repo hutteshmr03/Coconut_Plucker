@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getDisplayName } from '../../utils/helpers';
 import { StatusBadge } from '../common/StatusBadge';
 import { Button } from '../common/Button';
-import { Play, CheckCircle, MapPin, Calendar, Phone, AlertCircle } from 'lucide-react';
+import { Modal } from '../common/Modal';
+import { Play, CheckCircle, MapPin, Calendar, Phone, AlertCircle, Camera, Eye } from 'lucide-react';
 
 export const AssignedJobCard = ({
   booking,
@@ -11,6 +12,7 @@ export const AssignedJobCard = ({
   onStartJob,
   onCompleteJob
 }) => {
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const isAssigned = booking.status === 'assigned';
   const isInProgress = booking.status === 'in_progress';
   const isCompleted = booking.status === 'completed';
@@ -99,6 +101,68 @@ export const AssignedJobCard = ({
         </div>
       </div>
 
+      {/* Feature: Customer Attached Tree Photo */}
+      {booking.tree_photo && (
+        <div
+          style={{
+            marginTop: '12px',
+            background: 'rgba(31, 138, 130, 0.06)',
+            border: '1px solid rgba(31, 138, 130, 0.2)',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img
+              src={booking.tree_photo}
+              alt="Tree Snapshot"
+              onClick={() => setIsPhotoModalOpen(true)}
+              style={{
+                width: '46px',
+                height: '46px',
+                objectFit: 'cover',
+                borderRadius: '6px',
+                border: '1px solid var(--line)',
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+              }}
+            />
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--teal-dark)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Camera size={14} /> 1-Snap Tree Photo Attached
+              </div>
+              <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                Uploaded by customer for height & safety rope inspection
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsPhotoModalOpen(true)}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid var(--teal)',
+              color: 'var(--teal-dark)',
+              padding: '5px 12px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <Eye size={13} /> View Snap
+          </button>
+        </div>
+      )}
+
       {booking.job_notes && (
         <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--ink-soft)' }}>
           <b>Customer Note:</b> "{booking.job_notes}"
@@ -135,6 +199,35 @@ export const AssignedJobCard = ({
           </div>
         )}
       </div>
+
+      {/* Tree Photo Lightbox Modal */}
+      {isPhotoModalOpen && (
+        <Modal
+          isOpen={isPhotoModalOpen}
+          onClose={() => setIsPhotoModalOpen(false)}
+          title={`Customer Tree Snapshot · ${booking.booking_number}`}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <img
+              src={booking.tree_photo}
+              alt="Tree full snapshot"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                borderRadius: '8px',
+                objectFit: 'contain',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.15)'
+              }}
+            />
+            <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--ink-soft)' }}>
+              Location: <b>{booking.address}, {booking.taluka}</b>
+              {booking.height_category && (
+                <span> · Height Tier: <b>{booking.height_category}</b></span>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
