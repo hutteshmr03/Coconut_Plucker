@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { availabilityAPI, bookingsAPI } from '../../services/api';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -22,38 +23,23 @@ import {
   CreditCard,
   Smartphone,
   ShieldCheck,
-  Lock
+  Lock,
+  Camera,
+  Image as ImageIcon,
+  Sparkles,
+  Minus,
+  ShoppingCart,
+  Trash2,
+  Edit3
 } from 'lucide-react';
-import { getTalukaDayConfig, formatScheduledDateLabel } from '../../utils/helpers';
-
-// Service Background Images
-import coconutImg from '../../assets/services/coconut.png';
-import arecaImg from '../../assets/services/areca.png';
-import mangoImg from '../../assets/services/mango.png';
-import jackfruitImg from '../../assets/services/jackfruit.jpg';
-import palmImg from '../../assets/services/palm.jpg';
-import trimImg from '../../assets/services/trim.jpg';
-
-export const SERVICE_IMAGES = {
-  svc_coconut: coconutImg,
-  svc_areca: arecaImg,
-  svc_mango: mangoImg,
-  svc_jackfruit: jackfruitImg,
-  svc_palm: palmImg,
-  svc_trim: trimImg,
-};
-
-const TALUKAS = [
-  { value: '', label: '-- Select one --' },
-  { value: 'North Goa', label: 'North Goa' },
-  { value: 'South Goa', label: 'South Goa' },
-  { value: 'Kushavati', label: 'Kushavati' }
-];
+import { getTalukaDayConfig, formatScheduledDateLabel, getServiceImage, SERVICE_IMAGES } from '../../utils/helpers';
 
 export const BookingWizard = ({ onComplete }) => {
   const { currentUser } = useAuth();
+  const { t } = useLanguage();
   const {
     services,
+    customers,
     addService,
     addBooking,
     selectedServiceForBooking,
@@ -61,14 +47,28 @@ export const BookingWizard = ({ onComplete }) => {
     schedulingConfig
   } = useApp();
 
+  const customerProfile = customers?.find((c) => c.id === currentUser?.id || c.phone === currentUser?.phone) || currentUser;
+
+  const TALUKAS = [
+    { value: '', label: '-- Select one --' },
+    { value: 'North Goa', label: t('taluka_north_goa', 'North Goa') },
+    { value: 'South Goa', label: t('taluka_south_goa', 'South Goa') },
+    { value: 'Kushavati', label: t('taluka_kushavati', 'Kushavati') }
+  ];
+
   const [step, setStep] = useState(1);
   const [selectedServiceId, setSelectedServiceId] = useState(
     selectedServiceForBooking?.id || services[0]?.id || ''
   );
+  const [serviceCart, setServiceCart] = useState([]);
   const [treeCount, setTreeCount] = useState(1);
   const [heightCategory, setHeightCategory] = useState('medium'); // 'low' | 'medium' | 'high'
-  const [taluka, setTaluka] = useState('');
-  const [address, setAddress] = useState('');
+  const [taluka, setTaluka] = useState(
+    customerProfile?.taluka || currentUser?.taluka || 'South Goa'
+  );
+  const [address, setAddress] = useState(
+    customerProfile?.address || currentUser?.address || ''
+  );
   const [bookingType, setBookingType] = useState('standard'); // 'standard' | 'urgent'
 
   // Backend quote calculation breakdown
@@ -90,17 +90,31 @@ export const BookingWizard = ({ onComplete }) => {
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking'
   const [upiId, setUpiId] = useState('user@okhdfcbank');
+  const [treePhoto, setTreePhoto] = useState(null);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTreePhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Modals state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
-  const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false);
-  const [newServiceName, setNewServiceName] = useState('');
-  const [newServiceRate, setNewServiceRate] = useState('100');
-  const [newServiceUnit, setNewServiceUnit] = useState('per tree');
-  const [newServiceDesc, setNewServiceDesc] = useState('');
-  const [newServiceReqHeight, setNewServiceReqHeight] = useState(false);
-  const [modalError, setModalError] = useState('');
+
+  useEffect(() => {
+    if (customerProfile?.taluka && (!taluka || taluka === '')) {
+      setTaluka(customerProfile.taluka);
+    }
+    if (customerProfile?.address && (!address || address === '')) {
+      setAddress(customerProfile.address);
+    }
+  }, [customerProfile?.taluka, customerProfile?.address]);
 
   useEffect(() => {
     if (selectedServiceForBooking) {
@@ -236,6 +250,23 @@ export const BookingWizard = ({ onComplete }) => {
     return Object.keys(errs).length === 0;
   };
 
+  // Dynamic calculation for multi-service cart
+  const currentItems = serviceCart.length > 0 ? serviceCart : [{
+    serviceId: activeService.id,
+    serviceName: activeService.name,
+    icon: activeService.icon,
+    base_rate: Number(activeService.base_rate),
+    unit: activeService.unit,
+    treeCount: Number(treeCount || 1),
+    heightCategory: isHeightCategoryRequired ? heightCategory : null,
+    requires_height_category: isHeightCategoryRequired
+  }];
+
+  const totalBase = currentItems.reduce((acc, item) => acc + (Number(item.base_rate) * Number(item.treeCount)), 0);
+  const totalGst = totalBase * (bookingType === 'urgent' ? 0.20 : 0.18);
+  const totalAmount = totalBase + totalGst;
+  const totalTreeCount = currentItems.reduce((acc, item) => acc + Number(item.treeCount), 0);
+
   // Upfront Payment Gateway Flow (Razorpay)
   const handleOpenPayment = (e) => {
     if (e) e.preventDefault();
@@ -244,26 +275,23 @@ export const BookingWizard = ({ onComplete }) => {
 
   const handlePaymentSuccess = (paymentRecord) => {
     const scheduledAt = `${scheduledDate}T09:00:00Z`;
-    const finalAmount = Number(
-      quoteData?.quote_amount ||
-        Number(activeService.base_rate) * Number(treeCount) * (bookingType === 'urgent' ? 1.2 : 1.18)
-    );
+    const finalAmount = totalAmount;
 
     const bookingPayload = {
       customer_id: currentUser?.id,
-      service_id: activeService.id,
-      tree_count: Number(treeCount),
+      service_id: currentItems[0].serviceId,
+      service_name: currentItems.map((i) => i.serviceName).join(' + '),
+      services: currentItems,
+      tree_count: totalTreeCount,
       height_category: isHeightCategoryRequired ? heightCategory : null,
       taluka,
       address,
+      tree_photo: treePhoto,
       scheduled_at: scheduledAt,
       booking_type: bookingType,
-      base_amount: Number(quoteData.base_amount || Number(activeService.base_rate) * Number(treeCount)),
-      surcharge_amount: Number(quoteData.surcharge_amount || 0),
-      gst_amount: Number(
-        quoteData.gst_amount ||
-          Number(activeService.base_rate) * Number(treeCount) * (bookingType === 'urgent' ? 0.2 : 0.18)
-      ),
+      base_amount: totalBase,
+      surcharge_amount: Number(quoteData?.surcharge_amount || 0),
+      gst_amount: totalGst,
       quote_amount: finalAmount,
       actual_amount: finalAmount,
       payment_status: 'paid',
@@ -275,38 +303,161 @@ export const BookingWizard = ({ onComplete }) => {
 
     addBooking(bookingPayload);
     setSelectedServiceForBooking(null);
+    setServiceCart([]);
     if (onComplete) onComplete();
   };
 
-  // Handle adding custom service
-  const handleCreateCustomService = (e) => {
-    e.preventDefault();
-    if (!newServiceName.trim()) {
-      setModalError('Please enter the service name');
+  const handleSelectService = (svcId) => {
+    setSelectedServiceId(svcId);
+    const existing = serviceCart.find(i => i.serviceId === svcId);
+    if (existing) {
+      setTreeCount(existing.treeCount);
+      if (existing.heightCategory) setHeightCategory(existing.heightCategory);
+    } else {
+      setTreeCount(1);
+      setHeightCategory('medium');
+    }
+  };
+
+  const handleAddAnotherService = () => {
+    // Ensure active service is saved in serviceCart
+    setServiceCart((prev) => {
+      const existingIdx = prev.findIndex(item => item.serviceId === activeService.id);
+      const newItem = {
+        serviceId: activeService.id,
+        serviceName: activeService.name,
+        icon: activeService.icon,
+        base_rate: Number(activeService.base_rate),
+        unit: activeService.unit,
+        treeCount: Number(treeCount),
+        heightCategory: isHeightCategoryRequired ? heightCategory : null,
+        requires_height_category: isHeightCategoryRequired
+      };
+      if (existingIdx >= 0) {
+        const copy = [...prev];
+        copy[existingIdx] = newItem;
+        return copy;
+      }
+      return [...prev, newItem];
+    });
+
+    const addedIds = (serviceCart.length > 0 ? serviceCart : [{ serviceId: activeService.id }]).map(i => i.serviceId);
+    const nextUnadded = services.find(s => !addedIds.includes(s.id) && s.status === 'active');
+    if (nextUnadded) {
+      setSelectedServiceId(nextUnadded.id);
+    }
+    setTreeCount(1);
+    setHeightCategory('medium');
+    setStep(1);
+  };
+
+  const handleEditService = (svcId) => {
+    const item = currentItems.find((i) => i.serviceId === svcId) || services.find((s) => s.id === svcId);
+    if (item) {
+      setSelectedServiceId(item.serviceId || item.id);
+      setTreeCount(item.treeCount || 1);
+      if (item.heightCategory) {
+        setHeightCategory(item.heightCategory);
+      }
+      setStep(2);
+    }
+  };
+
+  const handleUpdateQuantity = (svcId, delta) => {
+    setServiceCart((prev) => {
+      const existingIdx = prev.findIndex((item) => item.serviceId === svcId);
+      if (existingIdx >= 0) {
+        const copy = [...prev];
+        const newCount = Math.max(1, (copy[existingIdx].treeCount || 1) + delta);
+        copy[existingIdx] = { ...copy[existingIdx], treeCount: newCount };
+        if (svcId === activeService.id) {
+          setTreeCount(newCount);
+        }
+        return copy;
+      } else {
+        const newCount = Math.max(1, Number(treeCount || 1) + delta);
+        setTreeCount(newCount);
+        return [{
+          serviceId: activeService.id,
+          serviceName: activeService.name,
+          icon: activeService.icon,
+          base_rate: Number(activeService.base_rate),
+          unit: activeService.unit,
+          treeCount: newCount,
+          heightCategory: isHeightCategoryRequired ? heightCategory : null,
+          requires_height_category: isHeightCategoryRequired
+        }];
+      }
+    });
+  };
+
+  const handleDirectSetQuantity = (svcId, rawVal) => {
+    if (rawVal === '') {
+      // Allow user to clear before typing new number
+      setServiceCart((prev) => {
+        const existingIdx = prev.findIndex((item) => item.serviceId === svcId);
+        if (existingIdx >= 0) {
+          const copy = [...prev];
+          copy[existingIdx] = { ...copy[existingIdx], treeCount: '' };
+          return copy;
+        }
+        return prev;
+      });
       return;
     }
-    if (!newServiceRate || Number(newServiceRate) <= 0) {
-      setModalError('Please enter a valid base rate');
-      return;
-    }
+    let parsed = parseInt(rawVal, 10);
+    if (isNaN(parsed) || parsed < 1) parsed = 1;
+    if (parsed > 999) parsed = 999;
 
-    const createdService = {
-      id: 'svc_' + Date.now().toString(36),
-      name: newServiceName.trim(),
-      base_rate: Number(newServiceRate),
-      unit: newServiceUnit,
-      icon: '🌴',
-      desc: newServiceDesc.trim() || 'Custom requested tree service',
-      requires_height_category: newServiceReqHeight,
-      status: 'active'
-    };
+    setServiceCart((prev) => {
+      const existingIdx = prev.findIndex((item) => item.serviceId === svcId);
+      if (existingIdx >= 0) {
+        const copy = [...prev];
+        copy[existingIdx] = { ...copy[existingIdx], treeCount: parsed };
+        if (svcId === activeService.id) {
+          setTreeCount(parsed);
+        }
+        return copy;
+      } else {
+        setTreeCount(parsed);
+        return [{
+          serviceId: activeService.id,
+          serviceName: activeService.name,
+          icon: activeService.icon,
+          base_rate: Number(activeService.base_rate),
+          unit: activeService.unit,
+          treeCount: parsed,
+          heightCategory: isHeightCategoryRequired ? heightCategory : null,
+          requires_height_category: isHeightCategoryRequired
+        }];
+      }
+    });
+  };
 
-    addService(createdService);
-    setSelectedServiceId(createdService.id);
-    setIsAddServiceModalOpen(false);
-    setNewServiceName('');
-    setNewServiceDesc('');
-    setModalError('');
+  const handleRemoveFromCart = (svcId) => {
+    setServiceCart((prev) => {
+      const currentList = prev.length > 0 ? prev : [{
+        serviceId: activeService.id,
+        serviceName: activeService.name,
+        icon: activeService.icon,
+        base_rate: Number(activeService.base_rate),
+        unit: activeService.unit,
+        treeCount: Number(treeCount || 1),
+        heightCategory: isHeightCategoryRequired ? heightCategory : null,
+        requires_height_category: isHeightCategoryRequired
+      }];
+      const updated = currentList.filter((item) => item.serviceId !== svcId);
+      if (updated.length > 0) {
+        setSelectedServiceId(updated[0].serviceId);
+        setTreeCount(updated[0].treeCount);
+        if (updated[0].heightCategory) setHeightCategory(updated[0].heightCategory);
+      } else {
+        setSelectedServiceId(services[0]?.id || '');
+        setTreeCount(1);
+        setStep(1);
+      }
+      return updated;
+    });
   };
 
   // Selected date object from availability data
@@ -316,40 +467,53 @@ export const BookingWizard = ({ onComplete }) => {
 
   return (
     <div style={{ maxWidth: '820px', margin: '0 auto' }}>
-      {/* Step Indicators */}
-      <div className="wizard-steps">
-        <div className={`wiz-step ${step === 1 ? 'active' : step > 1 ? 'done' : ''}`}>
-          {step > 1 ? <Check size={14} /> : '1'} <span>Choose Service</span>
-        </div>
-        <div className={`wiz-step ${step === 2 ? 'active' : step > 2 ? 'done' : ''}`}>
-          {step > 2 ? <Check size={14} /> : '2'} <span>Property Details</span>
-        </div>
-        <div className={`wiz-step ${step === 3 ? 'active' : step > 3 ? 'done' : ''}`}>
-          {step > 3 ? <Check size={14} /> : '3'} <span>Schedule</span>
-        </div>
-        <div className={`wiz-step ${step === 4 ? 'active' : ''}`}>
-          <span>4</span> <span>Quote & Confirm</span>
-        </div>
-      </div>
-
-      {/* Step 1: Choose Service */}
-      {step === 1 && (
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+      <div key={step} className="wizard-step-container">
+        {/* Step 1: Choose Service */}
+        {step === 1 && (
+          <Card>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <h3>Choose a Service</h3>
-              <p className="cell-muted">
-                Select a tree harvest or maintenance service from the catalog below.
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>{t('wiz_step_1_title')}</h3>
+              <p className="cell-muted" style={{ margin: '4px 0 0', fontSize: '13px' }}>
+                {t('wiz_step_1_sub')}
               </p>
             </div>
-            <Button
-              variant="gold"
-              size="sm"
-              icon={Plus}
-              onClick={() => setIsAddServiceModalOpen(true)}
-            >
-              Add Other Service
-            </Button>
+
+            {serviceCart.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'flex-end',
+                  gap: '4px',
+                  background: '#131921',
+                  color: '#FFFFFF',
+                  border: '1px solid #232f3e',
+                  padding: '5px 12px 5px 8px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                  transition: 'all 0.15s ease'
+                }}
+                title="View Shopping Cart"
+              >
+                <svg width="28" height="20" viewBox="0 0 38 26" fill="none" style={{ display: 'block' }}>
+                  <path
+                    d="M2 3h5l3.8 13.5h17l3.8-9.5H9"
+                    stroke="#FFFFFF"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="13" cy="22.5" r="2.2" fill="#FFFFFF" />
+                  <circle cx="26" cy="22.5" r="2.2" fill="#FFFFFF" />
+                </svg>
+                <span style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF', lineHeight: 1, paddingBottom: '2px' }}>
+                  Cart
+                </span>
+              </button>
+            )}
           </div>
 
           <div className="svc-pick-grid">
@@ -357,36 +521,50 @@ export const BookingWizard = ({ onComplete }) => {
               .filter((s) => s.status === 'active')
               .map((svc) => {
                 const isSelected = selectedServiceId === svc.id;
-                const bgImg =
-                  SERVICE_IMAGES[svc.id] ||
-                  (svc.name?.toLowerCase().includes('coconut')
-                    ? coconutImg
-                    : svc.name?.toLowerCase().includes('jackfruit')
-                    ? jackfruitImg
-                    : svc.name?.toLowerCase().includes('mango')
-                    ? mangoImg
-                    : svc.name?.toLowerCase().includes('supari') || svc.name?.toLowerCase().includes('areca')
-                    ? arecaImg
-                    : svc.name?.toLowerCase().includes('trim')
-                    ? trimImg
-                    : palmImg);
+                const inCart = serviceCart.find((i) => i.serviceId === svc.id);
+                const bgImg = getServiceImage(svc);
 
                 return (
                   <div
                     key={svc.id}
                     className={`svc-pick ${isSelected ? 'selected' : ''}`}
-                    onClick={() => setSelectedServiceId(svc.id)}
+                    onClick={() => handleSelectService(svc.id)}
+                    style={{
+                      position: 'relative',
+                      border: inCart ? '2px solid #FF9900' : isSelected ? '2px solid var(--teal)' : '1px solid var(--line)',
+                      boxShadow: inCart ? '0 4px 12px rgba(255, 153, 0, 0.18)' : 'none'
+                    }}
                   >
                     <div className="svc-pick-thumb-wrap">
                       <img src={bgImg} alt={svc.name} className="svc-pick-thumb" />
-                      {isSelected && (
+                      {isSelected && !inCart && (
                         <span className="svc-pick-selected-badge">
                           <Check size={14} strokeWidth={3} />
                         </span>
                       )}
+                      {inCart && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '8px',
+                          left: '8px',
+                          background: '#FFD814',
+                          color: '#0F1111',
+                          border: '1px solid #FCD200',
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.18)'
+                        }}>
+                          🛒 In Cart ({inCart.treeCount})
+                        </span>
+                      )}
                       {svc.requires_height_category && (
                         <span className="svc-pick-height-chip">
-                          *Height Tier Applies
+                          {t('badge_big_tree')}
                         </span>
                       )}
                     </div>
@@ -402,40 +580,27 @@ export const BookingWizard = ({ onComplete }) => {
               })}
           </div>
 
-          {/* Add Service Banner if service is not found */}
-          <div
-            style={{
-              background: 'var(--cream)',
-              border: '1px dashed var(--line)',
-              borderRadius: 'var(--radius)',
-              padding: '16px 20px',
-              marginTop: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px'
-            }}
-          >
-            <div>
-              <b style={{ color: 'var(--ink)', fontSize: '13.5px', display: 'block' }}>
-                Can't find the exact service you need?
-              </b>
-              <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
-                Add a custom service request (e.g. tree spraying, special fruit picking).
-              </span>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '24px',
+            paddingTop: '16px',
+            borderTop: '1px solid var(--line)',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
+              {serviceCart.length > 0 ? (
+                <>
+                  <span style={{ color: 'var(--ink-soft)' }}>Cart Subtotal ({serviceCart.length} service{serviceCart.length > 1 ? 's' : ''}):</span>{' '}
+                  <b style={{ fontSize: '16px', color: '#B12704', fontWeight: '800' }}>₹{totalBase.toFixed(2)}</b>
+                </>
+              ) : (
+                <span style={{ color: 'var(--ink-soft)' }}>Choose a service to configure trees & details</span>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={Plus}
-              style={{ background: 'var(--paper)', border: '1px solid var(--line)' }}
-              onClick={() => setIsAddServiceModalOpen(true)}
-            >
-              Add Service
-            </Button>
-          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
             <Button
               variant="primary"
               type="button"
@@ -445,7 +610,7 @@ export const BookingWizard = ({ onComplete }) => {
                 if (selectedServiceId) setStep(2);
               }}
             >
-              Continue to Property Details
+              {serviceCart.length > 0 ? 'Proceed to Details' : t('wiz_next_step')}
             </Button>
           </div>
         </Card>
@@ -455,15 +620,15 @@ export const BookingWizard = ({ onComplete }) => {
       {step === 2 && (
         <Card>
           <h3>
-            {activeService.icon} {activeService.name} — Property Details
+            {activeService.icon} {activeService.name} — {t('wiz_step_2_title')}
           </h3>
           <p className="cell-muted" style={{ marginBottom: '20px' }}>
-            Specify tree quantity, property Taluka, and service address.
+            {t('wiz_step_2_sub')}
           </p>
 
           <div className="field-row">
             <Input
-              label={`Number of ${activeService.unit.replace('per ', '')}s`}
+              label={t('wiz_tree_count')}
               type="number"
               min="1"
               value={treeCount}
@@ -473,17 +638,17 @@ export const BookingWizard = ({ onComplete }) => {
             />
 
             <Select
-              label="Taluka (Region)"
+              label={t('signup_taluka')}
               value={taluka}
               onChange={(e) => setTaluka(e.target.value)}
               options={TALUKAS}
               required
               error={errors.taluka}
-              hint="Determines server schedule allocation & verified workforce assignment"
+              hint="Determines schedule days and local climber allocation"
             />
           </div>
 
-          {/* Section A.1: Height Category rendered ONLY for Canopy / Tree Trimming (requires_height_category: true) */}
+          {/* Section A.1: Height Category rendered ONLY for Tree Branch Cutting */}
           {isHeightCategoryRequired && (
             <div
               style={{
@@ -497,17 +662,17 @@ export const BookingWizard = ({ onComplete }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <AlertCircle size={16} color="var(--amber)" />
                 <span style={{ fontWeight: '700', fontSize: '13px', color: 'var(--ink)' }}>
-                  Height Category (Applies to Canopy / Tree Trimming)
+                  Tree Height / Chainsaw Level
                 </span>
               </div>
               <Select
-                label="Select Canopy Working Height Range"
+                label="Select Tree Height Range"
                 value={heightCategory}
                 onChange={(e) => setHeightCategory(e.target.value)}
                 options={[
-                  { value: 'low', label: 'Low (e.g. Under 25 ft)' },
-                  { value: 'medium', label: 'Medium (e.g. 25 to 45 ft)' },
-                  { value: 'high', label: 'High Altitude (e.g. Above 45 ft)' }
+                  { value: 'low', label: 'Low (Under 25 ft)' },
+                  { value: 'medium', label: 'Medium (25 to 45 ft)' },
+                  { value: 'high', label: 'Very Tall / High (Above 45 ft)' }
                 ]}
                 required
                 error={errors.heightCategory}
@@ -515,15 +680,129 @@ export const BookingWizard = ({ onComplete }) => {
             </div>
           )}
 
+          {/* Dynamic Saved Addresses Quick Toggle */}
+          {(() => {
+            const allSaved = (
+              Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0
+                ? customerProfile.addresses
+                : [customerProfile?.address || currentUser?.address, customerProfile?.secondary_address || currentUser?.secondary_address]
+            ).filter(Boolean);
+
+            if (allSaved.length <= 1) return null;
+
+            return (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                {allSaved.map((savedAddr, sIdx) => {
+                  const isSelected = address === savedAddr;
+                  return (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      onClick={() => setAddress(savedAddr)}
+                      style={{
+                        background: isSelected ? 'var(--teal)' : 'var(--cream)',
+                        color: isSelected ? '#FFFFFF' : 'var(--ink)',
+                        border: '1px solid ' + (isSelected ? 'var(--teal)' : 'var(--line)'),
+                        padding: '5px 14px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Address {sIdx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           {/* Canonical single address/location field per Section A.2 */}
           <Input
-            label="Property Street Address & Location"
-            placeholder="Enter address"
+            label={t('wiz_address')}
+            placeholder="House No, Village/Town, Landmark, Goa"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             required
             error={errors.address}
           />
+
+          {/* Feature 4: 1-Snap Tree Photo Helper */}
+          <div
+            style={{
+              background: 'var(--paper)',
+              border: '1.5px dashed var(--line)',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              marginTop: '14px',
+              marginBottom: '16px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Camera size={15} color="var(--teal)" /> 1-Snap Tree Photo (Optional)
+                </b>
+                <p style={{ fontSize: '11.5px', color: 'var(--ink-soft)', margin: '2px 0 0' }}>
+                  Attach a photo so the climber brings the right ladder height & safety ropes.
+                </p>
+              </div>
+
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  id="tree-photo-input"
+                  style={{ display: 'none' }}
+                  onChange={handlePhotoUpload}
+                />
+                {!treePhoto ? (
+                  <label
+                    htmlFor="tree-photo-input"
+                    style={{
+                      background: 'rgba(31, 138, 130, 0.08)',
+                      border: '1px solid var(--teal)',
+                      color: 'var(--teal-dark)',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Camera size={14} /> Snap / Upload Photo
+                  </label>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img
+                      src={treePhoto}
+                      alt="Tree preview"
+                      style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setTreePhoto(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--danger)',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
             <Button
@@ -535,7 +814,7 @@ export const BookingWizard = ({ onComplete }) => {
                 setStep(1);
               }}
             >
-              Back
+              {t('btn_back')}
             </Button>
             <Button
               variant="primary"
@@ -543,10 +822,31 @@ export const BookingWizard = ({ onComplete }) => {
               icon={ArrowRight}
               onClick={(e) => {
                 e.preventDefault();
-                if (validateStep2()) setStep(3);
+                if (validateStep2()) {
+                  setServiceCart((prev) => {
+                    const existingIdx = prev.findIndex(item => item.serviceId === activeService.id);
+                    const newItem = {
+                      serviceId: activeService.id,
+                      serviceName: activeService.name,
+                      icon: activeService.icon,
+                      base_rate: Number(activeService.base_rate),
+                      unit: activeService.unit,
+                      treeCount: Number(treeCount),
+                      heightCategory: isHeightCategoryRequired ? heightCategory : null,
+                      requires_height_category: isHeightCategoryRequired
+                    };
+                    if (existingIdx >= 0) {
+                      const copy = [...prev];
+                      copy[existingIdx] = newItem;
+                      return copy;
+                    }
+                    return [...prev, newItem];
+                  });
+                  setStep(3);
+                }
               }}
             >
-              Continue to Schedule
+              {t('wiz_next_schedule')}
             </Button>
           </div>
         </Card>
@@ -557,9 +857,9 @@ export const BookingWizard = ({ onComplete }) => {
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
             <div>
-              <h3>Schedule the Booking</h3>
+              <h3>{t('wiz_step_3_title')}</h3>
               <p className="cell-muted">
-                Select an available service day allocated for <b>{taluka}</b>.
+                {t('wiz_step_3_sub')} <b>{t(`taluka_${taluka.toLowerCase().replace(/\s+/g, '_')}`, taluka)}</b>.
               </p>
             </div>
             {bookingType === 'urgent' && (
@@ -577,110 +877,6 @@ export const BookingWizard = ({ onComplete }) => {
                 ⚡ Urgent Dispatch Active (+20% Surcharge)
               </span>
             )}
-          </div>
-
-          {/* Separate Selectable Cards: Normal Booking vs Urgent Booking */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '14px',
-            marginBottom: '22px'
-          }}>
-            {/* Card 1: Normal Booking */}
-            <div
-              onClick={() => setBookingType('standard')}
-              style={{
-                border: bookingType === 'standard' ? '2px solid var(--teal)' : '1.5px solid var(--line)',
-                background: bookingType === 'standard' ? 'rgba(31, 138, 130, 0.06)' : 'var(--paper)',
-                borderRadius: '12px',
-                padding: '16px 18px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: bookingType === 'standard' ? '0 4px 12px rgba(31, 138, 130, 0.15)' : 'none'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>🌿</span>
-                  <b style={{ fontSize: '15px', color: 'var(--ink)' }}>Normal Booking</b>
-                </div>
-                <span style={{
-                  background: bookingType === 'standard' ? 'var(--teal)' : 'var(--cream)',
-                  color: bookingType === 'standard' ? '#FFFFFF' : 'var(--ink-soft)',
-                  border: bookingType === 'standard' ? 'none' : '1px solid var(--line)',
-                  padding: '3px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: '700'
-                }}>
-                  Standard Rate
-                </span>
-              </div>
-              <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', margin: '0 0 10px', lineHeight: '1.4' }}>
-                Standard allocated scheduling days for <b>{taluka}</b>.
-              </p>
-              <div style={{ fontSize: '11.5px', color: 'var(--teal-dark)', fontWeight: '600' }}>
-                🗓️ Allocated: {getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}
-              </div>
-            </div>
-
-            {/* Card 2: Urgent Booking */}
-            <div
-              onClick={() => setBookingType('urgent')}
-              style={{
-                border: bookingType === 'urgent' ? '2px solid var(--danger)' : '1.5px solid rgba(179, 64, 44, 0.35)',
-                background: bookingType === 'urgent' ? 'rgba(179, 64, 44, 0.08)' : 'rgba(179, 64, 44, 0.02)',
-                borderRadius: '12px',
-                padding: '16px 18px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: bookingType === 'urgent' ? '0 4px 14px rgba(179, 64, 44, 0.18)' : 'none'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>⚡</span>
-                  <b style={{ fontSize: '15px', color: 'var(--danger)' }}>Urgent Booking</b>
-                </div>
-                <span style={{
-                  background: 'var(--danger)',
-                  color: '#FFFFFF',
-                  padding: '3px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: '700'
-                }}>
-                  +20% GST
-                </span>
-              </div>
-              <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', margin: '0 0 10px', lineHeight: '1.4' }}>
-                Priority same-day/next-day dispatch. <b>Any day except Sunday (Mon–Sat)</b>.
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '11.5px', color: 'var(--danger)', fontWeight: '700' }}>
-                  🚨 Mon to Sat (Excluding Sunday)
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEmergencyModalOpen(true);
-                  }}
-                  style={{
-                    background: 'none',
-                    border: '1px solid var(--danger)',
-                    color: 'var(--danger)',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  1-Click Dispatch
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* Server Availability Notice */}
@@ -775,7 +971,7 @@ export const BookingWizard = ({ onComplete }) => {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                   <label style={{ fontWeight: '700', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
-                    🗓️ Select Custom / Future Date for {taluka}
+                    🗓️ {t('wiz_customize_date', 'Customize the Date')}
                   </label>
                   <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
                     {bookingType === 'urgent'
@@ -834,7 +1030,228 @@ export const BookingWizard = ({ onComplete }) => {
             </>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+          {/* Amazon / Flipkart Style Shopping Cart Box */}
+          <div style={{
+            background: 'var(--paper)',
+            border: '1px solid #D5D9D9',
+            borderRadius: '10px',
+            padding: '18px 20px',
+            marginTop: '20px',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              paddingBottom: '12px',
+              borderBottom: '1.5px solid var(--line)',
+              marginBottom: '14px',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShoppingCart size={19} color="#0F1111" />
+                <b style={{ fontSize: '15.5px', color: '#0F1111', fontWeight: '800' }}>
+                  Shopping Cart
+                </b>
+                <span style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
+                  ({currentItems.length} service{currentItems.length > 1 ? 's' : ''})
+                </span>
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: '600' }}>
+                Price
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {currentItems.map((item, idx) => {
+                const svcObj = services.find((s) => s.id === item.serviceId);
+                const bgImg = getServiceImage(svcObj || item);
+
+                return (
+                  <div
+                    key={item.serviceId || idx}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      paddingBottom: '14px',
+                      borderBottom: idx < currentItems.length - 1 ? '1px solid var(--line)' : 'none',
+                      gap: '14px',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '14px', flex: 1, minWidth: '240px' }}>
+                      <img
+                        src={bgImg}
+                        alt={item.serviceName}
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                          border: '1px solid var(--line)',
+                          flexShrink: 0
+                        }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ fontSize: '14.5px', fontWeight: '700', color: '#007185' }}>
+                          {item.serviceName}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
+                          ₹{item.base_rate} per {item.unit ? item.unit.replace('per ', '') : 'tree'}
+                          {item.heightCategory ? ` • Height: ${item.heightCategory}` : ''}
+                        </div>
+
+                        {/* Inline Typable Stepper & Delete Symbol */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
+                          {/* Quantity Pill Stepper with Typable Input */}
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            background: '#F0F2F2',
+                            border: '1px solid #D5D9D9',
+                            borderRadius: '8px',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+                            overflow: 'hidden'
+                          }}>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQuantity(item.serviceId, -1)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '4px 9px',
+                                cursor: 'pointer',
+                                color: '#0F1111',
+                                fontWeight: '800',
+                                fontSize: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              title="Decrease"
+                            >
+                              −
+                            </button>
+                            <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#0F1111', paddingLeft: '4px' }}>
+                              Qty:
+                            </span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={item.treeCount}
+                              onChange={(e) => handleDirectSetQuantity(item.serviceId, e.target.value)}
+                              onBlur={(e) => {
+                                if (!e.target.value || parseInt(e.target.value, 10) < 1) {
+                                  handleDirectSetQuantity(item.serviceId, 1);
+                                }
+                              }}
+                              style={{
+                                width: '38px',
+                                background: 'transparent',
+                                border: 'none',
+                                textAlign: 'center',
+                                fontWeight: '700',
+                                fontSize: '13px',
+                                color: '#0F1111',
+                                padding: '3px 0',
+                                outline: 'none'
+                              }}
+                              title="Enter quantity"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateQuantity(item.serviceId, 1)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '4px 9px',
+                                cursor: 'pointer',
+                                color: '#0F1111',
+                                fontWeight: '800',
+                                fontSize: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              title="Increase"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* Delete Symbol Button Only */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromCart(item.serviceId)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#B12704',
+                              cursor: 'pointer',
+                              padding: '5px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '6px',
+                              transition: 'background 0.15s'
+                            }}
+                            title={t('btn_delete', 'Delete')}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(177, 39, 4, 0.1)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                          >
+                            <Trash2 size={16} strokeWidth={2.2} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <b style={{ fontSize: '16px', color: '#B12704', fontWeight: '800' }}>
+                        ₹{(Number(item.base_rate) * Number(item.treeCount)).toFixed(2)}
+                      </b>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Amazon Style Price Breakdown Footer */}
+            <div style={{
+              marginTop: '16px',
+              paddingTop: '14px',
+              borderTop: '1px solid var(--line)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)' }}>
+                <span>Items Subtotal:</span>
+                <span>₹{totalBase.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)' }}>
+                <span>{bookingType === 'urgent' ? '⚡ Urgent GST (20%):' : 'Estimated GST (18%):'}</span>
+                <span>+ ₹{totalGst.toFixed(2)}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '16px',
+                fontWeight: '800',
+                color: '#0F1111',
+                marginTop: '4px',
+                paddingTop: '6px',
+                borderTop: '1px dashed var(--line)'
+              }}>
+                <span>Order Total:</span>
+                <span style={{ color: '#B12704', fontSize: '18px' }}>₹{totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <Button
               variant="ghost"
               type="button"
@@ -844,182 +1261,54 @@ export const BookingWizard = ({ onComplete }) => {
                 setStep(2);
               }}
             >
-              Back
+              {t('btn_back')}
             </Button>
-            <Button
-              variant="primary"
-              type="button"
-              icon={ArrowRight}
-              onClick={(e) => {
-                e.preventDefault();
-                if (validateStep3()) setStep(4);
-              }}
-            >
-              Review Quote & Confirm
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Step 4: Quote & Confirm */}
-      {step === 4 && (
-        <Card>
-          <h3>Review & Confirm Booking</h3>
-          <p className="cell-muted" style={{ marginBottom: '20px' }}>
-            Review your service details, address, and calculated instant quote with GST breakdown.
-          </p>
-
-          <div className="kpi-line">
-            <span>Service</span>
-            <b>
-              {activeService.icon} {activeService.name}
-            </b>
-          </div>
-          <div className="kpi-line">
-            <span>Booking Type</span>
-            <b>
-              {bookingType === 'urgent' ? (
-                <span style={{ color: 'var(--danger)', fontWeight: '700' }}>⚡ Urgent Priority (+20% GST)</span>
-              ) : (
-                <span>🌿 Standard Schedule</span>
-              )}
-            </b>
-          </div>
-          <div className="kpi-line">
-            <span>Quantity</span>
-            <b>
-              {treeCount} {activeService.unit.replace('per ', '')}s
-            </b>
-          </div>
-          <div className="kpi-line">
-            <span>Taluka</span>
-            <b>{taluka}</b>
-          </div>
-          <div className="kpi-line">
-            <span>Scheduled Service Date</span>
-            <b>
-              {selectedDateObj?.label || (scheduledDate ? formatScheduledDateLabel(scheduledDate) : scheduledDate)}
-            </b>
-          </div>
-          {isHeightCategoryRequired && (
-            <div className="kpi-line">
-              <span>Height Category</span>
-              <b style={{ textTransform: 'capitalize' }}>{heightCategory}</b>
-            </div>
-          )}
-          <div className="kpi-line">
-            <span>Service Address</span>
-            <b>{address}</b>
-          </div>
-
-          {/* Itemized Quote Box with 20% GST for Urgent / 18% GST for Normal */}
-          <div className="quote-box" style={{ marginTop: '20px' }}>
-            <div className="ql-row">
-              <span>Base Service (₹{activeService.base_rate} × {treeCount})</span>
-              <span>₹{(Number(quoteData?.base_amount || (Number(activeService.base_rate) * Number(treeCount)))).toFixed(2)}</span>
-            </div>
-
-            <div className="ql-row" style={{ color: bookingType === 'urgent' ? 'var(--danger)' : 'var(--ink-soft)', fontWeight: bookingType === 'urgent' ? '600' : 'normal' }}>
-              <span>{bookingType === 'urgent' ? '⚡ Urgent Service GST (20% GST)' : 'GST (18% Goods & Services Tax)'}</span>
-              <span>+ ₹{(Number(quoteData?.gst_amount || ((Number(activeService.base_rate) * Number(treeCount)) * (bookingType === 'urgent' ? 0.20 : 0.18)))).toFixed(2)}</span>
-            </div>
-
-            <div className="ql-total">
-              <span>Total Estimated Quote</span>
-              <span>₹{(quoteData?.quote_amount || ((Number(activeService.base_rate) * Number(treeCount)) * (bookingType === 'urgent' ? 1.20 : 1.18))).toFixed(2)}</span>
-            </div>
-            <div className="ql-note">
-              🛡️ Verified safe climb guaranteed. Payment processed securely upfront.
-            </div>
-          </div>
-
-          {/* Payment Method Notice & Gateway Trust Banner */}
-          <div
-            style={{
-              background: 'linear-gradient(135deg, rgba(12, 35, 64, 0.05) 0%, rgba(49, 130, 206, 0.08) 100%)',
-              border: '1.5px solid rgba(49, 130, 206, 0.3)',
-              borderRadius: '10px',
-              padding: '16px',
-              marginTop: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="secondary"
+                type="button"
+                icon={Plus}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddAnotherService();
+                }}
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '8px',
-                  background: '#0c2340',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  border: '1.5px solid var(--teal)',
+                  color: 'var(--teal-dark)',
+                  background: 'var(--paper)',
+                  fontWeight: '600'
                 }}
               >
-                <Lock size={22} color="#68d391" />
-              </div>
-              <div>
-                <b style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
-                  Razorpay Upfront Gateway Checkout
-                </b>
-                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: '2px 0 0' }}>
-                  Pay securely using <b>UPI / QR</b>, <b>Credit/Debit Cards</b>, or <b>Net Banking</b>.
-                </p>
-              </div>
+                {t('wiz_add_service', 'Add Service')}
+              </Button>
+              <Button
+                variant="primary"
+                type="button"
+                icon={ArrowRight}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (validateStep3()) {
+                    handleOpenPayment();
+                  }
+                }}
+              >
+                {t('wiz_confirm_and_pay', 'Confirm & Pay')} (₹{totalAmount.toFixed(2)})
+              </Button>
             </div>
-
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <span style={{ fontSize: '11px', background: 'var(--paper)', border: '1px solid var(--line)', padding: '3px 8px', borderRadius: '4px', fontWeight: '600' }}>
-                📱 UPI / GPay / PhonePe
-              </span>
-              <span style={{ fontSize: '11px', background: 'var(--paper)', border: '1px solid var(--line)', padding: '3px 8px', borderRadius: '4px', fontWeight: '600' }}>
-                💳 Visa / MasterCard / RuPay
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
-            <Button
-              variant="ghost"
-              type="button"
-              icon={ArrowLeft}
-              onClick={(e) => {
-                e.preventDefault();
-                setStep(3);
-              }}
-            >
-              Back
-            </Button>
-            <Button
-              variant="gold"
-              size="lg"
-              type="button"
-              icon={Lock}
-              onClick={handleOpenPayment}
-            >
-              Proceed to Pay ₹{(quoteData?.quote_amount || ((Number(activeService.base_rate) * Number(treeCount)) * (bookingType === 'urgent' ? 1.20 : 1.18))).toFixed(2)} via Razorpay
-            </Button>
           </div>
         </Card>
       )}
+      </div>
 
       {/* Razorpay Upfront Payment Modal */}
       <RazorpayPaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
-        amount={
-          quoteData?.quote_amount ||
-          Number(activeService.base_rate) * Number(treeCount) * (bookingType === 'urgent' ? 1.2 : 1.18)
-        }
-        serviceName={activeService?.name}
+        amount={totalAmount}
+        serviceName={currentItems.map((i) => `${i.serviceName} (${i.treeCount})`).join(', ')}
         bookingDetails={{
           taluka,
-          treeCount,
+          treeCount: totalTreeCount,
           bookingType,
           scheduledDate
         }}
@@ -1034,70 +1323,6 @@ export const BookingWizard = ({ onComplete }) => {
           if (onComplete) onComplete();
         }}
       />
-
-      {/* Add Custom Service Modal */}
-      <Modal
-        isOpen={isAddServiceModalOpen}
-        onClose={() => setIsAddServiceModalOpen(false)}
-        title="Add / Request a Service"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setIsAddServiceModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleCreateCustomService}>
-              Add & Select Service
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleCreateCustomService}>
-          <p className="cell-muted" style={{ marginBottom: '14px', fontSize: '13px' }}>
-            Add a service that is not in the list. It will be added to the catalog and selected for your booking.
-          </p>
-
-          {modalError && <div className="field-error" style={{ marginBottom: '12px' }}>{modalError}</div>}
-
-          <Input
-            label="Service Name"
-            placeholder="e.g. Tree Pruning / Leaf Clearance"
-            value={newServiceName}
-            onChange={(e) => setNewServiceName(e.target.value)}
-            required
-          />
-
-          <div className="field-row">
-            <Input
-              label="Estimated Base Rate (₹)"
-              type="number"
-              value={newServiceRate}
-              onChange={(e) => setNewServiceRate(e.target.value)}
-              required
-            />
-            <Select
-              label="Pricing Unit"
-              value={newServiceUnit}
-              onChange={(e) => setNewServiceUnit(e.target.value)}
-              options={[
-                { value: 'per tree', label: 'per tree' },
-                { value: 'per visit', label: 'per visit' },
-                { value: 'per acre', label: 'per acre' }
-              ]}
-              required
-            />
-          </div>
-
-          <div className="field">
-            <label>Service Description (Optional)</label>
-            <textarea
-              placeholder="Describe the nature of work needed..."
-              value={newServiceDesc}
-              onChange={(e) => setNewServiceDesc(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };

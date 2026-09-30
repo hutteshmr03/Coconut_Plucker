@@ -56,6 +56,17 @@ def request_otp(req: OTPRequest):
         "request_id": "req_" + str(uuid.uuid4())[:8]
     }
 
+SEED_USERS_MAP = {
+    "9822100001": {"full_name": "Rohan Dessai", "role": "customer", "taluka": "North Goa", "address": "House 42, Beach Road, Calangute"},
+    "9822100002": {"full_name": "Savio Fernandes", "role": "customer", "taluka": "South Goa", "address": "Villa 18, Colva Estate, Salcete"},
+    "9822100003": {"full_name": "Anand Gaonkar", "role": "customer", "taluka": "Kushavati", "address": "Plot 7, River Valley, Kushavati"},
+    "9822200001": {"full_name": "Prakash Naik", "role": "professional", "taluka": "North Goa", "address": "Mapusa, Goa", "exp": 10},
+    "9822200002": {"full_name": "Santosh Kerkar", "role": "professional", "taluka": "North Goa", "address": "Pernem, Goa", "exp": 8},
+    "9822200003": {"full_name": "Damodar Gaonkar", "role": "professional", "taluka": "Kushavati", "address": "Quepem, Goa", "exp": 12},
+    "9822200004": {"full_name": "Rohidas Naik", "role": "professional", "taluka": "South Goa", "address": "Margao, Goa", "exp": 7},
+    "9822200005": {"full_name": "Suresh Gaonkar", "role": "professional", "taluka": "South Goa", "address": "Canacona, Goa", "exp": 15},
+}
+
 @router.post("/otp/verify", response_model=TokenResponse)
 def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
     phone_clean = "".join(filter(str.isdigit, req.phone))
@@ -64,18 +75,34 @@ def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.phone == phone_clean).first()
     if not user:
-        # Auto-provision customer account if first-time phone login
+        seed_info = SEED_USERS_MAP.get(phone_clean, {
+            "full_name": f"User {phone_clean[-4:]}",
+            "role": "customer",
+            "taluka": "North Goa",
+            "address": "Goa"
+        })
         user = User(
             phone=phone_clean,
-            full_name=f"User {phone_clean[-4:]}",
-            role="customer",
+            full_name=seed_info["full_name"],
+            role=seed_info["role"],
             status="active"
         )
         db.add(user)
         db.flush()
 
-        profile = CustomerProfile(user_id=user.id, taluka="North Goa", address="Goa")
-        db.add(profile)
+        if seed_info["role"] == "customer":
+            profile = CustomerProfile(user_id=user.id, taluka=seed_info["taluka"], address=seed_info["address"])
+            db.add(profile)
+        elif seed_info["role"] == "professional":
+            prof_profile = ProfessionalProfile(
+                user_id=user.id,
+                taluka=seed_info["taluka"],
+                experience_years=seed_info.get("exp", 5),
+                safety_cert="Verified Professional Climber",
+                rating_avg=5.0
+            )
+            db.add(prof_profile)
+
         db.commit()
         db.refresh(user)
 

@@ -14,7 +14,7 @@ export { normalizeTaluka };
 
 const AppContext = createContext();
 
-const STORAGE_KEY = "coconut_plucker_state_v7";
+const STORAGE_KEY = "coconut_plucker_state_v8";
 
 export const AppProvider = ({ children }) => {
   const { currentUser, role: authRole } = useAuth();
@@ -24,18 +24,10 @@ export const AppProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY + "_services");
       let list = saved ? JSON.parse(saved) : INITIAL_SERVICES;
-      if (!Array.isArray(list)) list = INITIAL_SERVICES;
+      if (!Array.isArray(list) || list.length === 0) list = INITIAL_SERVICES;
       // Filter out legacy discontinued services
       list = list.filter((s) => s.id !== 'svc_orchard' && s.id !== 'svc_waste');
-      // Ensure Jackfruit Plucking is present
-      if (!list.some((s) => s.id === 'svc_jackfruit')) {
-        const jackfruitSvc = INITIAL_SERVICES.find((s) => s.id === 'svc_jackfruit');
-        if (jackfruitSvc) list.push(jackfruitSvc);
-      }
-      return list.map((s) => ({
-        ...s,
-        requires_height_category: s.id === 'svc_trim' ? true : (s.id === 'svc_coconut' ? false : Boolean(s.requires_height_category))
-      }));
+      return list;
     } catch {
       return INITIAL_SERVICES;
     }
@@ -347,6 +339,25 @@ export const AppProvider = ({ children }) => {
     );
   };
 
+  const addProfessional = (proData) => {
+    const newId = proData.id || ("wrk_" + Date.now().toString(36));
+    const newPro = {
+      id: newId,
+      full_name: proData.full_name,
+      phone: proData.phone,
+      taluka: proData.taluka,
+      experience_years: Number(proData.experience_years) || 1,
+      safety_cert: proData.safety_cert || 'Certified Climber',
+      rating_avg: Number(proData.rating_avg) || 5.0,
+      skills: proData.skills || ['svc_coconut', 'svc_palm'],
+      status: proData.status || 'approved',
+      created_at: new Date().toISOString()
+    };
+    setProfessionals((prev) => [newPro, ...prev]);
+    showToast(`Professional Climber "${proData.full_name}" onboarded successfully!`, "success");
+    return newPro;
+  };
+
   const addIncident = (incidentData) => {
     const newIncident = {
       id: "inc_" + Date.now().toString(36),
@@ -417,6 +428,7 @@ export const AppProvider = ({ children }) => {
         updateService,
         toggleServiceStatus,
         verifyProfessional,
+        addProfessional,
         addIncident,
         resolveIncident,
         updateCustomerProfile,

@@ -10,6 +10,7 @@ import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone, ShieldCheck } from 
 import { authAPI } from '../services/api';
 
 const TALUKAS = [
+  { value: '', label: '-- Select one --' },
   { value: 'North Goa', label: 'North Goa' },
   { value: 'South Goa', label: 'South Goa' },
   { value: 'Kushavati', label: 'Kushavati' }
@@ -33,12 +34,12 @@ export const AuthPage = () => {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
 
-  // Sign Up form fields (Only Full Name, Phone Number, Role, Taluka, and Address/Experience)
+  // Sign Up form fields (Only Full Name, Phone Number, Role, Taluka, and Address)
   const [signupStep, setSignupStep] = useState('details'); // 'details' | 'otp'
   const [fullName, setFullName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
-  const [role, setRole] = useState('customer'); // 'customer' | 'professional'
-  const [taluka, setTaluka] = useState('North Goa');
+  const [role, setRole] = useState('customer');
+  const [taluka, setTaluka] = useState('');
   const [address, setAddress] = useState('');
   const [experienceYears, setExperienceYears] = useState('5');
   const [safetyCert, setSafetyCert] = useState('');
@@ -100,7 +101,19 @@ export const AuthPage = () => {
     try {
       const res = await authAPI.verifyOTP(pClean, loginOtp);
       if (res?.user) {
-        authedUser = { ...pendingLoginUser, ...res.user };
+        const serverUser = res.user;
+        const localUser = pendingLoginUser || {};
+        authedUser = {
+          ...serverUser,
+          ...localUser,
+          // Preserve local name if present and not a generic stub
+          full_name: localUser.full_name || serverUser.full_name,
+          avatar_url: localUser.avatar_url || serverUser.avatar_url || null,
+          addresses: localUser.addresses || (localUser.address ? [localUser.address] : [serverUser.address || '']),
+          address: localUser.address || serverUser.address || '',
+          taluka: localUser.taluka || serverUser.taluka || 'North Goa',
+          token: res.access_token || undefined
+        };
       }
     } catch {
       // Offline / simulated fallback
@@ -151,7 +164,13 @@ export const AuthPage = () => {
     try {
       const res = await authAPI.login({ username: uClean, password: passClean });
       if (res?.user) {
-        login({ ...found, ...res.user });
+        login({
+          ...res.user,
+          ...found,
+          full_name: found.full_name || res.user.full_name,
+          avatar_url: found.avatar_url || res.user.avatar_url || null,
+          token: res.access_token || undefined
+        });
         return;
       }
     } catch {
@@ -179,7 +198,7 @@ export const AuthPage = () => {
       setError('Please select your Taluka');
       return;
     }
-    if (role === 'customer' && !address.trim()) {
+    if (!address.trim()) {
       setError('Please enter your property address');
       return;
     }
@@ -198,13 +217,9 @@ export const AuthPage = () => {
       full_name: fullName.trim(),
       phone: pClean,
       username: pClean,
-      role: role,
+      role: 'customer',
       taluka: taluka,
-      address: role === 'customer' ? address.trim() || `${taluka}, Goa` : undefined,
-      experience_years: role === 'professional' ? Number(experienceYears) || 0 : undefined,
-      safety_cert: role === 'professional' ? safetyCert.trim() || 'Safety Certified Climber' : undefined,
-      rating_avg: role === 'professional' ? 5.0 : undefined,
-      skills: role === 'professional' ? ['svc_coconut', 'svc_palm'] : undefined
+      address: address.trim() || `${taluka}, Goa`
     };
 
     try {
@@ -552,38 +567,23 @@ export const AuthPage = () => {
                 hint={t('auth_mobile_hint')}
               />
 
-              <div className="field-row">
-                <Select
-                  label={t('signup_i_am')}
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  options={[
-                    { value: 'customer', label: t('signup_role_customer') },
-                    { value: 'professional', label: t('signup_role_climber') }
-                  ]}
-                  required
-                />
+              <Select
+                label={t('signup_taluka')}
+                value={taluka}
+                onChange={(e) => setTaluka(e.target.value)}
+                options={TALUKAS}
+                required
+              />
 
-                <Select
-                  label={t('signup_taluka')}
-                  value={taluka}
-                  onChange={(e) => setTaluka(e.target.value)}
-                  options={TALUKAS}
-                  required
-                />
-              </div>
-
-              {role === 'customer' && (
-                <Input
-                  label={t('signup_address')}
-                  name="signup_address"
-                  autoComplete="street-address"
-                  placeholder={t('signup_address_placeholder')}
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                />
-              )}
+              <Input
+                label={t('signup_address')}
+                name="signup_address"
+                autoComplete="street-address"
+                placeholder={t('signup_address_placeholder')}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+              />
 
               <div style={{ marginTop: '24px' }}>
                 <Button
@@ -623,7 +623,7 @@ export const AuthPage = () => {
                 >
                   <div>Name: <b>{pendingSignupData.full_name}</b></div>
                   <div>Mobile Number: <b>+91 {pendingSignupData.phone}</b> · Taluka: <b>{pendingSignupData.taluka}</b></div>
-                  <div style={{ textTransform: 'capitalize' }}>Role: <b>{pendingSignupData.role === 'customer' ? t('signup_role_customer') : t('signup_role_climber')}</b></div>
+                  <div>Address: <b>{pendingSignupData.address}</b></div>
                 </div>
               )}
 

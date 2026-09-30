@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
-import { Ruler } from 'lucide-react';
+import { getServiceImage, compressImageFile } from '../../utils/helpers';
+import { Upload, Camera, Trash2, Image as ImageIcon } from 'lucide-react';
 
 export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
+  const fileInputRef = useRef(null);
   const [name, setName] = useState('');
   const [baseRate, setBaseRate] = useState('');
   const [unit, setUnit] = useState('per tree');
-  const [icon, setIcon] = useState('🌴');
+  const [imageUrl, setImageUrl] = useState('');
   const [desc, setDesc] = useState('');
   const [requiresHeightCategory, setRequiresHeightCategory] = useState(false);
   const [error, setError] = useState('');
@@ -19,19 +21,32 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       setName(service.name || '');
       setBaseRate(service.base_rate || '');
       setUnit(service.unit || 'per tree');
-      setIcon(service.icon || '🌴');
+      setImageUrl(service.image_url || service.image || '');
       setDesc(service.desc || '');
       setRequiresHeightCategory(!!service.requires_height_category);
     } else {
       setName('');
       setBaseRate('');
       setUnit('per tree');
-      setIcon('🌴');
+      setImageUrl('');
       setDesc('');
       setRequiresHeightCategory(false);
     }
     setError('');
   }, [service, isOpen]);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const compressed = await compressImageFile(file, 600, 600, 0.75);
+        setImageUrl(compressed);
+        setError('');
+      } catch (err) {
+        setError('Could not process image file. Please try another image.');
+      }
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,12 +58,18 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       setError('Valid base rate is required');
       return;
     }
+    if (!imageUrl && !service?.image_url && !service?.image) {
+      setError('Service Photo / Image is mandatory. Please upload an image.');
+      return;
+    }
 
     const payload = {
       name: name.trim(),
       base_rate: Number(baseRate),
       unit: unit.trim(),
-      icon: icon.trim() || '🌴',
+      image_url: imageUrl || (service?.image_url || null),
+      image: imageUrl || (service?.image || null),
+      icon: imageUrl || service?.icon || '🌴',
       desc: desc.trim(),
       requires_height_category: requiresHeightCategory
     };
@@ -56,6 +77,8 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
     onSave(payload);
     onClose();
   };
+
+  const hasPhoto = Boolean(imageUrl || service?.image_url || service?.image);
 
   return (
     <Modal
@@ -85,15 +108,6 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
             required
           />
           <Input
-            label="Icon (Emoji)"
-            placeholder="e.g. 🐛"
-            value={icon}
-            onChange={(e) => setIcon(e.target.value)}
-          />
-        </div>
-
-        <div className="field-row">
-          <Input
             label="Base Rate (₹)"
             type="number"
             step="0.01"
@@ -102,6 +116,9 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
             onChange={(e) => setBaseRate(e.target.value)}
             required
           />
+        </div>
+
+        <div className="field-row" style={{ alignItems: 'flex-start' }}>
           <Select
             label="Pricing Unit"
             value={unit}
@@ -114,6 +131,86 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
             ]}
             required
           />
+
+          {/* Service Image File Upload Field - MANDATORY */}
+          <div className="field" style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600' }}>
+              Service Photo / Image <span style={{ color: 'var(--danger)' }}>*</span>
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {hasPhoto ? (
+                <img
+                  src={imageUrl || getServiceImage(service || { name })}
+                  alt={name || 'Service'}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '6px',
+                    objectFit: 'cover',
+                    border: '1px solid var(--line)',
+                    flexShrink: 0
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '6px',
+                    border: '1.5px dashed var(--danger, #e53e3e)',
+                    background: 'var(--cream)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--ink-soft)',
+                    flexShrink: 0
+                  }}
+                >
+                  <ImageIcon size={18} />
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleImageUpload}
+              />
+              <Button
+                type="button"
+                variant={hasPhoto ? 'secondary' : 'primary'}
+                size="sm"
+                icon={Upload}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {hasPhoto ? 'Change Photo' : 'Upload Photo *'}
+              </Button>
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl('');
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--danger)',
+                    fontSize: '11.5px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {!hasPhoto && (
+              <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
+                Required: Please upload a service photo
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="field">

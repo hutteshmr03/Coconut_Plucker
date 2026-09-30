@@ -80,7 +80,7 @@ export const TRANSLATIONS = {
 
     // Topbar titles
     top_book_service_title: 'Book a Service',
-    top_book_service_sub: 'Standardized rates, safety-certified climbers & instant quote',
+    top_book_service_sub: 'Book trusted local climbers for your trees in Goa.',
     top_my_bookings_title: 'My Bookings',
     top_my_bookings_sub: 'Track active bookings, payment, and submit professional reviews',
     top_cust_profile_title: 'Customer Profile',
@@ -107,6 +107,8 @@ export const TRANSLATIONS = {
     // Common UI
     btn_next: 'Next Step',
     btn_back: 'Back',
+    btn_edit: 'Edit',
+    btn_delete: 'Delete',
     btn_cancel: 'Cancel',
     btn_confirm: 'Confirm',
     btn_save: 'Save Changes',
@@ -122,7 +124,43 @@ export const TRANSLATIONS = {
     tree_count: 'Number of Trees',
     total_amount: 'Total Amount',
     pay_now: 'Pay Now',
-    rupees: '₹'
+    rupees: '₹',
+
+    // Role & Taluka translation keys
+    role_customer: 'Customer',
+    role_professional: 'Professional Climber',
+    role_admin: 'Admin',
+    role_super_admin: 'Super Admin',
+    taluka_north_goa: 'North Goa',
+    taluka_south_goa: 'South Goa',
+    taluka_kushavati: 'Kushavati',
+    taluka_all: 'All Talukas',
+
+    // Wizard Step Translation Keys
+    wiz_step_1: '1. Choose Tree Service',
+    wiz_step_2: '2. How Many Trees? & Address',
+    wiz_step_3: '3. Choose Day & Time',
+    wiz_step_4: '4. Confirm & Book',
+    wiz_step_1_title: 'Choose Tree Service',
+    wiz_step_1_sub: 'Which tree service do you need? (Tap one below)',
+    wiz_add_service: 'Add Service',
+    wiz_services_selected: 'Selected Services',
+    wiz_next_step: 'Next Step',
+    wiz_step_2_title: 'How Many Trees & Address',
+    wiz_step_2_sub: 'Enter how many trees you have and your address in Goa.',
+    wiz_tree_count: 'How many trees?',
+    wiz_address: 'Your Address in Goa',
+    wiz_next_schedule: 'Next: Choose Day & Time',
+    wiz_step_3_title: 'Choose Day & Time',
+    wiz_step_3_sub: 'Pick a convenient day for our climber to visit your property in',
+    wiz_next_confirm: 'Confirm & Pay',
+    wiz_confirm_and_pay: 'Confirm & Pay',
+    wiz_step_4_title: 'Confirm & Pay',
+    wiz_step_4_sub: 'Review your booking details and confirm your payment.',
+    wiz_total_price: 'Total Price',
+    wiz_book_now: 'Confirm & Pay',
+    badge_big_tree: 'Big Tree / Chainsaw Work',
+    wiz_customize_date: 'Customize the Date'
   },
 
   hi: {
@@ -196,7 +234,7 @@ export const TRANSLATIONS = {
 
     // Topbar titles
     top_book_service_title: 'सेवा बुक करें',
-    top_book_service_sub: 'मानकीकृत दरें, सुरक्षा-प्रमाणित क्लाइंबर और त्वरित अनुमान',
+    top_book_service_sub: 'गोवा में अपने पेड़ों के लिए विश्वसनीय स्थानीय क्लाइंबर बुक करें।',
     top_my_bookings_title: 'मेरी बुकिंग',
     top_my_bookings_sub: 'सक्रिय बुकिंग ट्रैक करें, भुगतान करें और समीक्षा दें',
     top_cust_profile_title: 'ग्राहक प्रोफ़ाइल',
@@ -223,6 +261,8 @@ export const TRANSLATIONS = {
     // Common UI
     btn_next: 'अगला कदम',
     btn_back: 'पीछे',
+    btn_edit: 'संपादित करें',
+    btn_delete: 'हटाएं',
     btn_cancel: 'रद्द करें',
     btn_confirm: 'पुष्टि करें',
     btn_save: 'बदलाव सहेजें',
@@ -238,7 +278,43 @@ export const TRANSLATIONS = {
     tree_count: 'पेड़ों की संख्या',
     total_amount: 'कुल राशि',
     pay_now: 'अभी भुगतान करें',
-    rupees: '₹'
+    rupees: '₹',
+
+    // Role & Taluka translation keys
+    role_customer: 'ग्राहक',
+    role_professional: 'पेशेवर क्लाइंबर',
+    role_admin: 'व्यवस्थापक',
+    role_super_admin: 'सुपर एडमिन',
+    taluka_north_goa: 'उत्तर गोवा',
+    taluka_south_goa: 'दक्षिण गोवा',
+    taluka_kushavati: 'कुशावती',
+    taluka_all: 'सभी तालुका',
+
+    // Wizard Step Translation Keys
+    wiz_step_1: '1. पेड़ सेवा चुनें',
+    wiz_step_2: '2. कितने पेड़ और पता',
+    wiz_step_3: '3. दिन और समय चुनें',
+    wiz_step_4: '4. पुष्टि करें और बुक करें',
+    wiz_step_1_title: 'पेड़ सेवा चुनें',
+    wiz_step_1_sub: 'आपको कौन सी पेड़ सेवा चाहिए? (नीचे एक चुनें)',
+    wiz_add_service: 'सेवा जोड़ें',
+    wiz_services_selected: 'चयनित सेवाएं',
+    wiz_next_step: 'अगला कदम',
+    wiz_step_2_title: 'कितने पेड़ और पता',
+    wiz_step_2_sub: 'अपने पेड़ों की संख्या और गोवा का पता दर्ज करें।',
+    wiz_tree_count: 'कितने पेड़?',
+    wiz_address: 'गोवा में आपका पता',
+    wiz_next_schedule: 'आगे: दिन और समय चुनें',
+    wiz_step_3_title: 'दिन और समय चुनें',
+    wiz_step_3_sub: 'क्लाइंबर के दौरे के लिए सुविधाजनक दिन चुनें:',
+    wiz_next_confirm: 'पुष्टि करें और भुगतान करें',
+    wiz_confirm_and_pay: 'पुष्टि करें और भुगतान करें',
+    wiz_step_4_title: 'पुष्टि करें और भुगतान करें',
+    wiz_step_4_sub: 'अपने बुकिंग विवरण और कुल मूल्य की समीक्षा करें।',
+    wiz_total_price: 'कुल मूल्य',
+    wiz_book_now: 'पुष्टि करें और भुगतान करें',
+    badge_big_tree: 'बड़ा पेड़ / चेनसॉ कार्य',
+    wiz_customize_date: 'तिथि अनुकूलित करें'
   },
 
   mr: {
@@ -312,7 +388,7 @@ export const TRANSLATIONS = {
 
     // Topbar titles
     top_book_service_title: 'सेवा बुक करा',
-    top_book_service_sub: 'प्रमाणित दर, सुरक्षा-प्रमाणित क्लाइंबर आणि त्वरित कोटेशन',
+    top_book_service_sub: 'गोव्यात आपल्या झाडांसाठी विश्वासू स्थानिक क्लाइंबर बुक करा.',
     top_my_bookings_title: 'माझ्या बुकिंग्स',
     top_my_bookings_sub: 'सक्रिय बुकिंगचा मागोवा घ्या, पैसे द्या आणि अभिप्राय नोंदवा',
     top_cust_profile_title: 'ग्राहक प्रोफाइल',
@@ -339,6 +415,8 @@ export const TRANSLATIONS = {
     // Common UI
     btn_next: 'पुढील पायरी',
     btn_back: 'मागे',
+    btn_edit: 'संपादित करा',
+    btn_delete: 'हटवा',
     btn_cancel: 'रद्द करा',
     btn_confirm: 'खात्री करा',
     btn_save: 'बदल जतन करा',
@@ -348,13 +426,49 @@ export const TRANSLATIONS = {
     status_pending: 'प्रलंबित',
     status_completed: 'पूर्ण',
     status_assigned: 'वाटप झाले',
-    status_in_progress: 'प्रगतीपथावर',
+    status_in_progress: 'प्रगति पर',
     status_cancelled: 'रद्द',
-    emergency_badge: 'तातडीची बुकिंग (२४ तास)',
+    emergency_badge: 'आपातकालीन बुकिंग (24 तास)',
     tree_count: 'झाडांची संख्या',
     total_amount: 'एकूण रक्कम',
     pay_now: 'आत्ताच पैसे द्या',
-    rupees: '₹'
+    rupees: '₹',
+
+    // Role & Taluka translation keys
+    role_customer: 'ग्राहक',
+    role_professional: 'व्यावसायिक क्लाइंबर',
+    role_admin: 'व्यवस्थापक',
+    role_super_admin: 'सुपर अ‍ॅडमिन',
+    taluka_north_goa: 'उत्तर गोवा',
+    taluka_south_goa: 'दक्षिण गोवा',
+    taluka_kushavati: 'कुशावती',
+    taluka_all: 'सर्व तालुके',
+
+    // Wizard Step Translation Keys
+    wiz_step_1: '१. झाड सेवा निवडा',
+    wiz_step_2: '२. किती झाडे आणि पत्ता',
+    wiz_step_3: '३. दिवस आणि वेळ निवडा',
+    wiz_step_4: '४. खात्री करा आणि बुक करा',
+    wiz_step_1_title: 'झाड सेवा निवडा',
+    wiz_step_1_sub: 'आपल्याला कोणती झाड सेवा हवी आहे? (खाली एक निवडा)',
+    wiz_add_service: 'सेवा जोडा',
+    wiz_services_selected: 'निवडलेल्या सेवा',
+    wiz_next_step: 'पुढील पायरी',
+    wiz_step_2_title: 'किती झाडे आणि पत्ता',
+    wiz_step_2_sub: 'आपल्या झाडांची संख्या आणि गोव्यातील पत्ता प्रविष्ट करा.',
+    wiz_tree_count: 'किती झाडे?',
+    wiz_address: 'गोव्यात आपला पत्ता',
+    wiz_next_schedule: 'पुढे: दिवस आणि वेळ निवडा',
+    wiz_step_3_title: 'दिवस आणि वेळ निवडा',
+    wiz_step_3_sub: 'क्लाइंबरच्या भेटीसाठी सोयीस्कर दिवस निवडा:',
+    wiz_next_confirm: 'पुष्टी करा आणि पैसे द्या',
+    wiz_confirm_and_pay: 'पुष्टी करा आणि पैसे द्या',
+    wiz_step_4_title: 'पुष्टी करा आणि पैसे द्या',
+    wiz_step_4_sub: 'आपल्या बुकिंग तपशील आणि एकूण मूल्याचे पुनरावलोकन करा.',
+    wiz_total_price: 'एकूण किंमत',
+    wiz_book_now: 'पुष्टी करा आणि पैसे द्या',
+    badge_big_tree: 'मोठे झाड / चेनसॉ काम',
+    wiz_customize_date: 'तारीख सानुकूल करा'
   }
 };
 

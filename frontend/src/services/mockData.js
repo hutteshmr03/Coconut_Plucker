@@ -7,29 +7,29 @@ export const INITIAL_SERVICES = [
     base_rate: 90.0,
     requires_height_category: false,
     risk: "high",
-    desc: "Full-height climb and harvest of mature coconuts by safety-certified pluckers with ground spotting.",
+    desc: "Plucking mature coconuts and cleaning the tree top.",
     status: "active"
   },
   {
     id: "svc_areca",
-    name: "Supari (Areca Nut) Plucking",
+    name: "Supari Plucking",
     icon: "🌰",
     unit: "per tree",
     base_rate: 70.0,
     requires_height_category: false,
     risk: "high",
-    desc: "Agile slender-trunk climbing for ripe areca nut bunches with gentle handling.",
+    desc: "Climbing slender trees to cut ripe supari bunches.",
     status: "active"
   },
   {
     id: "svc_mango",
-    name: "Mango Harvesting",
+    name: "Mango Plucking",
     icon: "🥭",
     unit: "per tree",
     base_rate: 120.0,
     requires_height_category: false,
     risk: "high",
-    desc: "Seasonal canopy work with specialized picking poles and catch-nets to eliminate fruit bruising.",
+    desc: "Gentle mango picking from branches without damaging fruits.",
     status: "active"
   },
   {
@@ -40,29 +40,29 @@ export const INITIAL_SERVICES = [
     base_rate: 140.0,
     requires_height_category: false,
     risk: "high",
-    desc: "Specialized climbing and gentle rope-lowering of heavy, mature jackfruits from tall canopy branches without fruit damage.",
+    desc: "Cutting and lowering heavy jackfruits safely using ropes.",
     status: "active"
   },
   {
     id: "svc_palm",
-    name: "Palm Leaf Cutting & Crown Care",
+    name: "Palm Leaf Cutting & Cleaning",
     icon: "🌿",
     unit: "per tree",
     base_rate: 150.0,
     requires_height_category: false,
     risk: "high",
-    desc: "Removal of hazardous dry fronds, seed pods, and crown debris to maintain tree health.",
+    desc: "Cutting dry palm leaves and cleaning the crown.",
     status: "active"
   },
   {
     id: "svc_trim",
-    name: "Canopy / Tree Trimming",
+    name: "Tree Branch Cutting",
     icon: "✂️",
     unit: "per tree",
     base_rate: 350.0,
-    requires_height_category: true, // Only Canopy / Tree Trimming requires Height Category per spec A.1
+    requires_height_category: true, // Only Tree Branch Cutting requires Height Category / Chainsaw Work
     risk: "high",
-    desc: "Chainsaw-assisted branch clearance and canopy reduction near roofs, overhead wires, and compound walls.",
+    desc: "Cutting big branches near roofs, walls, and electric wires with chainsaw.",
     status: "active"
   }
 ];
@@ -73,6 +73,7 @@ export const INITIAL_CUSTOMERS = [
     username: "9822100001",
     password: "123",
     full_name: "Rohan Dessai",
+    full_name_local: "रोहन देसाई",
     phone: "9822100001",
     address: "House 42, Beach Road, Calangute",
     taluka: "North Goa",
@@ -83,6 +84,7 @@ export const INITIAL_CUSTOMERS = [
     username: "9822100002",
     password: "123",
     full_name: "Savio Fernandes",
+    full_name_local: "सावियो फर्नांडीस",
     phone: "9822100002",
     address: "Villa 18, Colva Estate, Salcete",
     taluka: "South Goa",
@@ -93,6 +95,7 @@ export const INITIAL_CUSTOMERS = [
     username: "9822100003",
     password: "123",
     full_name: "Anand Gaonkar",
+    full_name_local: "आनंद गावकर",
     phone: "9822100003",
     address: "Plot 7, River Valley, Kushavati",
     taluka: "Kushavati",
@@ -106,6 +109,7 @@ export const INITIAL_PROFESSIONALS = [
     username: "9822200001",
     password: "123",
     full_name: "Prakash Naik",
+    full_name_local: "प्रकाश नाईक",
     phone: "9822200001",
     experience_years: 10,
     safety_cert: "Certified Master Climber (Govt. CPCRI)",
@@ -120,6 +124,7 @@ export const INITIAL_PROFESSIONALS = [
     username: "9822200002",
     password: "123",
     full_name: "Santosh Kerkar",
+    full_name_local: "संतोष केरकर",
     phone: "9822200002",
     experience_years: 8,
     safety_cert: "Advanced Rigging & Tree Safety",
@@ -134,6 +139,7 @@ export const INITIAL_PROFESSIONALS = [
     username: "9822200003",
     password: "123",
     full_name: "Damodar Gaonkar",
+    full_name_local: "दामोदर गावकर",
     phone: "9822200003",
     experience_years: 6,
     safety_cert: "Rope Access & Slender Trunk Specialist",

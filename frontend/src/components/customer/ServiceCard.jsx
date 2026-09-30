@@ -40,7 +40,7 @@ export const ServiceCard = ({ service, onSelect }) => {
         {service.requires_height_category ? (
           <span className="risk-chip height-req">
             <Ruler size={12} style={{ display: 'inline', marginRight: '4px' }} />
-            Height Tier Applies
+            Big Tree / Chainsaw Work
           </span>
         ) : (
           <span className="risk-chip" style={{ background: 'rgba(63, 122, 78, 0.9)', color: '#FFFFFF' }}>

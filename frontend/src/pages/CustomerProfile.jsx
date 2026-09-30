@@ -5,7 +5,8 @@ import { Card } from '../components/common/Card';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { Button } from '../components/common/Button';
-import { Save, Camera, Trash2, Upload } from 'lucide-react';
+import { Save, Camera, Trash2, Upload, Plus, MapPin, Home } from 'lucide-react';
+import { compressImageFile } from '../utils/helpers';
 
 const TALUKAS = [
   { value: 'North Goa', label: 'North Goa' },
@@ -20,22 +21,44 @@ export const CustomerProfile = () => {
 
   const [fullName, setFullName] = useState(currentUser?.full_name || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
-  const [address, setAddress] = useState(currentUser?.address || '');
   const [taluka, setTaluka] = useState(currentUser?.taluka || 'North Goa');
+  const [addresses, setAddresses] = useState(() => {
+    if (Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0) {
+      return currentUser.addresses;
+    }
+    const initial = [];
+    if (currentUser?.address) initial.push(currentUser.address);
+    if (currentUser?.secondary_address) initial.push(currentUser.secondary_address);
+    return initial.length > 0 ? initial : [''];
+  });
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar_url || '');
 
-  const handleImageChange = (e) => {
+  const handleAddressChange = (index, value) => {
+    setAddresses((prev) => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
+  };
+
+  const handleAddAddress = () => {
+    setAddresses((prev) => [...prev, '']);
+  };
+
+  const handleRemoveAddress = (index) => {
+    setAddresses((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Please choose an image under 5MB');
-        return;
+      try {
+        const compressed = await compressImageFile(file, 400, 400, 0.75);
+        setAvatarUrl(compressed);
+      } catch (err) {
+        console.error('Image compression failed:', err);
+        alert('Could not process selected image. Please try a different photo.');
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -49,10 +72,16 @@ export const CustomerProfile = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
+    const cleanAddresses = addresses.map((a) => a.trim()).filter(Boolean);
+    const primaryAddr = cleanAddresses[0] || '';
+    const secondaryAddr = cleanAddresses[1] || null;
+
     const updatedData = {
       full_name: fullName.trim(),
       phone: phone.trim(),
-      address: address.trim(),
+      address: primaryAddr,
+      addresses: cleanAddresses.length > 0 ? cleanAddresses : [primaryAddr],
+      secondary_address: secondaryAddr,
       taluka,
       avatar_url: avatarUrl || null
     };
@@ -192,35 +221,83 @@ export const CustomerProfile = () => {
         </div>
 
         <form onSubmit={handleSave}>
+          <Input
+            label="Full Name"
+            placeholder="e.g. Savio Fernandes"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
+
           <div className="field-row">
-            <Input
-              label="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
             <Input
               label="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
             />
+            <Select
+              label="Taluka (Region)"
+              value={taluka}
+              onChange={(e) => setTaluka(e.target.value)}
+              options={TALUKAS}
+              required
+            />
           </div>
 
-          <Select
-            label="Taluka (Region)"
-            value={taluka}
-            onChange={(e) => setTaluka(e.target.value)}
-            options={TALUKAS}
-            required
-          />
+          {addresses.map((addr, idx) => (
+            <div key={idx} style={{ position: 'relative', marginBottom: '14px' }}>
+              <Input
+                label={idx === 0 ? "Address 1" : `Address ${idx + 1} (Optional)`}
+                placeholder={idx === 0 ? "House No, Village/Town, Landmark, Goa" : `Property ${idx + 1} address (optional)`}
+                value={addr}
+                onChange={(e) => handleAddressChange(idx, e.target.value)}
+                required={idx === 0}
+              />
+              {idx > 0 && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAddress(idx)}
+                  style={{
+                    position: 'absolute',
+                    top: '2px',
+                    right: '0',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--danger)',
+                    fontSize: '11.5px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    padding: '2px 6px'
+                  }}
+                  title="Remove this address"
+                >
+                  ✕ Remove
+                </button>
+              )}
+            </div>
+          ))}
 
-          <Input
-            label="Primary Property Address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-          />
+          <div style={{ marginTop: '-4px', marginBottom: '16px' }}>
+            <button
+              type="button"
+              onClick={handleAddAddress}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--teal)',
+                fontSize: '12.5px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                padding: '4px 0',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              + Add Another Address
+            </button>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
             <Button variant="primary" icon={Save} type="submit">

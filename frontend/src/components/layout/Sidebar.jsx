@@ -26,7 +26,7 @@ import {
 export const Sidebar = () => {
   const { currentUser, logout, role, adminAccounts } = useAuth();
   const { bookings, professionals, incidents, currentView, setCurrentView, isMobileSidebarOpen, setIsMobileSidebarOpen } = useApp();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Customer navigation items (CustomerRateCard and CustomerHome removed per instruction)
   const safeBookings = bookings || [];
@@ -189,7 +189,6 @@ export const Sidebar = () => {
             <div className="brand-mark">🌴</div>
             <div className="brand-text">
               <div className="t1">Coconut Plucker</div>
-              <div className="t2">SKILLED HEIGHT WORK, ON DEMAND</div>
             </div>
           </div>
 
@@ -236,7 +235,7 @@ export const Sidebar = () => {
                 className="worker-avatar"
                 style={{ width: '36px', height: '36px', fontSize: '13px', flexShrink: 0 }}
               >
-                {getDisplayName(currentUser)
+                {(currentUser?.full_name || currentUser?.name || currentUser?.username || 'SF')
                   .split(' ')
                   .map((n) => n[0])
                   .join('')
@@ -255,16 +254,16 @@ export const Sidebar = () => {
                   textOverflow: 'ellipsis'
                 }}
               >
-                {getDisplayName(currentUser)}
+                {getDisplayName(currentUser, language)}
               </div>
               <div
                 style={{
                   fontSize: '11px',
-                  color: '#8CAABB',
-                  textTransform: 'capitalize'
+                  color: '#8CAABB'
                 }}
               >
-                {currentUser?.role} {currentUser?.taluka ? `· ${currentUser.taluka}` : ''}
+                {t(`role_${currentUser?.role}`, currentUser?.role || '')}
+                {currentUser?.taluka ? ` · ${t(`taluka_${currentUser.taluka.toLowerCase().replace(/\s+/g, '_')}`, currentUser.taluka)}` : ''}
               </div>
             </div>
           </div>
@@ -299,22 +298,20 @@ export const Sidebar = () => {
           ))}
         </nav>
 
-        {/* Footer & Sign Out (Admins only; Customers & Climbers stay permanently signed in) */}
-        {(role === 'admin' || role === 'super_admin') && (
-          <div className="sidebar-foot">
-            <button
-              className="nav-item"
-              style={{ width: '100%', color: '#E4A15E' }}
-              onClick={() => {
-                logout();
-                setIsMobileSidebarOpen(false);
-              }}
-            >
-              <LogOut size={16} />
-              <span>{t('sign_out')}</span>
-            </button>
-          </div>
-        )}
+        {/* Footer & Sign Out */}
+        <div className="sidebar-foot">
+          <button
+            className="nav-item"
+            style={{ width: '100%', color: '#E4A15E' }}
+            onClick={() => {
+              logout();
+              setIsMobileSidebarOpen(false);
+            }}
+          >
+            <LogOut size={16} />
+            <span>{t('sign_out')}</span>
+          </button>
+        </div>
       </aside>
     </>
   );

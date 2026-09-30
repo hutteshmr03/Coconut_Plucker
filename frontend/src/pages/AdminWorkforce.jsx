@@ -1,17 +1,28 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/helpers';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { VerificationModal } from '../components/admin/VerificationModal';
-import { Search, UserCheck, Phone } from 'lucide-react';
+import { CreateProfessionalModal } from '../components/admin/CreateProfessionalModal';
+import { Search, UserCheck, Phone, UserPlus } from 'lucide-react';
 
 export const AdminWorkforce = () => {
-  const { professionals, services, verifyProfessional } = useApp();
+  const { professionals, services, verifyProfessional, addProfessional } = useApp();
+  const { createProfessionalAccount } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [verifyingPro, setVerifyingPro] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const handleCreateProfessional = async (formData) => {
+    // 1. Create account in Auth database so climber can log in via OTP
+    const authUser = createProfessionalAccount(formData);
+    // 2. Add to active workforce list in AppContext
+    addProfessional({ ...formData, id: authUser.id });
+  };
 
   const filteredPros = professionals.filter((p) => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
@@ -27,21 +38,34 @@ export const AdminWorkforce = () => {
 
   return (
     <div>
-      {/* Filter Tabs */}
-      <div className="tag-strip">
-        {[
-          { key: 'all', label: `All Professionals (${professionals.length})` },
-          { key: 'pending_verification', label: `Pending Verification (${professionals.filter((p) => p.status === 'pending_verification').length})` },
-          { key: 'approved', label: `Approved & Active (${professionals.filter((p) => p.status === 'approved').length})` }
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            className={`tab-pill ${statusFilter === tab.key ? 'active' : ''}`}
-            onClick={() => setStatusFilter(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Top Header & Actions Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+        {/* Filter Tabs */}
+        <div className="tag-strip" style={{ margin: 0 }}>
+          {[
+            { key: 'all', label: `All Professionals (${professionals.length})` },
+            { key: 'pending_verification', label: `Pending Verification (${professionals.filter((p) => p.status === 'pending_verification').length})` },
+            { key: 'approved', label: `Approved & Active (${professionals.filter((p) => p.status === 'approved').length})` }
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              className={`tab-pill ${statusFilter === tab.key ? 'active' : ''}`}
+              onClick={() => setStatusFilter(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Onboard / Create Professional Button */}
+        <Button
+          variant="gold"
+          size="sm"
+          icon={UserPlus}
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          + Onboard Professional
+        </Button>
       </div>
 
       {/* Toolbar */}
@@ -143,6 +167,14 @@ export const AdminWorkforce = () => {
         professional={verifyingPro}
         services={services}
         onDecision={verifyProfessional}
+      />
+
+      {/* Onboard / Create Professional Modal */}
+      <CreateProfessionalModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        services={services}
+        onCreate={handleCreateProfessional}
       />
     </div>
   );

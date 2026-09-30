@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { ServiceFormModal } from '../components/admin/ServiceFormModal';
+import { getServiceImage } from '../utils/helpers';
 import { Plus, Edit2, Power, Ruler } from 'lucide-react';
 
 export const AdminServices = () => {
@@ -60,8 +61,19 @@ export const AdminServices = () => {
             {services.map((svc) => (
               <tr key={svc.id}>
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '22px' }}>{svc.icon}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img
+                      src={getServiceImage(svc)}
+                      alt={svc.name}
+                      style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '6px',
+                        objectFit: 'cover',
+                        border: '1px solid var(--line)',
+                        flexShrink: 0
+                      }}
+                    />
                     <div>
                       <div className="cell-strong">{svc.name}</div>
                       <div className="cell-muted" style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

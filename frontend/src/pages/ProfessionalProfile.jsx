@@ -7,6 +7,7 @@ import { Select } from '../components/common/Select';
 import { Button } from '../components/common/Button';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Save, Camera, Trash2, Upload } from 'lucide-react';
+import { compressImageFile } from '../utils/helpers';
 
 const TALUKAS = [
   { value: 'North Goa', label: 'North Goa' },
@@ -32,18 +33,16 @@ export const ProfessionalProfile = () => {
     currentUser?.skills || ['svc_coconut', 'svc_palm']
   );
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Please choose an image under 5MB');
-        return;
+      try {
+        const compressed = await compressImageFile(file, 400, 400, 0.75);
+        setAvatarUrl(compressed);
+      } catch (err) {
+        console.error('Image compression failed:', err);
+        alert('Could not process selected image. Please try a different photo.');
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
     }
   };
 

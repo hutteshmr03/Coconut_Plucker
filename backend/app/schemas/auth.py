@@ -13,6 +13,7 @@ class OTPVerify(BaseModel):
 class UserRegister(BaseModel):
     phone: str
     full_name: str
+    full_name_local: Optional[str] = None
     role: str = Field(..., pattern="^(customer|professional|admin|super_admin)$")
     username: Optional[str] = None
     email: Optional[str] = None
@@ -31,6 +32,7 @@ class LoginRequest(BaseModel):
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
+    full_name_local: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     taluka: Optional[str] = None
@@ -43,6 +45,7 @@ class UserOut(BaseModel):
     id: str
     phone: str
     full_name: str
+    full_name_local: Optional[str] = None
     role: str
     status: str
     username: Optional[str] = None

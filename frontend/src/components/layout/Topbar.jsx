@@ -10,7 +10,7 @@ import { Plus, User, ShieldCheck, LogOut, ShieldAlert, Menu } from 'lucide-react
 export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
   const { currentUser, role, logout } = useAuth();
   const { currentView, setCurrentView, setIsMobileSidebarOpen } = useApp();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const getPageMeta = () => {
     switch (currentView) {
@@ -124,32 +124,12 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
         </button>
         <div>
           <h1>{meta.title}</h1>
-          <div className="sub">{meta.sub}</div>
         </div>
       </div>
 
       <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {role === 'customer' && currentView !== 'cust-book' && (
-          <Button
-            variant="gold"
-            size="sm"
-            icon={Plus}
-            onClick={() => setCurrentView('cust-book')}
-          >
-            {t('nav_book_service')}
-          </Button>
-        )}
 
-        {(role === 'admin' || role === 'super_admin') && currentView === 'adm-services' && (
-          <Button
-            variant="primary"
-            size="sm"
-            icon={Plus}
-            onClick={onOpenAddService}
-          >
-            Add Service
-          </Button>
-        )}
+
 
         {(role === 'admin' || role === 'super_admin') && currentView === 'adm-safety' && (
           <Button
@@ -179,7 +159,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
             fontWeight: '600'
           }}
         >
-          <span>{getDisplayName(currentUser)}</span>
+          <span>{getDisplayName(currentUser, language)}</span>
 
           {role === 'super_admin' && (
             <span

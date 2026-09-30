@@ -101,22 +101,34 @@ export const AuthProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('cp_registered_users_v5', JSON.stringify(registeredUsers));
+    try {
+      localStorage.setItem('cp_registered_users_v5', JSON.stringify(registeredUsers));
+    } catch (e) {
+      console.warn('Could not save registered users to localStorage (quota exceeded):', e);
+    }
   }, [registeredUsers]);
 
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('cp_auth_user', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('cp_auth_user');
+    try {
+      if (currentUser) {
+        localStorage.setItem('cp_auth_user', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('cp_auth_user');
+      }
+    } catch (e) {
+      console.warn('Could not save current user to localStorage:', e);
     }
   }, [currentUser]);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem('cp_auth_token', token);
-    } else {
-      localStorage.removeItem('cp_auth_token');
+    try {
+      if (token) {
+        localStorage.setItem('cp_auth_token', token);
+      } else {
+        localStorage.removeItem('cp_auth_token');
+      }
+    } catch (e) {
+      console.warn('Could not save auth token to localStorage:', e);
     }
   }, [token]);
 
@@ -158,16 +170,39 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateCurrentUser = (updates) => {
+    let updatedUserObj = null;
     setCurrentUser((prev) => {
       if (!prev) return null;
-      const updated = { ...prev, ...updates };
-      localStorage.setItem('cp_auth_user', JSON.stringify(updated));
-      return updated;
+      updatedUserObj = { ...prev, ...updates };
+      try {
+        localStorage.setItem('cp_auth_user', JSON.stringify(updatedUserObj));
+      } catch (e) {
+        console.warn('Could not save cp_auth_user:', e);
+      }
+      return updatedUserObj;
     });
 
-    setRegisteredUsers((prev) =>
-      prev.map((u) => (u.id === currentUser?.id ? { ...u, ...updates } : u))
-    );
+    setRegisteredUsers((prev) => {
+      const targetPhone = currentUser?.phone ? currentUser.phone.replace(/\D/g, '') : '';
+      const targetUsername = currentUser?.username ? currentUser.username.toLowerCase() : '';
+      const targetId = currentUser?.id;
+
+      const updatedList = prev.map((u) => {
+        const uPhone = u.phone ? u.phone.replace(/\D/g, '') : '';
+        const uUsername = u.username ? u.username.toLowerCase() : '';
+        const isMatch = (targetId && u.id === targetId) ||
+                        (targetPhone && uPhone && targetPhone === uPhone) ||
+                        (targetUsername && uUsername && targetUsername === uUsername);
+        return isMatch ? { ...u, ...updates } : u;
+      });
+
+      try {
+        localStorage.setItem('cp_registered_users_v5', JSON.stringify(updatedList));
+      } catch (e) {
+        console.warn('Could not save cp_registered_users_v5:', e);
+      }
+      return updatedList;
+    });
   };
 
   // Super Admin: Admin Account Management
@@ -204,6 +239,41 @@ export const AuthProvider = ({ children }) => {
 
     setRegisteredUsers((prev) => [...prev, newAdmin]);
     return newAdmin;
+  };
+
+  // Admin & Super Admin: Onboard / Provision Professional Climber Account
+  const createProfessionalAccount = (proData) => {
+    if (currentUser?.role !== 'admin' && currentUser?.role !== 'super_admin') {
+      throw new Error('Unauthorized: Only Platform Administrators can create professional accounts.');
+    }
+
+    const phoneClean = (proData.phone || '').replace(/\D/g, '');
+    const exists = registeredUsers.find(
+      (u) => u.phone && u.phone.replace(/\D/g, '') === phoneClean
+    );
+
+    if (exists) {
+      throw new Error(`An account with phone number +91 ${phoneClean} already exists.`);
+    }
+
+    const newId = 'wrk_' + Date.now().toString(36);
+    const newProUser = {
+      id: newId,
+      full_name: proData.full_name.trim(),
+      phone: phoneClean,
+      username: phoneClean,
+      role: 'professional',
+      taluka: proData.taluka || 'North Goa',
+      experience_years: Number(proData.experience_years) || 1,
+      safety_cert: proData.safety_cert?.trim() || 'Verified Professional Climber',
+      rating_avg: 5.0,
+      skills: proData.skills || ['svc_coconut', 'svc_palm'],
+      status: proData.status || 'approved',
+      created_at: new Date().toISOString()
+    };
+
+    setRegisteredUsers((prev) => [...prev, newProUser]);
+    return newProUser;
   };
 
   const toggleAdminStatus = (adminId) => {
@@ -290,6 +360,7 @@ export const AuthProvider = ({ children }) => {
         registerUser,
         updateCurrentUser,
         createAdminAccount,
+        createProfessionalAccount,
         toggleAdminStatus,
         deleteAdminAccount,
         changeSuperAdminPassword,

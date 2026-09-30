@@ -916,6 +916,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ===================== BOOKING WIZARD ===================== */
+.wizard-step-container {
+  animation: wizardStepTransition 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes wizardStepTransition {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .wizard-steps {
   display: flex;
   gap: 10px;

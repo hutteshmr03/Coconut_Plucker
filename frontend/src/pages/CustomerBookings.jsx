@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getDisplayName } from '../utils/helpers';
+import { getDisplayName, getServiceImage } from '../utils/helpers';
 import { useApp } from '../context/AppContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
@@ -70,10 +70,22 @@ export const CustomerBookings = () => {
           return (
             <div key={b.id} className="booking-card">
               {/* Header */}
-              <div className="bk-head">
-                <div>
+              <div className="bk-head" style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                <img
+                  src={getServiceImage(svc || b)}
+                  alt={svc?.name || b.service_name}
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    border: '1px solid var(--line)',
+                    flexShrink: 0
+                  }}
+                />
+                <div style={{ flex: 1 }}>
                   <h4>
-                    {svc?.icon} {svc?.name} · <span style={{ color: 'var(--teal)' }}>{b.booking_number}</span>
+                    {svc?.name || b.service_name} · <span style={{ color: 'var(--teal)' }}>{b.booking_number}</span>
                     {b.booking_type === 'urgent' && (
                       <span
                         style={{
@@ -250,29 +262,149 @@ export const CustomerBookings = () => {
                 </div>
               )}
 
-              {/* Assigned Professional Profile Snippet */}
-              {pro && (
-                <div className="worker-mini">
-                  <div className="worker-avatar">
-                    {getDisplayName(pro)
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div className="cell-strong" style={{ fontSize: '13.5px' }}>
-                      {getDisplayName(pro)}
+              {/* Swiggy/Zomato-Style Live Climber Tracker Card */}
+              {pro ? (
+                <div
+                  style={{
+                    background: b.status === 'in_progress' ? 'rgba(31, 138, 130, 0.06)' : 'var(--paper)',
+                    border: b.status === 'in_progress' ? '1.5px solid var(--teal)' : '1px solid var(--line)',
+                    borderRadius: '10px',
+                    padding: '14px 16px',
+                    marginTop: '14px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="worker-avatar" style={{ width: '44px', height: '44px', fontSize: '15px' }}>
+                        {getDisplayName(pro)
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{getDisplayName(pro)}</b>
+                          <span
+                            style={{
+                              background: 'rgba(72, 187, 120, 0.15)',
+                              color: 'var(--success)',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10.5px',
+                              fontWeight: '700'
+                            }}
+                          >
+                            🛡️ Certified Climber
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                          {pro.experience_years || 5} yrs experience · {pro.taluka || b.taluka} · 
+                          <span className="star-rate" style={{ marginLeft: '4px' }}>
+                            {'★'.repeat(Math.round(pro.rating_avg || 5))} ({pro.rating_avg || '5.0'})
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="cell-muted">
-                      {pro.experience_years} years climbing · Taluka: {pro.taluka} {pro.safety_cert ? '· Certified' : ''}
+
+                    {/* Live Tracker Status Tag */}
+                    <div style={{ textAlign: 'right' }}>
+                      <span
+                        style={{
+                          background: b.status === 'in_progress' ? 'var(--teal)' : 'var(--navy)',
+                          color: '#FFFFFF',
+                          padding: '4px 10px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        {b.status === 'in_progress' ? '🛵 Tree Plucking In Progress' : '🛵 Climber Assigned & Ready'}
+                      </span>
                     </div>
                   </div>
-                  <div className="star-rate">
-                    {'★'.repeat(Math.round(pro.rating_avg))}
-                    <span style={{ fontSize: '12px', color: 'var(--ink-soft)', marginLeft: '4px' }}>
-                      ({pro.rating_avg})
-                    </span>
+
+                  {/* Direct Contact Buttons */}
+                  {!isCompleted && b.status !== 'cancelled' && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
+                      <a
+                        href={`tel:${pro.phone || '9822123456'}`}
+                        style={{
+                          flex: 1,
+                          textAlign: 'center',
+                          background: 'var(--teal)',
+                          color: '#FFFFFF',
+                          padding: '7px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        📞 Call Climber
+                      </a>
+                      <a
+                        href={`https://wa.me/91${pro.phone || '9822123456'}?text=Hello%20${encodeURIComponent(getDisplayName(pro))},%20my%20Coconut%20Plucker%20booking%20is%20${b.booking_number}.%20Here%20is%20my%20address:%20${encodeURIComponent(b.address)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          flex: 1,
+                          textAlign: 'center',
+                          background: '#25D366',
+                          color: '#FFFFFF',
+                          padding: '7px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        💬 WhatsApp Location
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : b.status === 'requested' ? (
+                <div
+                  style={{
+                    background: 'rgba(216, 163, 61, 0.08)',
+                    border: '1px dashed rgba(216, 163, 61, 0.4)',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    marginTop: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}
+                >
+                  <span style={{ fontSize: '18px' }}>📡</span>
+                  <div style={{ fontSize: '12px', color: 'var(--ink)' }}>
+                    <b>Local Dispatch Radar Active:</b> Finding the closest safety-certified climber in <b>{b.taluka}</b>. You will receive an SMS and WhatsApp notification once assigned.
                   </div>
+                </div>
+              ) : null}
+
+              {/* Customer Uploaded Tree Photo if available */}
+              {b.tree_photo && (
+                <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <img
+                    src={b.tree_photo}
+                    alt="Uploaded Tree"
+                    style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--line)' }}
+                  />
+                  <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                    📸 Customer Tree Reference Photo attached
+                  </span>
                 </div>
               )}
 
