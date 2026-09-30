@@ -61,9 +61,6 @@ export const SuperAdminScheduling = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h3>Taluka & Regional Scheduling Governance</h3>
-          <p className="cell-muted">
-            Configure operational days and booking capacity allocated to North Goa, South Goa, and Kushavati. Changes immediately govern the customer booking calendar.
-          </p>
         </div>
       </div>
 

@@ -45,7 +45,6 @@ export const CustomerBookings = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h3>My Bookings & Status History</h3>
-          <p className="cell-muted">Track assignments, verify completion, pay online, and review your climbers.</p>
         </div>
         <Button variant="gold" size="sm" icon={Plus} onClick={() => setCurrentView('cust-book')}>
           New Booking
@@ -327,7 +326,7 @@ export const CustomerBookings = () => {
                   </div>
 
                   {/* Direct Contact Buttons */}
-                  {!isCompleted && b.status !== 'cancelled' && (
+                  {b.status !== 'cancelled' && (
                     <div style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
                       <a
                         href={`tel:${pro.phone || '9822123456'}`}

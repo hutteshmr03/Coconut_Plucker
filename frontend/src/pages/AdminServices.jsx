@@ -44,9 +44,6 @@ export const AdminServices = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h3>Dynamic Service Catalog Management</h3>
-          <p className="cell-muted">
-            Add, update, or activate/deactivate services. Changes appear immediately in the customer booking flow.
-          </p>
         </div>
         <Button variant="primary" icon={Plus} onClick={handleOpenAdd}>
           Add New Service
