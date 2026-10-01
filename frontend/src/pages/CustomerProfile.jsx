@@ -102,10 +102,7 @@ export const CustomerProfile = () => {
   return (
     <div style={{ maxWidth: '650px', margin: '0 auto' }}>
       <Card>
-        <h3>Customer Account Profile</h3>
-        <p className="cell-muted" style={{ marginBottom: '20px' }}>
-          Your profile photo and details are used for scheduling and verified communication.
-        </p>
+        <h3 style={{ margin: 0, marginBottom: '20px' }}>Customer Account Profile</h3>
 
         {/* Profile Photo Upload Banner */}
         <div
@@ -180,12 +177,9 @@ export const CustomerProfile = () => {
           </div>
 
           <div style={{ flex: 1 }}>
-            <b style={{ display: 'block', fontSize: '14px', color: 'var(--ink)' }}>
+            <b style={{ display: 'block', fontSize: '14px', color: 'var(--ink)', marginBottom: '8px' }}>
               Profile Photo
             </b>
-            <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: '2px 0 10px' }}>
-              Upload your photo (JPG, PNG or WebP, up to 5MB).
-            </p>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <input

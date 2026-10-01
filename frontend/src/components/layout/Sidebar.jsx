@@ -77,8 +77,13 @@ export const Sidebar = () => {
               b.professional_id === currentUser?.id &&
               (b.status === 'assigned' || b.status === 'in_progress')
           ).length
-        },
-        { id: 'work-profile', label: t('nav_skills_safety'), icon: ShieldCheck }
+        }
+      ]
+    },
+    {
+      group: 'My Account',
+      items: [
+        { id: 'work-profile', label: t('nav_profile'), icon: User }
       ]
     }
   ];
@@ -169,7 +174,7 @@ export const Sidebar = () => {
     {
       group: 'My Account',
       items: [
-        { id: 'sadm-profile', label: t('nav_super_profile'), icon: KeyRound }
+        { id: 'sadm-profile', label: t('nav_profile'), icon: User }
       ]
     }
   ];

@@ -91,10 +91,7 @@ export const ProfessionalProfile = () => {
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
           <div>
-            <h3>Professional Skills & Safety Profile</h3>
-            <p className="cell-muted">
-              Configure your verified experience, profile photo, Taluka service area, and service skills.
-            </p>
+            <h3 style={{ margin: 0 }}>Professional Skills & Safety Profile</h3>
           </div>
           <StatusBadge status={currentUser?.status || 'approved'} />
         </div>
@@ -172,12 +169,9 @@ export const ProfessionalProfile = () => {
           </div>
 
           <div style={{ flex: 1 }}>
-            <b style={{ display: 'block', fontSize: '14px', color: 'var(--ink)' }}>
+            <b style={{ display: 'block', fontSize: '14px', color: 'var(--ink)', marginBottom: '8px' }}>
               Professional Photo
             </b>
-            <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: '2px 0 10px' }}>
-              Upload your climber photo for job identity verification (up to 5MB).
-            </p>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <input
