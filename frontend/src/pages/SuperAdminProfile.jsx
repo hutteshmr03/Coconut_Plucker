@@ -93,9 +93,6 @@ export const SuperAdminProfile = () => {
             <b style={{ color: '#92400E', fontSize: '14px', display: 'block' }}>
               Action Required: Change Temporary Super Admin Password
             </b>
-            <p style={{ color: '#78350F', fontSize: '12.5px', marginTop: '4px', lineHeight: '1.5', margin: 0 }}>
-              This Super Admin account was provisioned with an initial temporary seed password. You must set a permanent secure password below to unlock all platform operations.
-            </p>
           </div>
         </div>
       )}
