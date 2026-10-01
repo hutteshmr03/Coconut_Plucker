@@ -399,90 +399,33 @@ export const SuperAdminProfile = () => {
         )}
 
         <form onSubmit={handlePasswordSubmit}>
-          <div style={{ position: 'relative' }}>
-            <Input
-              label="Current / Temporary Password"
-              type={showCurrentPass ? 'text' : 'password'}
-              placeholder="Enter current password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrentPass(!showCurrentPass)}
-              style={{
-                position: 'absolute',
-                right: '12px',
-                top: '34px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--muted)',
-                padding: '4px'
-              }}
-              title={showCurrentPass ? 'Hide password' : 'Show password'}
-            >
-              {showCurrentPass ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
+          <Input
+            label="Current / Temporary Password"
+            type="password"
+            placeholder="Enter current password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+          />
 
           <div className="field-row">
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Input
-                label="New Password"
-                type={showNewPass ? 'text' : 'password'}
-                placeholder="At least 6 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPass(!showNewPass)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '34px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--muted)',
-                  padding: '4px'
-                }}
-                title={showNewPass ? 'Hide password' : 'Show password'}
-              >
-                {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <Input
+              label="New Password"
+              type="password"
+              placeholder="At least 6 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
 
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Input
-                label="Confirm New Password"
-                type={showConfirmPass ? 'text' : 'password'}
-                placeholder="Re-enter new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPass(!showConfirmPass)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '34px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--muted)',
-                  padding: '4px'
-                }}
-                title={showConfirmPass ? 'Hide password' : 'Show password'}
-              >
-                {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            <Input
+              label="Confirm New Password"
+              type="password"
+              placeholder="Re-enter new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
           </div>
 
           <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
