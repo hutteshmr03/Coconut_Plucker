@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { Globe, Check, ChevronDown } from 'lucide-react';
 
-export const LanguageSwitcher = ({ theme = 'light', variant = 'dropdown', className = '' }) => {
+export const LanguageSwitcher = ({ theme = 'light', variant = 'dropdown', align = 'auto', className = '' }) => {
   const { language, setLanguage, languages } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
+  const [placement, setPlacement] = useState(align === 'right' ? 'right' : 'left');
   const dropdownRef = useRef(null);
 
   // Close dropdown on outside click
@@ -17,6 +18,26 @@ export const LanguageSwitcher = ({ theme = 'light', variant = 'dropdown', classN
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
+
+  // Compute smart viewport-aware positioning on open
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      if (align !== 'auto') {
+        setPlacement(align);
+        return;
+      }
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const expectedMenuWidth = 190;
+      
+      // If opening to the right overflows screen, anchor right; otherwise anchor left
+      if (rect.left + expectedMenuWidth > viewportWidth - 12) {
+        setPlacement('right');
+      } else {
+        setPlacement('left');
+      }
+    }
+  }, [isOpen, align]);
 
   const currentLang = languages.find((l) => l.code === language) || languages[0];
 
@@ -106,21 +127,22 @@ export const LanguageSwitcher = ({ theme = 'light', variant = 'dropdown', classN
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            right: 0,
+            ...(placement === 'right' ? { right: 0 } : { left: 0 }),
             zIndex: 1000,
             background: '#FFFFFF',
             border: '1px solid var(--line)',
             borderRadius: '12px',
             boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
             padding: '6px',
-            minWidth: '150px',
+            minWidth: '175px',
+            maxWidth: 'calc(100vw - 24px)',
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
             animation: 'fadeIn 0.15s ease-out'
           }}
         >
-          <div style={{ padding: '6px 10px 4px', fontSize: '10.5px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)' }}>
+          <div style={{ padding: '6px 10px 4px', fontSize: '10.5px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--ink-soft)', whiteSpace: 'nowrap' }}>
             Select Language
           </div>
 
@@ -149,6 +171,7 @@ export const LanguageSwitcher = ({ theme = 'light', variant = 'dropdown', classN
                   fontSize: '13px',
                   fontWeight: isSelected ? '700' : '500',
                   color: isSelected ? 'var(--navy)' : 'var(--ink)',
+                  whiteSpace: 'nowrap',
                   transition: 'background 0.15s ease'
                 }}
                 onMouseEnter={(e) => {

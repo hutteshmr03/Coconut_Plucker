@@ -59,7 +59,8 @@ export const AuthPage = () => {
   // ===================== 1. LOGIN: STEP 1 (PHONE -> SEND OTP) =====================
   const handleLoginPhoneSubmit = async (e) => {
     e.preventDefault();
-    const pClean = loginPhone.replace(/\D/g, '');
+    const digitsOnly = loginPhone.replace(/\D/g, '');
+    const pClean = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
 
     if (!pClean || pClean.length < 10) {
       setError('Please enter a valid 10-digit mobile phone number');
@@ -68,7 +69,7 @@ export const AuthPage = () => {
 
     // Check if account exists
     const found = registeredUsers.find(
-      (u) => u.phone && u.phone.replace(/\D/g, '') === pClean
+      (u) => u.phone && u.phone.replace(/\D/g, '').slice(-10) === pClean
     );
 
     if (!found) {
@@ -95,7 +96,8 @@ export const AuthPage = () => {
       return;
     }
 
-    const pClean = loginPhone.replace(/\D/g, '');
+    const digitsOnly = loginPhone.replace(/\D/g, '');
+    const pClean = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
     let authedUser = pendingLoginUser;
 
     try {
@@ -184,7 +186,8 @@ export const AuthPage = () => {
   // ===================== 4. SIGN UP: STEP 1 (DETAILS) =====================
   const handleSignupDetailsSubmit = async (e) => {
     e.preventDefault();
-    const pClean = signupPhone.replace(/\D/g, '');
+    const digitsOnly = signupPhone.replace(/\D/g, '');
+    const pClean = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
 
     if (!fullName.trim()) {
       setError('Please enter your full name');
@@ -205,7 +208,7 @@ export const AuthPage = () => {
 
     // Check for duplicate phone
     const existing = registeredUsers.find(
-      (u) => u.phone && u.phone.replace(/\D/g, '') === pClean
+      (u) => u.phone && u.phone.replace(/\D/g, '').slice(-10) === pClean
     );
 
     if (existing) {

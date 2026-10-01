@@ -132,29 +132,53 @@ export const AppProvider = ({ children }) => {
     }
   }, [currentUser]);
 
-  // Sync to local storage
+  // Sync to local storage with defensive try/catch
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + "_services", JSON.stringify(services));
+    try {
+      localStorage.setItem(STORAGE_KEY + "_services", JSON.stringify(services));
+    } catch (e) {
+      console.warn("Storage write failed for services:", e);
+    }
   }, [services]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + "_customers", JSON.stringify(customers));
+    try {
+      localStorage.setItem(STORAGE_KEY + "_customers", JSON.stringify(customers));
+    } catch (e) {
+      console.warn("Storage write failed for customers:", e);
+    }
   }, [customers]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + "_pros", JSON.stringify(professionals));
+    try {
+      localStorage.setItem(STORAGE_KEY + "_pros", JSON.stringify(professionals));
+    } catch (e) {
+      console.warn("Storage write failed for pros:", e);
+    }
   }, [professionals]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + "_bookings", JSON.stringify(bookings));
+    try {
+      localStorage.setItem(STORAGE_KEY + "_bookings", JSON.stringify(bookings));
+    } catch (e) {
+      console.warn("Storage write failed for bookings:", e);
+    }
   }, [bookings]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + "_incidents", JSON.stringify(incidents));
+    try {
+      localStorage.setItem(STORAGE_KEY + "_incidents", JSON.stringify(incidents));
+    } catch (e) {
+      console.warn("Storage write failed for incidents:", e);
+    }
   }, [incidents]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY + "_scheduling", JSON.stringify(schedulingConfig));
+    try {
+      localStorage.setItem(STORAGE_KEY + "_scheduling", JSON.stringify(schedulingConfig));
+    } catch (e) {
+      console.warn("Storage write failed for scheduling:", e);
+    }
   }, [schedulingConfig]);
 
   const updateSchedulingConfig = (newConfig) => {
@@ -185,10 +209,11 @@ export const AppProvider = ({ children }) => {
     const bookingNumber = "CP-" + (1000 + bookings.length + 1);
     const isUrgent = bookingData.booking_type === 'urgent';
     const quoteAmt = Number(bookingData.quote_amount || 0);
+    const resolvedCustId = bookingData.customer_id || currentUser?.id || currentCustomerId;
     const newBooking = {
       id: newId,
       booking_number: bookingNumber,
-      customer_id: currentCustomerId,
+      customer_id: resolvedCustId,
       professional_id: null,
       status: "requested",
       booking_type: bookingData.booking_type || 'standard',
@@ -286,7 +311,8 @@ export const AppProvider = ({ children }) => {
         (b) => b.professional_id === booking.professional_id && (b.id === bookingId ? rating : b.rating)
       );
       const sum = proBookings.reduce((acc, curr) => acc + (curr.id === bookingId ? rating : (curr.rating || 0)), 0);
-      const avg = Math.round((sum / proBookings.length) * 10) / 10;
+      const rawAvg = proBookings.length > 0 ? sum / proBookings.length : Number(rating || 5);
+      const avg = isNaN(rawAvg) ? 5.0 : Math.max(1.0, Math.min(5.0, Math.round(rawAvg * 10) / 10));
       setProfessionals((prev) =>
         prev.map((p) =>
           p.id === booking.professional_id ? { ...p, rating_avg: avg } : p

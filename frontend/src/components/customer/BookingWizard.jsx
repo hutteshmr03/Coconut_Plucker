@@ -263,17 +263,17 @@ export const BookingWizard = ({ onComplete }) => {
     serviceId: activeService.id,
     serviceName: activeService.name,
     icon: activeService.icon,
-    base_rate: Number(activeService.base_rate),
+    base_rate: Number(activeService.base_rate || 0),
     unit: activeService.unit,
-    treeCount: Number(treeCount || 1),
+    treeCount: Math.max(1, Number(treeCount || 1)),
     heightCategory: isHeightCategoryRequired ? heightCategory : null,
     requires_height_category: isHeightCategoryRequired
   }];
 
-  const totalBase = currentItems.reduce((acc, item) => acc + (Number(item.base_rate) * Number(item.treeCount)), 0);
+  const totalBase = currentItems.reduce((acc, item) => acc + (Number(item.base_rate || 0) * Math.max(1, Number(item.treeCount || 1))), 0);
   const totalGst = totalBase * (bookingType === 'urgent' ? 0.20 : 0.18);
   const totalAmount = totalBase + totalGst;
-  const totalTreeCount = currentItems.reduce((acc, item) => acc + Number(item.treeCount), 0);
+  const totalTreeCount = currentItems.reduce((acc, item) => acc + Math.max(1, Number(item.treeCount || 1)), 0);
 
   // Upfront Payment Gateway Flow (Razorpay)
   const handleOpenPayment = (e) => {
