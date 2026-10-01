@@ -20,7 +20,6 @@ export const AssignedJobCard = ({
   const totalAmt = Number(booking.actual_amount || booking.quote_amount || 0);
 
   const scheduledDate = new Date(booking.scheduled_at).toLocaleDateString('en-IN', {
-    weekday: 'short',
     day: '2-digit',
     month: 'short',
     year: 'numeric'
@@ -132,15 +131,15 @@ export const AssignedJobCard = ({
 
       {/* Job Details Key-Value Box */}
       <div className="bk-job-grid">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+        <div className="bk-job-col">
           <div className="bk-job-row">
             <span>Customer</span>
-            <b>{getDisplayName(customer)}</b>
+            <b title={getDisplayName(customer)}>{getDisplayName(customer)}</b>
           </div>
           <div className="bk-job-row">
             <span>Contact</span>
             {customer?.phone ? (
-              <a href={`tel:${customer.phone}`} className="phone-link-pill">
+              <a href={`tel:${customer.phone}`} className="phone-link-pill" style={{ justifySelf: 'end' }}>
                 <Phone size={11} /> {customer.phone}
               </a>
             ) : (
@@ -153,14 +152,16 @@ export const AssignedJobCard = ({
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+        <div className="bk-job-col">
           <div className="bk-job-row">
             <span>Scheduled</span>
-            <b className="nowrap">{scheduledDate}</b>
+            <b title={scheduledDate}>{scheduledDate}</b>
           </div>
           <div className="bk-job-row">
-            <span>{booking.height_category ? 'Height Tier' : 'Service Area'}</span>
-            <b>{booking.height_category ? `${booking.height_category} Altitude` : booking.taluka}</b>
+            <span>{booking.height_category ? 'Height' : 'Taluka'}</span>
+            <b title={booking.height_category ? `${booking.height_category} Altitude` : booking.taluka}>
+              {booking.height_category ? `${booking.height_category} Alt` : booking.taluka}
+            </b>
           </div>
           <div className="bk-job-row">
             <span>Payment</span>
@@ -250,31 +251,27 @@ export const AssignedJobCard = ({
       {/* Action Buttons Area */}
       <div className="bk-bottom-actions">
         {isAssigned && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-            <Button
-              variant="primary"
-              size="md"
-              icon={Play}
-              className="bk-action-btn"
-              onClick={() => onStartJob(booking)}
-            >
-              Start Job (Safety Check)
-            </Button>
-          </div>
+          <Button
+            variant="primary"
+            size="md"
+            icon={Play}
+            className="bk-action-btn"
+            onClick={() => onStartJob(booking)}
+          >
+            Start Job (Safety Check)
+          </Button>
         )}
 
         {isInProgress && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-            <Button
-              variant="gold"
-              size="md"
-              icon={CheckCircle}
-              className="bk-action-btn"
-              onClick={() => onCompleteJob(booking)}
-            >
-              Mark Job Completed
-            </Button>
-          </div>
+          <Button
+            variant="gold"
+            size="md"
+            icon={CheckCircle}
+            className="bk-action-btn"
+            onClick={() => onCompleteJob(booking)}
+          >
+            Mark Job Completed
+          </Button>
         )}
 
         {isCompleted && (
