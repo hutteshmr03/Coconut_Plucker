@@ -22,6 +22,7 @@ import {
   KeyRound,
   X
 } from 'lucide-react';
+import logoImg from '../../assets/logo.png';
 
 export const Sidebar = () => {
   const { currentUser, logout, role, adminAccounts } = useAuth();
@@ -201,7 +202,17 @@ export const Sidebar = () => {
         {/* Brand Header */}
         <div className="brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="brand-mark">🌴</div>
+            <img
+              src={logoImg}
+              alt="Coconut Plucker Logo"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '9px',
+                objectFit: 'cover',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}
+            />
             <div className="brand-text">
               <div className="t1">Coconut Plucker</div>
             </div>

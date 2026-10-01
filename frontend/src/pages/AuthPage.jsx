@@ -8,6 +8,7 @@ import { Select } from '../components/common/Select';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
 import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone, ShieldCheck } from 'lucide-react';
 import { authAPI } from '../services/api';
+import logoImg from '../assets/logo.png';
 
 const TALUKAS = [
   { value: '', label: '-- Select one --' },
@@ -279,12 +280,19 @@ export const AuthPage = () => {
       <div style={{ maxWidth: '520px', width: '100%', margin: 'auto' }}>
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div
-            className="brand-mark"
-            style={{ width: '56px', height: '56px', fontSize: '28px', margin: '0 auto 12px' }}
-          >
-            🌴
-          </div>
+          <img
+            src={logoImg}
+            alt="Coconut Plucker Logo"
+            style={{
+              width: '68px',
+              height: '68px',
+              borderRadius: '16px',
+              objectFit: 'cover',
+              margin: '0 auto 14px',
+              display: 'block',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+            }}
+          />
           <h2 style={{ color: '#FFFFFF', fontSize: '26px', letterSpacing: '-0.2px', fontWeight: '700' }}>
             {t('brand_name')}
           </h2>
