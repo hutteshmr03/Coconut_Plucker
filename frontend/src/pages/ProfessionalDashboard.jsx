@@ -7,7 +7,7 @@ import { CompleteJobModal } from '../components/professional/CompleteJobModal';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { StatusBadge } from '../components/common/StatusBadge';
-import { ShieldCheck, Star, Briefcase, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Star, Briefcase, CheckCircle, Check } from 'lucide-react';
 
 export const ProfessionalDashboard = () => {
   const { currentUser } = useAuth();
@@ -70,16 +70,16 @@ export const ProfessionalDashboard = () => {
 
       <div className="dash-grid">
         {/* Active Work Queue */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3>Assigned Work Queue</h3>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '36px', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px' }}>Assigned Work Queue</h3>
             <Button variant="ghost" size="sm" onClick={() => setCurrentView('work-jobs')}>
               View All Jobs ({myBookings.length}) →
             </Button>
           </div>
 
           {activeJobs.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {activeJobs.slice(0, 3).map((b) => {
                 const svc = services.find((s) => s.id === b.service_id);
                 const cust = customers.find((c) => c.id === b.customer_id);
@@ -97,7 +97,7 @@ export const ProfessionalDashboard = () => {
             </div>
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--ink-soft)' }}>
+              <div style={{ textAlign: 'center', padding: '28px 0', color: 'var(--ink-soft)' }}>
                 <CheckCircle size={36} color="var(--success)" style={{ margin: '0 auto 10px' }} />
                 <b style={{ display: 'block', fontSize: '15px', color: 'var(--ink)' }}>
                   All Caught Up!
@@ -111,16 +111,18 @@ export const ProfessionalDashboard = () => {
         </div>
 
         {/* Safety & Compliance Card */}
-        <div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '36px', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px' }}>Safety & Certification Status</h3>
+          </div>
           <Card>
-            <h3>Safety & Certification Status</h3>
             <div className="kpi-line">
               <span>Safety Certification</span>
-              <b>{currentProfessional?.safety_cert || 'Certified Climber'}</b>
+              <b>{currentProfessional?.safety_cert || 'Certified Master Climber (Govt. CPCRI)'}</b>
             </div>
             <div className="kpi-line">
               <span>Climbing Experience</span>
-              <b>{currentProfessional?.experience_years} years</b>
+              <b>{currentProfessional?.experience_years || 5} years</b>
             </div>
             <div className="kpi-line">
               <span>Primary Taluka</span>
@@ -128,15 +130,17 @@ export const ProfessionalDashboard = () => {
             </div>
             <div className="kpi-line">
               <span>Accident Insurance</span>
-              <b style={{ color: 'var(--success)' }}>✅ Active Platform Cover</b>
+              <b style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Check size={15} strokeWidth={3} /> Active Platform Cover
+              </b>
             </div>
 
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ marginTop: '18px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
                 Active Service Capabilities
               </div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {currentProfessional?.skills.map((sid) => {
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {currentProfessional?.skills?.map((sid) => {
                   const s = services.find((x) => x.id === sid);
                   return (
                     <span
@@ -144,10 +148,13 @@ export const ProfessionalDashboard = () => {
                       style={{
                         background: 'var(--cream)',
                         border: '1px solid var(--line)',
-                        padding: '4px 10px',
+                        padding: '5px 12px',
                         borderRadius: '20px',
-                        fontSize: '11.5px',
-                        fontWeight: '600'
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
                       }}
                     >
                       {s?.icon} {s?.name}
@@ -160,8 +167,9 @@ export const ProfessionalDashboard = () => {
             <div style={{ marginTop: '20px' }}>
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 className="btn-block"
+                style={{ width: '100%', height: '44px' }}
                 onClick={() => setCurrentView('work-profile')}
               >
                 Manage Profile & Skills

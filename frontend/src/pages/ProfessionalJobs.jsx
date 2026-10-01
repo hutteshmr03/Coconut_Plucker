@@ -33,7 +33,7 @@ export const ProfessionalJobs = () => {
   });
 
   return (
-    <div>
+    <div className="my-bookings-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h3>Assigned Work Orders ({myBookings.length})</h3>
@@ -69,7 +69,7 @@ export const ProfessionalJobs = () => {
       </div>
 
       {filtered.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="my-bookings-grid">
           {filtered.map((b) => {
             const svc = services.find((s) => s.id === b.service_id);
             const cust = customers.find((c) => c.id === b.customer_id);
