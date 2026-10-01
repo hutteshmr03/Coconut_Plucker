@@ -1583,8 +1583,40 @@ tbody tr:hover {
   padding: 16px 24px;
   border-top: 1px solid var(--line);
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 540px) {
+  .modal-backdrop {
+    padding: 16px 12px;
+  }
+  .modal {
+    max-height: 94vh;
+    border-radius: var(--radius-md);
+  }
+  .modal-head {
+    padding: 16px 18px;
+  }
+  .modal-head h3 {
+    font-size: 16px;
+  }
+  .modal-body {
+    padding: 18px;
+  }
+  .modal-foot {
+    padding: 14px 16px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .modal-foot > button,
+  .modal-foot > .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ===================== TOAST ===================== */
