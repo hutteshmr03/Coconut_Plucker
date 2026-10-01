@@ -30,7 +30,9 @@ import {
   Minus,
   ShoppingCart,
   Trash2,
-  Edit3
+  Edit3,
+  ChevronDown,
+  MapPin
 } from 'lucide-react';
 import { getTalukaDayConfig, formatScheduledDateLabel, getServiceImage, SERVICE_IMAGES, compressImageFile } from '../../utils/helpers';
 
@@ -48,6 +50,12 @@ export const BookingWizard = ({ onComplete }) => {
   } = useApp();
 
   const customerProfile = customers?.find((c) => c.id === currentUser?.id || c.phone === currentUser?.phone) || currentUser;
+
+  const savedAddresses = (
+    Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0
+      ? customerProfile.addresses
+      : [customerProfile?.address || currentUser?.address, customerProfile?.secondary_address || currentUser?.secondary_address]
+  ).filter(Boolean);
 
   const TALUKAS = [
     { value: '', label: '-- Select one --' },
@@ -69,6 +77,7 @@ export const BookingWizard = ({ onComplete }) => {
   const [address, setAddress] = useState(
     customerProfile?.address || currentUser?.address || ''
   );
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false);
   const [bookingType, setBookingType] = useState('standard'); // 'standard' | 'urgent'
 
   // Backend quote calculation breakdown
@@ -482,9 +491,6 @@ export const BookingWizard = ({ onComplete }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>{t('wiz_step_1_title')}</h3>
-              <p className="cell-muted" style={{ margin: '4px 0 0', fontSize: '13px' }}>
-                {t('wiz_step_1_sub')}
-              </p>
             </div>
 
             {serviceCart.length > 0 && (
@@ -599,26 +605,24 @@ export const BookingWizard = ({ onComplete }) => {
             gap: '12px'
           }}>
             <div style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
-              {serviceCart.length > 0 ? (
+              {serviceCart.length > 0 && (
                 <>
                   <span style={{ color: 'var(--ink-soft)' }}>Cart Subtotal ({serviceCart.length} service{serviceCart.length > 1 ? 's' : ''}):</span>{' '}
                   <b style={{ fontSize: '16px', color: '#B12704', fontWeight: '800' }}>₹{totalBase.toFixed(2)}</b>
                 </>
-              ) : (
-                <span style={{ color: 'var(--ink-soft)' }}>Choose a service to configure trees & details</span>
               )}
             </div>
 
             <Button
               variant="primary"
               type="button"
-              icon={ArrowRight}
               onClick={(e) => {
                 e.preventDefault();
                 if (selectedServiceId) setStep(2);
               }}
             >
-              {serviceCart.length > 0 ? 'Proceed to Details' : t('wiz_next_step')}
+              <span>{serviceCart.length > 0 ? 'Proceed to Details' : t('wiz_next_step')}</span>
+              <ArrowRight size={16} />
             </Button>
           </div>
         </Card>
@@ -630,20 +634,78 @@ export const BookingWizard = ({ onComplete }) => {
           <h3>
             {activeService.icon} {activeService.name} — {t('wiz_step_2_title')}
           </h3>
-          <p className="cell-muted" style={{ marginBottom: '20px' }}>
-            {t('wiz_step_2_sub')}
-          </p>
 
           <div className="field-row">
-            <Input
-              label={t('wiz_tree_count')}
-              type="number"
-              min="1"
-              value={treeCount}
-              onChange={(e) => setTreeCount(e.target.value)}
-              required
-              error={errors.treeCount}
-            />
+            <div className="field">
+              <label>
+                {t('wiz_tree_count')} <span style={{ color: 'var(--danger)' }}>*</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setTreeCount(prev => Math.max(1, (parseInt(prev, 10) || 1) - 1))}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--line)',
+                    background: 'var(--cream)',
+                    color: 'var(--ink)',
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0
+                  }}
+                  aria-label="Decrease trees"
+                >
+                  <Minus size={16} />
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={treeCount}
+                  onChange={(e) => setTreeCount(e.target.value)}
+                  className={errors.treeCount ? 'input-error' : ''}
+                  style={{
+                    flex: 1,
+                    height: '42px',
+                    textAlign: 'center',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    borderRadius: '8px',
+                    border: '1px solid var(--line)',
+                    background: 'var(--paper)',
+                    color: 'var(--ink)'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setTreeCount(prev => (parseInt(prev, 10) || 0) + 1)}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--line)',
+                    background: 'var(--cream)',
+                    color: 'var(--ink)',
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    flexShrink: 0
+                  }}
+                  aria-label="Increase trees"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+              {errors.treeCount && <span className="field-error">{errors.treeCount}</span>}
+            </div>
 
             <Select
               label={t('signup_taluka')}
@@ -688,150 +750,142 @@ export const BookingWizard = ({ onComplete }) => {
             </div>
           )}
 
-          {/* Dynamic Saved Addresses Quick Toggle */}
-          {(() => {
-            const allSaved = (
-              Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0
-                ? customerProfile.addresses
-                : [customerProfile?.address || currentUser?.address, customerProfile?.secondary_address || currentUser?.secondary_address]
-            ).filter(Boolean);
-
-            if (allSaved.length <= 1) return null;
-
-            return (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                {allSaved.map((savedAddr, sIdx) => {
-                  const isSelected = address === savedAddr;
-                  return (
-                    <button
-                      key={sIdx}
-                      type="button"
-                      onClick={() => setAddress(savedAddr)}
-                      style={{
-                        background: isSelected ? 'var(--teal)' : 'var(--cream)',
-                        color: isSelected ? '#FFFFFF' : 'var(--ink)',
-                        border: '1px solid ' + (isSelected ? 'var(--teal)' : 'var(--line)'),
-                        padding: '5px 14px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Address {sIdx + 1}
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })()}
-
-          {/* Canonical single address/location field per Section A.2 */}
-          <Input
-            label={t('wiz_address')}
-            placeholder="House No, Village/Town, Landmark, Goa"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-            error={errors.address}
-          />
-
-          {/* Feature 4: 1-Snap Tree Photo Helper */}
-          <div
-            style={{
-              background: 'var(--paper)',
-              border: '1.5px dashed var(--line)',
-              borderRadius: '10px',
-              padding: '14px 16px',
-              marginTop: '14px',
-              marginBottom: '16px'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-              <div>
-                <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Camera size={15} color="var(--teal)" /> 1-Snap Tree Photo (Optional)
-                </b>
-                <p style={{ fontSize: '11.5px', color: 'var(--ink-soft)', margin: '2px 0 0' }}>
-                  Attach a photo so the climber brings the right ladder height & safety ropes.
-                </p>
-              </div>
-
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  id="tree-photo-input"
-                  style={{ display: 'none' }}
-                  onChange={handlePhotoUpload}
-                  disabled={isCompressingPhoto}
-                />
-                {isCompressingPhoto ? (
-                  <span
+          {/* Canonical single address/location field with downward arrow for saved addresses */}
+          <div className="field" style={{ position: 'relative' }}>
+            <label htmlFor="booking-address">
+              {t('wiz_address')} <span style={{ color: 'var(--danger)' }}>*</span>
+            </label>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                id="booking-address"
+                type="text"
+                placeholder="House No, Village/Town, Landmark, Goa"
+                value={address}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setShowAddressDropdown(false);
+                }}
+                className={errors.address ? 'input-error' : ''}
+                style={{
+                  width: '100%',
+                  height: '42px',
+                  padding: '8px 40px 8px 14px',
+                  boxSizing: 'border-box',
+                  borderRadius: '8px',
+                  border: '1px solid ' + (errors.address ? 'var(--danger)' : 'var(--line)'),
+                  background: 'var(--paper)',
+                  color: 'var(--ink)',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+              {savedAddresses.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddressDropdown(prev => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: '6px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--ink-soft)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '6px',
+                    borderRadius: '4px'
+                  }}
+                  title="Select from saved addresses"
+                  aria-label="Select from saved addresses"
+                >
+                  <ChevronDown
+                    size={18}
                     style={{
-                      background: 'rgba(31, 138, 130, 0.08)',
-                      border: '1px solid var(--teal)',
-                      color: 'var(--teal-dark)',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
+                      transition: 'transform 0.2s ease',
+                      transform: showAddressDropdown ? 'rotate(180deg)' : 'none'
                     }}
-                  >
-                    ⏳ Optimizing photo...
-                  </span>
-                ) : !treePhoto ? (
-                  <label
-                    htmlFor="tree-photo-input"
-                    style={{
-                      background: 'rgba(31, 138, 130, 0.08)',
-                      border: '1px solid var(--teal)',
-                      color: 'var(--teal-dark)',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Camera size={14} /> Snap / Upload Photo
-                  </label>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <img
-                      src={treePhoto}
-                      alt="Tree preview"
-                      style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setTreePhoto(null)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--danger)',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✕ Remove
-                    </button>
-                  </div>
-                )}
-              </div>
+                  />
+                </button>
+              )}
             </div>
-            {photoError && (
-              <div style={{ color: 'var(--danger)', fontSize: '11.5px', marginTop: '6px', fontWeight: '600' }}>
-                {photoError}
-              </div>
+
+            {showAddressDropdown && savedAddresses.length > 0 && (
+              <>
+                <div
+                  onClick={() => setShowAddressDropdown(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 25 }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 30,
+                    marginTop: '4px',
+                    background: 'var(--paper)',
+                    border: '1px solid var(--line)',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      background: 'var(--cream)',
+                      borderBottom: '1px solid var(--line)',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      color: 'var(--ink-soft)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    Saved Customer Addresses
+                  </div>
+                  {savedAddresses.map((savedAddr, sIdx) => {
+                    const isSelected = address === savedAddr;
+                    return (
+                      <div
+                        key={sIdx}
+                        onClick={() => {
+                          setAddress(savedAddr);
+                          setShowAddressDropdown(false);
+                        }}
+                        style={{
+                          padding: '10px 14px',
+                          fontSize: '13px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          background: isSelected ? 'rgba(31, 138, 130, 0.08)' : 'transparent',
+                          color: isSelected ? 'var(--teal-dark)' : 'var(--ink)',
+                          fontWeight: isSelected ? '600' : '400',
+                          borderBottom: sIdx === savedAddresses.length - 1 ? 'none' : '1px solid var(--line)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                          <MapPin size={14} color={isSelected ? 'var(--teal)' : 'var(--ink-soft)'} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <b style={{ marginRight: '6px' }}>Address {sIdx + 1}:</b>
+                            {savedAddr}
+                          </span>
+                        </div>
+                        {isSelected && <Check size={14} color="var(--teal)" style={{ flexShrink: 0 }} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
+
+            {errors.address && <span className="field-error">{errors.address}</span>}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
@@ -849,7 +903,6 @@ export const BookingWizard = ({ onComplete }) => {
             <Button
               variant="primary"
               type="button"
-              icon={ArrowRight}
               onClick={(e) => {
                 e.preventDefault();
                 if (validateStep2()) {
@@ -876,7 +929,8 @@ export const BookingWizard = ({ onComplete }) => {
                 }
               }}
             >
-              {t('wiz_next_schedule')}
+              <span>{t('wiz_next_step')}</span>
+              <ArrowRight size={16} />
             </Button>
           </div>
         </Card>
@@ -885,13 +939,8 @@ export const BookingWizard = ({ onComplete }) => {
       {/* Step 3: Schedule Selection (Section B.3: Server-driven availability) */}
       {step === 3 && (
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <h3>{t('wiz_step_3_title')}</h3>
-              <p className="cell-muted">
-                {t('wiz_step_3_sub')} <b>{t(`taluka_${taluka.toLowerCase().replace(/\s+/g, '_')}`, taluka)}</b>.
-              </p>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3>{t('wiz_step_3_title')}</h3>
             {bookingType === 'urgent' && (
               <span
                 style={{
@@ -909,31 +958,6 @@ export const BookingWizard = ({ onComplete }) => {
             )}
           </div>
 
-          {/* Server Availability Notice */}
-          <div
-            style={{
-              background: 'var(--cream)',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '14px 16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}
-          >
-            <Calendar size={20} color={bookingType === 'urgent' ? 'var(--danger)' : 'var(--teal)'} style={{ flexShrink: 0 }} />
-            <div style={{ fontSize: '13px', color: 'var(--ink)' }}>
-              <b>{availabilityData?.message || `Loading available service days for ${taluka}...`}</b>
-              <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginTop: '2px' }}>
-                {bookingType === 'urgent'
-                  ? <>⚡ Urgent Schedule: <b>Monday, Tuesday, Wednesday, Thursday, Friday, Saturday (Any day except Sunday)</b></>
-                  : <>🌿 Standard Allocation for {taluka}: <b>{availabilityData?.allowed_days?.join(', ') || 'Standard Allocated Days'}</b></>
-                }
-              </div>
-            </div>
-          </div>
-
           {isLoadingAvailability ? (
             <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ink-soft)' }}>
               Checking server availability for {taluka}...
@@ -942,17 +966,17 @@ export const BookingWizard = ({ onComplete }) => {
             <>
               {/* Available Dates Selection (Strictly server-returned dates) */}
               <div className="field">
-                <label>Select Available Service Date ({taluka}) *</label>
+                <label>{t('wiz_select_slot', 'Select Available Slot')} *</label>
                 {availabilityData?.available_dates?.length > 0 ? (
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
                       gap: '10px',
                       marginTop: '6px'
                     }}
                   >
-                    {availabilityData.available_dates.map((d) => {
+                    {availabilityData.available_dates.slice(0, 4).map((d) => {
                       const isSelected = scheduledDate === d.date;
                       return (
                         <div
@@ -1001,7 +1025,7 @@ export const BookingWizard = ({ onComplete }) => {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
                   <label style={{ fontWeight: '700', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
-                    🗓️ {t('wiz_customize_date', 'Customize the Date')}
+                    🗓️ {t('wiz_customize_date', 'Customize Date')}
                   </label>
                   <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
                     {bookingType === 'urgent'
@@ -1314,7 +1338,6 @@ export const BookingWizard = ({ onComplete }) => {
               <Button
                 variant="primary"
                 type="button"
-                icon={ArrowRight}
                 onClick={(e) => {
                   e.preventDefault();
                   if (validateStep3()) {
@@ -1322,7 +1345,8 @@ export const BookingWizard = ({ onComplete }) => {
                   }
                 }}
               >
-                {t('wiz_confirm_and_pay', 'Confirm & Pay')} (₹{totalAmount.toFixed(2)})
+                <span>{t('wiz_next_step')}</span>
+                <ArrowRight size={16} />
               </Button>
             </div>
           </div>

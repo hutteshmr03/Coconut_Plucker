@@ -6,7 +6,6 @@ import {
   Smartphone,
   CreditCard,
   Building2,
-  ShieldCheck,
   CheckCircle,
   QrCode,
   Lock,
@@ -108,41 +107,6 @@ export const RazorpayPaymentModal = ({
       title="Secure Razorpay Payment Gateway"
     >
       <div style={{ padding: '4px 0' }}>
-        {/* Razorpay Brand & Order Banner */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #0c2340 0%, #0d3b66 100%)',
-            color: '#FFFFFF',
-            padding: '16px 18px',
-            borderRadius: '10px',
-            marginBottom: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '10px'
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#90cdf4', fontWeight: '700' }}>
-              Razorpay Trusted Business Checkout
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: '600', marginTop: '2px' }}>
-              {serviceName || 'Tree Care & Harvesting Service'}
-            </div>
-            <div style={{ fontSize: '11.5px', color: '#e2e8f0', marginTop: '2px' }}>
-              {bookingDetails?.taluka ? `Taluka: ${bookingDetails.taluka}` : 'Upfront Verified Payment'}
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '11px', color: '#cbd5e1' }}>Total Amount to Pay</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', color: '#68d391' }}>
-              ₹{numAmount.toFixed(2)}
-            </div>
-          </div>
-        </div>
-
         {isSuccess ? (
           <div style={{ textAlign: 'center', padding: '36px 16px' }}>
             <CheckCircle size={56} color="#38a169" style={{ margin: '0 auto 14px' }} />
@@ -286,7 +250,6 @@ export const RazorpayPaymentModal = ({
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       required
-                      hint="Supports GPay, PhonePe, Paytm, BHIM, Cred, Amazon Pay"
                     />
                   </div>
                 ) : (
@@ -407,22 +370,6 @@ export const RazorpayPaymentModal = ({
                 </div>
               </div>
             )}
-
-            {/* Security Guarantee Note */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '11.5px',
-                color: 'var(--ink-soft)',
-                marginTop: '14px',
-                marginBottom: '16px'
-              }}
-            >
-              <ShieldCheck size={16} color="#38a169" />
-              <span>Payments are processed 100% securely with 256-bit Razorpay encryption.</span>
-            </div>
 
             {/* Pay Button */}
             <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>

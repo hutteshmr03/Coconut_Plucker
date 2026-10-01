@@ -366,10 +366,6 @@ export const AuthPage = () => {
               {/* Option A: Customer & Professional Mobile OTP Login */}
               {loginType === 'phone_otp' && loginStep === 'phone' && (
                 <form onSubmit={handleLoginPhoneSubmit} autoComplete="off">
-                  <p className="cell-muted" style={{ marginBottom: '20px', fontSize: '13.5px' }}>
-                    {t('auth_otp_login_desc')}
-                  </p>
-
                   <Input
                     label={t('auth_mobile_label')}
                     name="login_phone"
@@ -379,7 +375,6 @@ export const AuthPage = () => {
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
                     required
-                    hint={t('auth_mobile_hint')}
                   />
 
                   <div style={{ marginTop: '24px' }}>
@@ -420,9 +415,6 @@ export const AuthPage = () => {
               {/* Option A Step 2: Login OTP Verification */}
               {loginType === 'phone_otp' && loginStep === 'otp' && (
                 <form onSubmit={handleVerifyLoginOTP} autoComplete="off">
-                  <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
-                    {t('auth_otp_step_title')}
-                  </h3>
                   <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
                     {t('auth_otp_sent_to')} <b>+91 {loginPhone}</b>
                   </p>
@@ -455,7 +447,6 @@ export const AuthPage = () => {
                     value={loginOtp}
                     onChange={(e) => setLoginOtp(e.target.value)}
                     required
-                    hint={t('auth_otp_hint')}
                   />
 
                   <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
@@ -575,7 +566,6 @@ export const AuthPage = () => {
                 value={signupPhone}
                 onChange={(e) => setSignupPhone(e.target.value.replace(/\D/g, ''))}
                 required
-                hint={t('auth_mobile_hint')}
               />
 
               <Select
@@ -613,9 +603,6 @@ export const AuthPage = () => {
           {/* ===================== SECTION 3: SIGN UP OTP ===================== */}
           {mode === 'signup' && signupStep === 'otp' && (
             <form onSubmit={handleVerifySignupOTP} autoComplete="off">
-              <h3 style={{ fontSize: '18px', marginBottom: '6px' }}>
-                {t('auth_otp_step_title')}
-              </h3>
               <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
                 {t('auth_otp_sent_to')} <b>+91 {signupPhone}</b>
               </p>
@@ -647,7 +634,6 @@ export const AuthPage = () => {
                 value={signupOtp}
                 onChange={(e) => setSignupOtp(e.target.value)}
                 required
-                hint={t('auth_otp_hint')}
               />
 
               <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
