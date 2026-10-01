@@ -170,9 +170,6 @@ export const AdminProfile = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>Administrator Account</h3>
-            <p className="cell-muted" style={{ margin: '4px 0 0 0', fontSize: '13px' }}>
-              Manage your administrator contact details and assigned regional Taluka scope.
-            </p>
           </div>
           <span
             className="badge green"
@@ -298,9 +295,6 @@ export const AdminProfile = () => {
                   </Button>
                 )}
               </div>
-              <span className="cell-muted" style={{ fontSize: '11px' }}>
-                JPG, PNG or WEBP. Compressed automatically.
-              </span>
             </div>
           </div>
 
@@ -321,7 +315,6 @@ export const AdminProfile = () => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
-              hint="Used for credentials authentication and SMS notifications"
             />
 
             <Select

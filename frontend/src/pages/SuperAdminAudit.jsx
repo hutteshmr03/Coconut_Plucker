@@ -64,9 +64,6 @@ export const SuperAdminAudit = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
           <h3>Platform-Wide Operations Audit Trail</h3>
-          <p className="cell-muted">
-            Immutable log of all administrator actions including workforce approvals, rate edits, and booking dispatches.
-          </p>
         </div>
       </div>
 
