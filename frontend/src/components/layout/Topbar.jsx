@@ -31,12 +31,14 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
           sub: t('top_adm_audit_sub')
         };
       case 'sadm-profile':
-      case 'adm-profile':
         return {
           title: t('nav_super_profile'),
-          sub: role === 'super_admin'
-            ? 'Manage singleton Super Admin credentials and change access password'
-            : 'Manage administrator credentials and change access password'
+          sub: 'Manage singleton Super Admin credentials and change access password'
+        };
+      case 'adm-profile':
+        return {
+          title: t('top_adm_profile_title', 'Administrator Profile'),
+          sub: t('top_adm_profile_sub', 'Manage administrator account details, regional scope, and credentials')
         };
 
       // Customer Views
@@ -223,18 +225,6 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
             <User size={14} color="var(--teal)" />
           )}
         </div>
-
-        {/* Sign Out Button (Admins only; Customers & Climbers stay permanently signed in) */}
-        {(role === 'admin' || role === 'super_admin') && (
-          <button
-            className="icon-btn"
-            title={t('sign_out')}
-            onClick={logout}
-            style={{ color: 'var(--amber)' }}
-          >
-            <LogOut size={16} />
-          </button>
-        )}
       </div>
     </header>
   );

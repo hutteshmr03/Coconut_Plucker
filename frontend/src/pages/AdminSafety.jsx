@@ -42,7 +42,6 @@ export const AdminSafety = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
           <h3>Safety Incident & Near-Miss Log</h3>
-          <p className="cell-muted">Track all reported field incidents, gear replacements, and tree hazard alerts.</p>
         </div>
         <Button variant="danger" icon={Plus} onClick={() => setIsLogModalOpen(true)}>
           Log Safety Incident

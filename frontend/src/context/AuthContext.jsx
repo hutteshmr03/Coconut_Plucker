@@ -25,7 +25,6 @@ const SUPER_ADMIN_USER = {
 const ADMIN_USER = {
   id: 'usr_admin',
   username: 'admin',
-  email: 'admin@coconutplucker.com',
   password: 'admin123',
   full_name: 'Goa Operations Admin',
   phone: '9800000001',
@@ -76,6 +75,14 @@ export const AuthProvider = ({ children }) => {
         if (!hasAdmin) {
           cleanList.push(ADMIN_USER);
         }
+
+        cleanList = cleanList.map((u) => {
+          if (u.role === 'admin' && u.email) {
+            const { email, ...rest } = u;
+            return rest;
+          }
+          return u;
+        });
 
         return cleanList;
       } catch (err) {
@@ -228,7 +235,6 @@ export const AuthProvider = ({ children }) => {
       id: 'usr_adm_' + Date.now().toString(36),
       username: usernameClean || `admin_${phoneClean.slice(-4)}`,
       full_name: adminData.full_name.trim(),
-      email: adminData.email?.trim() || `${usernameClean}@coconutplucker.com`,
       phone: phoneClean,
       role: 'admin',
       taluka: adminData.taluka || 'All Talukas',

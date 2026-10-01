@@ -27,7 +27,8 @@ export const MobileNav = () => {
     return [
       { id: 'adm-overview', label: t('nav_dashboard'), icon: LayoutDashboard },
       { id: 'adm-bookings', label: t('nav_all_bookings'), icon: BookOpen },
-      { id: 'adm-services', label: t('nav_catalog'), icon: Briefcase }
+      { id: 'adm-services', label: t('nav_catalog'), icon: Briefcase },
+      { id: role === 'super_admin' ? 'sadm-profile' : 'adm-profile', label: t('nav_profile'), icon: User }
     ];
   };
 

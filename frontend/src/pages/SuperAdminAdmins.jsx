@@ -120,13 +120,10 @@ export const SuperAdminAdmins = () => {
         }}
       >
         <div>
-          <b style={{ color: 'var(--ink)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <b style={{ color: 'var(--ink)', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldAlert size={18} color="#7C3AED" />
-            Super Admin Authority: Administrator Account Provisioning
+            Manage Administrators
           </b>
-          <p style={{ color: 'var(--ink-soft)', fontSize: '12.5px', marginTop: '3px', margin: 0 }}>
-            Super Admin is the sole role authorized to create, configure, and deactivate Admin accounts. Standard Admins cannot provision other Admins.
-          </p>
         </div>
         <Button
           variant="gold"
@@ -167,7 +164,7 @@ export const SuperAdminAdmins = () => {
           <Search size={16} color="var(--ink-soft)" />
           <input
             type="text"
-            placeholder="Search admins by name, phone, email, or Taluka..."
+            placeholder="Search admins by name, phone, or Taluka..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -180,7 +177,7 @@ export const SuperAdminAdmins = () => {
           <thead>
             <tr>
               <th>Admin Name & User ID</th>
-              <th>Contact Phone</th>
+              <th style={{ whiteSpace: 'nowrap' }}>Contact Phone</th>
               <th>Assigned Region / Taluka</th>
               <th>Date Provisioned</th>
               <th>Status</th>
@@ -194,11 +191,11 @@ export const SuperAdminAdmins = () => {
                   <td>
                     <div className="cell-strong">{getDisplayName(admin)}</div>
                     <div className="cell-muted" style={{ fontSize: '11.5px' }}>
-                      @{admin.username} {admin.email ? `· ${admin.email}` : ''}
+                      @{admin.username}
                     </div>
                   </td>
-                  <td>
-                    <span className="cell-strong">+91 {admin.phone}</span>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <span className="cell-strong">{admin.phone}</span>
                   </td>
                   <td>
                     <span className="badge blue">{admin.taluka || 'All Talukas'}</span>
@@ -269,10 +266,6 @@ export const SuperAdminAdmins = () => {
         }
       >
         <form onSubmit={handleCreateSubmit}>
-          <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-            Provision an administrator credential with access to platform workforce, booking verification, and safety operations.
-          </p>
-
           {errorMessage && (
             <div className="field-error" style={{ marginBottom: '14px', padding: '8px 12px', background: 'rgba(179, 64, 44, 0.08)', borderRadius: '6px' }}>
               {errorMessage}
@@ -338,7 +331,7 @@ export const SuperAdminAdmins = () => {
         }
       >
         <p style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
-          Are you sure you want to {deactivatingAdmin?.status === 'active' ? 'deactivate' : 'reactivate'} the administrator account for <b>{getDisplayName(deactivatingAdmin)}</b> (+91 {deactivatingAdmin?.phone})?
+          Are you sure you want to {deactivatingAdmin?.status === 'active' ? 'deactivate' : 'reactivate'} the administrator account for <b>{getDisplayName(deactivatingAdmin)}</b> ({deactivatingAdmin?.phone})?
         </p>
         <p className="cell-muted" style={{ marginTop: '10px', fontSize: '12px' }}>
           Deactivated admins will be immediately blocked from signing in to the operations dashboard. Existing booking assignment history will be preserved.

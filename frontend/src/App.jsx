@@ -33,6 +33,7 @@ import { AdminWorkforce } from './pages/AdminWorkforce';
 import { AdminServices } from './pages/AdminServices';
 import { AdminSafety } from './pages/AdminSafety';
 import { AdminReports } from './pages/AdminReports';
+import { AdminProfile } from './pages/AdminProfile';
 
 // Modals
 import { ServiceFormModal } from './components/admin/ServiceFormModal';
@@ -85,7 +86,6 @@ const MainLayout = () => {
       case 'sadm-admins':
         return <SuperAdminAdmins />;
       case 'sadm-profile':
-      case 'adm-profile':
         return <SuperAdminProfile />;
       case 'sadm-scheduling':
         return <SuperAdminScheduling />;
@@ -121,6 +121,8 @@ const MainLayout = () => {
         return <AdminSafety />;
       case 'adm-reports':
         return <AdminReports />;
+      case 'adm-profile':
+        return <AdminProfile />;
 
       default:
         return role === 'super_admin' ? (

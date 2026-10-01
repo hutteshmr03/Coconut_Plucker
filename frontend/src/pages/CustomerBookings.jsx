@@ -41,7 +41,7 @@ export const CustomerBookings = () => {
   }
 
   return (
-    <div>
+    <div className="my-bookings-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h3>My Bookings & Status History</h3>
@@ -51,7 +51,7 @@ export const CustomerBookings = () => {
         </Button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="my-bookings-grid">
         {customerBookings.map((b) => {
           const svc = services.find((s) => s.id === b.service_id);
           const pro = professionals.find((p) => p.id === b.professional_id);
@@ -72,127 +72,82 @@ export const CustomerBookings = () => {
 
           return (
             <div key={b.id} className="booking-card">
-              {/* Header */}
-              <div className="bk-head" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
-                  <img
-                    src={getServiceImage(svc || b)}
-                    alt={svc?.name || b.service_name}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '8px',
-                      objectFit: 'cover',
-                      border: '1px solid var(--line)',
-                      flexShrink: 0
-                    }}
-                  />
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                      <span>{svc?.name || b.service_name}</span>
-                      <span style={{ color: 'var(--teal)' }}>· {b.booking_number}</span>
-                      {b.booking_type === 'urgent' && (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            backgroundColor: '#FEF3C7',
-                            color: '#D97706',
-                            fontSize: '10.5px',
-                            fontWeight: 700,
-                            letterSpacing: '0.5px',
-                            border: '1px solid #FDE68A'
-                          }}
-                        >
-                          ⚡ URGENT
-                        </span>
-                      )}
-                    </h4>
-
-                    {/* Clean formatted details & address without broken wrapping */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '5px' }}>
-                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <span>{b.tree_count} {svc?.unit?.replace('per ', '') || 'unit'}s</span>
-                        <span>·</span>
-                        <span>Scheduled: {formattedDate}</span>
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'flex', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4' }}>
-                        <MapPin size={13} color="var(--ink-soft)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        <span>{b.address}, {b.taluka}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status & Price */}
-                <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
-                  <StatusBadge status={b.status} />
-                  <div className="cell-strong" style={{ marginTop: '4px', fontSize: '16px', fontWeight: '800' }}>
-                    ₹{totalAmt.toFixed(2)}
-                  </div>
-                  {isFullyPaid && (
-                    <div style={{ marginTop: '2px' }}>
+              {/* Header: Grid 64px 1fr auto, gap 12px */}
+              <div className="bk-head">
+                <img
+                  src={getServiceImage(svc || b)}
+                  alt={svc?.name || b.service_name}
+                  className="bk-thumb"
+                />
+                <div className="bk-middle">
+                  <h4 className="bk-title">
+                    <span>{svc?.name || b.service_name}</span>
+                    <span style={{ color: 'var(--teal)', marginLeft: '4px' }}>· {b.booking_number}</span>
+                    {b.booking_type === 'urgent' && (
                       <span
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '3px',
-                          fontSize: '11px',
-                          color: 'var(--teal)',
-                          fontWeight: '700'
+                          marginLeft: '6px',
+                          padding: '2px 7px',
+                          borderRadius: '12px',
+                          backgroundColor: '#FEF3C7',
+                          color: '#D97706',
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          border: '1px solid #FDE68A'
                         }}
                       >
+                        ⚡ URGENT
+                      </span>
+                    )}
+                  </h4>
+                  <div className="bk-meta">
+                    {b.tree_count} {svc?.unit?.replace('per ', '') || 'unit'}s · {formattedDate}
+                  </div>
+                </div>
+
+                <div className="bk-right">
+                  <StatusBadge status={b.status} />
+                  <div className="bk-price">
+                    ₹{totalAmt.toFixed(2)}
+                  </div>
+                  {isFullyPaid && (
+                    <div className="bk-payment-label" style={{ color: 'var(--teal)' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                         <Check size={12} strokeWidth={3} /> Paid ({b.payment_method || 'UPI'})
                       </span>
                     </div>
                   )}
                   {isBalancePending && (
-                    <div style={{ marginTop: '2px' }}>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                          fontSize: '11px',
-                          color: '#D97706',
-                          fontWeight: '700'
-                        }}
-                      >
-                        ₹{balanceDue.toFixed(2)} Balance Due
-                      </span>
+                    <div className="bk-payment-label" style={{ color: '#D97706' }}>
+                      ₹{balanceDue.toFixed(2)} Balance Due
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Extra Balance Breakdown if adjusted on-site */}
+              {/* Address Row: Fixed-width pin icon + text */}
+              <div className="bk-address-row">
+                <MapPin size={16} color="var(--ink-soft)" className="bk-address-pin" />
+                <span>{b.address}, {b.taluka}</span>
+              </div>
+
+              {/* Price Breakdown Box (2-column grid, labels left, values right) */}
               {isBalancePending && (
-                <div
-                  style={{
-                    background: '#FEF3C7',
-                    border: '1px solid #FDE68A',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    margin: '10px 0',
-                    fontSize: '12px',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '16px',
-                    alignItems: 'center',
-                    color: '#92400E'
-                  }}
-                >
-                  <span>Paid Upfront: <b>₹{paidAmt.toFixed(2)}</b></span>
-                  <span>Revised Total: <b>₹{totalAmt.toFixed(2)}</b></span>
-                  <span>Extra Balance Due: <b>₹{balanceDue.toFixed(2)}</b></span>
+                <div className="bk-price-breakdown">
+                  <span style={{ color: '#92400E' }}>Paid Upfront:</span>
+                  <b style={{ color: '#92400E', textAlign: 'right' }}>₹{paidAmt.toFixed(2)}</b>
+                  <span style={{ color: '#92400E' }}>Revised Total:</span>
+                  <b style={{ color: '#92400E', textAlign: 'right' }}>₹{totalAmt.toFixed(2)}</b>
+                  <span style={{ color: '#92400E', fontWeight: '700' }}>Extra Balance Due:</span>
+                  <b style={{ color: '#B45309', textAlign: 'right', fontWeight: '800' }}>₹{balanceDue.toFixed(2)}</b>
                 </div>
               )}
 
               {/* Urgent Price Breakdown Line Items */}
-              {b.booking_type === 'urgent' && b.surcharge_amount > 0 && (
+              {b.booking_type === 'urgent' && b.surcharge_amount > 0 && !isBalancePending && (
                 <div
                   style={{
                     background: 'var(--cream)',
@@ -241,9 +196,9 @@ export const CustomerBookings = () => {
                 </div>
               )}
 
-              {/* Status Timeline */}
+              {/* Progress Stepper (4 equal columns, centered 28px circles, labels 12px centered min-height 2.4em) */}
               {b.status !== 'cancelled' ? (
-                <div className="timeline">
+                <div className={`timeline ${b.booking_type === 'urgent' ? 'urgent-timeline' : ''}`}>
                   {b.booking_type === 'urgent' ? (
                     // 5-step Urgent Timeline with Confirmation Call step
                     [
@@ -278,7 +233,7 @@ export const CustomerBookings = () => {
                         className={`tl-step ${stepObj.isDone ? 'done' : stepObj.isCurrent ? 'on' : ''}`}
                       >
                         <div className="dot">
-                          {stepObj.isDone ? <Check size={13} strokeWidth={3} /> : idx + 1}
+                          {stepObj.isDone ? <Check size={14} strokeWidth={3} /> : idx + 1}
                         </div>
                         <div className="lbl">{stepObj.label}</div>
                       </div>
@@ -301,7 +256,7 @@ export const CustomerBookings = () => {
                           className={`tl-step ${isDone ? 'done' : isCurrent ? 'on' : ''}`}
                         >
                           <div className="dot">
-                            {isDone ? <Check size={13} strokeWidth={3} /> : idx + 1}
+                            {isDone ? <Check size={14} strokeWidth={3} /> : idx + 1}
                           </div>
                           <div className="lbl">{stepLabels[stepKey]}</div>
                         </div>
@@ -315,79 +270,54 @@ export const CustomerBookings = () => {
                 </div>
               )}
 
-              {/* Swiggy/Zomato-Style Live Climber Tracker Card */}
+              {/* Professional Card (No trailing dot, badge left-aligned on own row, 48px 2-col buttons) */}
               {pro ? (
-                <div
-                  style={{
-                    background: b.status === 'in_progress' ? 'rgba(31, 138, 130, 0.06)' : 'var(--paper)',
-                    border: b.status === 'in_progress' ? '1.5px solid var(--teal)' : '1px solid var(--line)',
-                    borderRadius: '10px',
-                    padding: '14px 16px',
-                    marginTop: '14px'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="worker-avatar" style={{ width: '42px', height: '42px', fontSize: '14px' }}>
-                        {getDisplayName(pro)
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
-                      </div>
-                      <div>
-                        <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{getDisplayName(pro)}</b>
-                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span>{pro.experience_years || 5} yrs exp</span>
-                          <span>·</span>
-                          <span>{pro.taluka || b.taluka}</span>
-                          <span>·</span>
-                          <span className="star-rate">
-                            {'★'.repeat(Math.round(pro.rating_avg || 5))} ({pro.rating_avg || '5.0'})
-                          </span>
-                        </div>
-                      </div>
+                <div className={`bk-pro-card ${b.status === 'in_progress' ? 'in-progress' : ''}`}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="worker-avatar" style={{ width: '42px', height: '42px', fontSize: '14px' }}>
+                      {getDisplayName(pro)
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
                     </div>
-
-                    {/* Live Tracker Status Tag */}
-                    <div>
-                      <span
-                        style={{
-                          background: b.status === 'in_progress' ? 'var(--teal)' : 'var(--navy)',
-                          color: '#FFFFFF',
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        {b.status === 'in_progress' ? '🛵 Tree Plucking In Progress' : '🛵 Climber Assigned & Ready'}
-                      </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <b style={{ fontSize: '14px', color: 'var(--ink)', display: 'block' }}>{getDisplayName(pro)}</b>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span>{pro.experience_years || 5} yrs exp · {pro.taluka || b.taluka}</span>
+                        <span>·</span>
+                        <span className="star-rate">
+                          {'★'.repeat(Math.round(pro.rating_avg || 5))} ({pro.rating_avg || '5.0'})
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Direct Contact Buttons */}
+                  {/* Status Badge on its own row, left-aligned */}
+                  <div style={{ marginTop: '10px' }}>
+                    <span
+                      style={{
+                        background: b.status === 'in_progress' ? 'var(--teal)' : 'var(--navy)',
+                        color: '#FFFFFF',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}
+                    >
+                      {b.status === 'in_progress' ? '🛵 Tree Plucking In Progress' : '🛵 Climber Assigned & Ready'}
+                    </span>
+                  </div>
+
+                  {/* 2-column grid buttons (48px height, equal width) */}
                   {b.status !== 'cancelled' && (
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
+                    <div className="bk-pro-buttons">
                       <a
                         href={`tel:${pro.phone || '9822123456'}`}
-                        style={{
-                          flex: 1,
-                          textAlign: 'center',
-                          background: 'var(--teal)',
-                          color: '#FFFFFF',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
+                        className="bk-btn-pro"
+                        style={{ background: 'var(--teal)', color: '#FFFFFF' }}
                       >
                         📞 Call Climber
                       </a>
@@ -395,21 +325,8 @@ export const CustomerBookings = () => {
                         href={`https://wa.me/91${pro.phone || '9822123456'}?text=Hello%20${encodeURIComponent(getDisplayName(pro))},%20my%20Coconut%20Plucker%20booking%20is%20${b.booking_number}.%20Here%20is%20my%20address:%20${encodeURIComponent(b.address)}`}
                         target="_blank"
                         rel="noreferrer"
-                        style={{
-                          flex: 1,
-                          textAlign: 'center',
-                          background: '#25D366',
-                          color: '#FFFFFF',
-                          padding: '8px 12px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
+                        className="bk-btn-pro"
+                        style={{ background: '#25D366', color: '#FFFFFF' }}
                       >
                         💬 WhatsApp Location
                       </a>
@@ -450,64 +367,44 @@ export const CustomerBookings = () => {
                 </div>
               )}
 
-              {/* Actions: Pay Balance & Rate / Review */}
-              {isCompleted && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    marginTop: '16px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid var(--line)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    {isBalancePending && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        icon={CreditCard}
-                        onClick={() => payBooking(b.id)}
-                      >
-                        Pay ₹{balanceDue.toFixed(2)} Balance Online
-                      </Button>
-                    )}
+              {/* Bottom Actions Area (pinned to bottom with margin-top: auto) */}
+              <div className="bk-bottom-actions">
+                {isCompleted && isBalancePending && (
+                  <Button
+                    variant="primary"
+                    icon={CreditCard}
+                    className="bk-pay-btn"
+                    onClick={() => payBooking(b.id)}
+                  >
+                    Pay ₹{balanceDue.toFixed(2)} Balance Online
+                  </Button>
+                )}
 
-                    {!b.rating && (
-                      <Button
-                        variant="gold"
-                        size="sm"
-                        icon={Star}
-                        onClick={() => setReviewingBooking(b)}
-                      >
-                        Rate & Review Professional
-                      </Button>
-                    )}
-                  </div>
+                {isCompleted && !b.rating && (
+                  <Button
+                    variant="gold"
+                    icon={Star}
+                    style={{ width: '100%', height: '48px', minHeight: '48px' }}
+                    onClick={() => setReviewingBooking(b)}
+                  >
+                    Rate & Review Professional
+                  </Button>
+                )}
 
-                  {b.rating && (
-                    <div
-                      style={{
-                        fontSize: '12.5px',
-                        color: 'var(--ink)',
-                        background: 'var(--cream)',
-                        padding: '9px 13px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--line)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        flexWrap: 'wrap'
-                      }}
-                    >
+                {isCompleted && b.rating && (
+                  <div className="bk-review-box">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span style={{ fontWeight: '700', color: 'var(--ink-soft)' }}>Your Review:</span>
                       <span className="star-rate">{'★'.repeat(b.rating)}</span>
-                      {b.comment && <span style={{ color: 'var(--ink)', fontStyle: 'italic' }}>— "{b.comment}"</span>}
                     </div>
-                  )}
-                </div>
-              )}
+                    {b.comment && (
+                      <p style={{ margin: '6px 0 0 0', fontStyle: 'italic', color: 'var(--ink)', lineHeight: '1.4' }}>
+                        "{b.comment}"
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

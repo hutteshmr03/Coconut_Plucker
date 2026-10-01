@@ -103,6 +103,8 @@ export const TRANSLATIONS = {
     top_adm_safety_sub: 'Track near-misses, equipment audits, and field safety logs',
     top_adm_reports_title: 'Analytics & Revenue Reports',
     top_adm_reports_sub: 'Volume breakdown, revenue realization, and service demand',
+    top_adm_profile_title: 'Administrator Profile',
+    top_adm_profile_sub: 'Manage administrator account details, regional scope, and credentials',
 
     // Common UI
     btn_next: 'Next Step',
@@ -257,6 +259,8 @@ export const TRANSLATIONS = {
     top_adm_safety_sub: 'सुरक्षा ऑडिट, उपकरण जांच और घटना लॉग ट्रैक करें',
     top_adm_reports_title: 'विश्लेषण और राजस्व रिपोर्ट',
     top_adm_reports_sub: 'मात्रा विवरण, राजस्व प्राप्ति और सेवा मांग',
+    top_adm_profile_title: 'व्यवस्थापक प्रोफ़ाइल',
+    top_adm_profile_sub: 'व्यवस्थापक प्रोफ़ाइल विवरण, क्षेत्रीय दायरा और सुरक्षा प्रबंधित करें',
 
     // Common UI
     btn_next: 'अगला कदम',
@@ -411,6 +415,8 @@ export const TRANSLATIONS = {
     top_adm_safety_sub: 'सुरक्षा तपासणी, उपकरण ऑडिट आणि घटना नोंदी',
     top_adm_reports_title: 'विश्लेषण आणि महसूल अहवाल',
     top_adm_reports_sub: 'कामांचे प्रमाण, महसूल प्राप्ती आणि सेवा मागणी',
+    top_adm_profile_title: 'प्रशासक प्रोफाइल',
+    top_adm_profile_sub: 'प्रशासक प्रोफाइल तपशील, प्रादेशिक व्याप्ती आणि क्रेडेंशियल्स व्यवस्थापित करा',
 
     // Common UI
     btn_next: 'पुढील पायरी',

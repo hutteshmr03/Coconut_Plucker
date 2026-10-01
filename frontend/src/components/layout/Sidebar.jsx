@@ -90,8 +90,7 @@ export const Sidebar = () => {
       items: [
         { id: 'adm-overview', label: t('nav_dashboard'), icon: LayoutDashboard },
         { id: 'sadm-scheduling', label: t('nav_scheduling'), icon: Sliders },
-        { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart },
-        { id: 'adm-profile', label: t('nav_super_profile'), icon: KeyRound }
+        { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart }
       ]
     },
     {
@@ -117,6 +116,12 @@ export const Sidebar = () => {
           count: safeIncidents.filter((i) => i && i.status === 'open').length
         }
       ]
+    },
+    {
+      group: 'My Account',
+      items: [
+        { id: 'adm-profile', label: t('nav_profile'), icon: User }
+      ]
     }
   ];
 
@@ -132,8 +137,7 @@ export const Sidebar = () => {
           count: safeAdminAccounts.length
         },
         { id: 'sadm-scheduling', label: t('nav_scheduling'), icon: Sliders },
-        { id: 'sadm-audit', label: t('nav_audit_trail'), icon: FileCheck },
-        { id: 'sadm-profile', label: t('nav_super_profile'), icon: KeyRound }
+        { id: 'sadm-audit', label: t('nav_audit_trail'), icon: FileCheck }
       ]
     },
     {
@@ -160,6 +164,12 @@ export const Sidebar = () => {
           count: safeIncidents.filter((i) => i && i.status === 'open').length
         },
         { id: 'adm-reports', label: t('nav_analytics'), icon: FileBarChart }
+      ]
+    },
+    {
+      group: 'My Account',
+      items: [
+        { id: 'sadm-profile', label: t('nav_super_profile'), icon: KeyRound }
       ]
     }
   ];
