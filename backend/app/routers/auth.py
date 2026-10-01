@@ -49,7 +49,8 @@ def format_user_out(user: User, db: Session) -> UserOut:
 
 @router.post("/otp/request")
 def request_otp(req: OTPRequest):
-    phone_clean = "".join(filter(str.isdigit, req.phone))
+    raw_digits = "".join(filter(str.isdigit, req.phone))
+    phone_clean = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
     return {
         "success": True,
         "message": f"OTP successfully sent to +91 {phone_clean}",
@@ -69,7 +70,8 @@ SEED_USERS_MAP = {
 
 @router.post("/otp/verify", response_model=TokenResponse)
 def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
-    phone_clean = "".join(filter(str.isdigit, req.phone))
+    raw_digits = "".join(filter(str.isdigit, req.phone))
+    phone_clean = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
     if not req.otp:
         raise HTTPException(status_code=400, detail="OTP is required")
 
@@ -115,7 +117,8 @@ def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=TokenResponse)
 def register_user(req: UserRegister, db: Session = Depends(get_db)):
-    phone_clean = "".join(filter(str.isdigit, req.phone))
+    raw_digits = "".join(filter(str.isdigit, req.phone))
+    phone_clean = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
     
     # Check if already registered
     existing = db.query(User).filter(User.phone == phone_clean).first()
@@ -176,7 +179,8 @@ def register_user(req: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     ident = (req.identifier or req.phone or req.username or "").strip().lower()
-    ident_phone = "".join(filter(str.isdigit, ident))
+    raw_digits = "".join(filter(str.isdigit, ident))
+    ident_phone = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
 
     user = None
     if ident_phone:

@@ -9,10 +9,36 @@ export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
 
   if (!booking) return null;
 
+  const isPaidUpfront = booking.payment_status === 'paid';
+  const numericActual = Number(actualAmount) || Number(booking.quote_amount || 0);
+  const numericQuote = Number(booking.quote_amount || 0);
+  const diff = numericActual - numericQuote;
+  const hasExtraCharge = isPaidUpfront && diff > 0;
+
   const handleComplete = (e) => {
     e.preventDefault();
-    onConfirm(booking.id, Number(actualAmount) || booking.quote_amount);
+    onConfirm(booking.id, numericActual);
     onClose();
+  };
+
+  const getHintText = () => {
+    if (!isPaidUpfront) {
+      return "The customer will receive an instant payment link for this exact amount";
+    }
+    if (hasExtraCharge) {
+      return `Initial ₹${numericQuote.toFixed(2)} was paid upfront. Customer will receive a payment link for the extra ₹${diff.toFixed(2)}.`;
+    }
+    return `Full payment of ₹${numericQuote.toFixed(2)} was already collected upfront.`;
+  };
+
+  const getButtonLabel = () => {
+    if (hasExtraCharge) {
+      return `Mark Completed & Request Extra ₹${diff.toFixed(2)}`;
+    }
+    if (isPaidUpfront) {
+      return "Mark Job Completed";
+    }
+    return "Mark Completed & Request Payment";
   };
 
   return (
@@ -26,7 +52,7 @@ export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
             Cancel
           </Button>
           <Button variant="gold" icon={CheckCircle2} onClick={handleComplete}>
-            Mark Completed & Request Payment
+            {getButtonLabel()}
           </Button>
         </>
       }
@@ -58,7 +84,7 @@ export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
             value={actualAmount}
             onChange={(e) => setActualAmount(e.target.value)}
             required
-            hint="The customer will receive an instant payment link for this exact amount"
+            hint={getHintText()}
           />
         </div>
       </form>

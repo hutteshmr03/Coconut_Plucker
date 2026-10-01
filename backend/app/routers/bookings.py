@@ -88,8 +88,9 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
 
     base_amt = base_rate * max(req.tree_count, 1)
     is_urgent = req.booking_type == "urgent"
-    surcharge = round(base_amt * 0.20, 2) if is_urgent else 0.0
-    quote_amt = base_amt + surcharge
+    gst_rate = 0.20 if is_urgent else 0.18
+    gst_amt = round(base_amt * gst_rate, 2)
+    quote_amt = round(base_amt + gst_amt, 2)
 
     # Resolve customer
     customer = None

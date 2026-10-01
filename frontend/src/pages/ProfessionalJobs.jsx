@@ -37,9 +37,6 @@ export const ProfessionalJobs = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
           <h3>Assigned Work Orders ({myBookings.length})</h3>
-          <p className="cell-muted">
-            All customer bookings assigned to you by Admin in {currentProfessional?.taluka} Taluka.
-          </p>
         </div>
       </div>
 

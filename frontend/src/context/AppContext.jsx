@@ -274,25 +274,42 @@ export const AppProvider = ({ children }) => {
   };
 
   const completeJob = (bookingId, actualAmount) => {
+    let toastMsg = "Job marked complete.";
     setBookings((prev) =>
-      prev.map((b) =>
-        b.id === bookingId
-          ? {
-              ...b,
-              status: "completed",
-              actual_amount: actualAmount || b.quote_amount
-            }
-          : b
-      )
+      prev.map((b) => {
+        if (b.id !== bookingId) return b;
+        const finalAmt = Number(actualAmount || b.quote_amount);
+        const initialPaid = Number(b.paid_amount != null ? b.paid_amount : (b.payment_status === 'paid' ? b.quote_amount : 0));
+        const extraBalance = Math.max(0, finalAmt - initialPaid);
+        const hasPendingBalance = extraBalance > 0;
+
+        toastMsg = hasPendingBalance
+          ? `Job completed! Balance payment link of ₹${extraBalance.toFixed(2)} requested from customer.`
+          : `Job marked complete. Full payment of ₹${finalAmt.toFixed(2)} received upfront.`;
+
+        return {
+          ...b,
+          status: "completed",
+          actual_amount: finalAmt,
+          paid_amount: initialPaid,
+          payment_status: hasPendingBalance ? "balance_pending" : "paid"
+        };
+      })
     );
-    showToast("Job marked complete. Payment and review pending.", "success");
+    showToast(toastMsg, "success");
   };
 
   const payBooking = (bookingId) => {
     setBookings((prev) =>
-      prev.map((b) =>
-        b.id === bookingId ? { ...b, payment_status: "paid" } : b
-      )
+      prev.map((b) => {
+        if (b.id !== bookingId) return b;
+        const total = Number(b.actual_amount || b.quote_amount);
+        return {
+          ...b,
+          paid_amount: total,
+          payment_status: "paid"
+        };
+      })
     );
     showToast("Payment processed successfully!", "success");
   };

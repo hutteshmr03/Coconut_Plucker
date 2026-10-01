@@ -57,7 +57,11 @@ export const CustomerBookings = () => {
           const pro = professionals.find((p) => p.id === b.professional_id);
           const currentStepIdx = STATUS_ORDER.indexOf(b.status);
           const isCompleted = b.status === 'completed';
-          const isPaid = b.payment_status === 'paid';
+          const totalAmt = Number(b.actual_amount || b.quote_amount || 0);
+          const paidAmt = Number(b.paid_amount != null ? b.paid_amount : (b.payment_status === 'paid' ? (b.quote_amount || 0) : 0));
+          const balanceDue = Math.max(0, totalAmt - paidAmt);
+          const isFullyPaid = b.payment_status === 'paid' && balanceDue === 0;
+          const isBalancePending = balanceDue > 0;
 
           const formattedDate = new Date(b.scheduled_at).toLocaleDateString('en-IN', {
             weekday: 'short',
@@ -69,73 +73,123 @@ export const CustomerBookings = () => {
           return (
             <div key={b.id} className="booking-card">
               {/* Header */}
-              <div className="bk-head" style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-                <img
-                  src={getServiceImage(svc || b)}
-                  alt={svc?.name || b.service_name}
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '8px',
-                    objectFit: 'cover',
-                    border: '1px solid var(--line)',
-                    flexShrink: 0
-                  }}
-                />
-                <div style={{ flex: 1 }}>
-                  <h4>
-                    {svc?.name || b.service_name} · <span style={{ color: 'var(--teal)' }}>{b.booking_number}</span>
-                    {b.booking_type === 'urgent' && (
-                      <span
-                        style={{
-                          marginLeft: '8px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          backgroundColor: '#FEF3C7',
-                          color: '#D97706',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          letterSpacing: '0.5px',
-                          border: '1px solid #FDE68A'
-                        }}
-                      >
-                        ⚡ URGENT
-                      </span>
-                    )}
-                  </h4>
-                  <div className="cell-muted" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                    <MapPin size={14} color="var(--ink-soft)" />
-                    <span>
-                      {b.tree_count} {svc?.unit?.replace('per ', '') || 'unit'}s · {b.address}, {b.taluka} · Scheduled for {formattedDate}
-                    </span>
+              <div className="bk-head" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
+                  <img
+                    src={getServiceImage(svc || b)}
+                    alt={svc?.name || b.service_name}
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '8px',
+                      objectFit: 'cover',
+                      border: '1px solid var(--line)',
+                      flexShrink: 0
+                    }}
+                  />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '700', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                      <span>{svc?.name || b.service_name}</span>
+                      <span style={{ color: 'var(--teal)' }}>· {b.booking_number}</span>
+                      {b.booking_type === 'urgent' && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            backgroundColor: '#FEF3C7',
+                            color: '#D97706',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            letterSpacing: '0.5px',
+                            border: '1px solid #FDE68A'
+                          }}
+                        >
+                          ⚡ URGENT
+                        </span>
+                      )}
+                    </h4>
+
+                    {/* Clean formatted details & address without broken wrapping */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '5px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span>{b.tree_count} {svc?.unit?.replace('per ', '') || 'unit'}s</span>
+                        <span>·</span>
+                        <span>Scheduled: {formattedDate}</span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'flex', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4' }}>
+                        <MapPin size={13} color="var(--ink-soft)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <span>{b.address}, {b.taluka}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
+                {/* Status & Price */}
+                <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
                   <StatusBadge status={b.status} />
-                  <div className="cell-strong" style={{ marginTop: '6px', fontSize: '16px' }}>
-                    ₹{Number(b.actual_amount || b.quote_amount).toFixed(2)}
+                  <div className="cell-strong" style={{ marginTop: '4px', fontSize: '16px', fontWeight: '800' }}>
+                    ₹{totalAmt.toFixed(2)}
                   </div>
-                  {isPaid && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        fontSize: '11px',
-                        color: 'var(--teal)',
-                        fontWeight: '700',
-                        marginTop: '2px'
-                      }}
-                    >
-                      <Check size={12} strokeWidth={3} /> Paid ({b.payment_method || 'UPI'})
-                    </span>
+                  {isFullyPaid && (
+                    <div style={{ marginTop: '2px' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          fontSize: '11px',
+                          color: 'var(--teal)',
+                          fontWeight: '700'
+                        }}
+                      >
+                        <Check size={12} strokeWidth={3} /> Paid ({b.payment_method || 'UPI'})
+                      </span>
+                    </div>
+                  )}
+                  {isBalancePending && (
+                    <div style={{ marginTop: '2px' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          fontSize: '11px',
+                          color: '#D97706',
+                          fontWeight: '700'
+                        }}
+                      >
+                        ₹{balanceDue.toFixed(2)} Balance Due
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
+
+              {/* Extra Balance Breakdown if adjusted on-site */}
+              {isBalancePending && (
+                <div
+                  style={{
+                    background: '#FEF3C7',
+                    border: '1px solid #FDE68A',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    margin: '10px 0',
+                    fontSize: '12px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    alignItems: 'center',
+                    color: '#92400E'
+                  }}
+                >
+                  <span>Paid Upfront: <b>₹{paidAmt.toFixed(2)}</b></span>
+                  <span>Revised Total: <b>₹{totalAmt.toFixed(2)}</b></span>
+                  <span>Extra Balance Due: <b>₹{balanceDue.toFixed(2)}</b></span>
+                </div>
+              )}
 
               {/* Urgent Price Breakdown Line Items */}
               {b.booking_type === 'urgent' && b.surcharge_amount > 0 && (
@@ -272,33 +326,22 @@ export const CustomerBookings = () => {
                     marginTop: '14px'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className="worker-avatar" style={{ width: '44px', height: '44px', fontSize: '15px' }}>
+                      <div className="worker-avatar" style={{ width: '42px', height: '42px', fontSize: '14px' }}>
                         {getDisplayName(pro)
                           .split(' ')
                           .map((n) => n[0])
                           .join('')}
                       </div>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{getDisplayName(pro)}</b>
-                          <span
-                            style={{
-                              background: 'rgba(72, 187, 120, 0.15)',
-                              color: 'var(--success)',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              fontSize: '10.5px',
-                              fontWeight: '700'
-                            }}
-                          >
-                            🛡️ Certified Climber
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
-                          {pro.experience_years || 5} yrs experience · {pro.taluka || b.taluka} · 
-                          <span className="star-rate" style={{ marginLeft: '4px' }}>
+                        <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{getDisplayName(pro)}</b>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span>{pro.experience_years || 5} yrs exp</span>
+                          <span>·</span>
+                          <span>{pro.taluka || b.taluka}</span>
+                          <span>·</span>
+                          <span className="star-rate">
                             {'★'.repeat(Math.round(pro.rating_avg || 5))} ({pro.rating_avg || '5.0'})
                           </span>
                         </div>
@@ -306,7 +349,7 @@ export const CustomerBookings = () => {
                     </div>
 
                     {/* Live Tracker Status Tag */}
-                    <div style={{ textAlign: 'right' }}>
+                    <div>
                       <span
                         style={{
                           background: b.status === 'in_progress' ? 'var(--teal)' : 'var(--navy)',
@@ -335,7 +378,7 @@ export const CustomerBookings = () => {
                           textAlign: 'center',
                           background: 'var(--teal)',
                           color: '#FFFFFF',
-                          padding: '7px 12px',
+                          padding: '8px 12px',
                           borderRadius: '6px',
                           fontSize: '12px',
                           fontWeight: '700',
@@ -357,7 +400,7 @@ export const CustomerBookings = () => {
                           textAlign: 'center',
                           background: '#25D366',
                           color: '#FFFFFF',
-                          padding: '7px 12px',
+                          padding: '8px 12px',
                           borderRadius: '6px',
                           fontSize: '12px',
                           fontWeight: '700',
@@ -407,53 +450,64 @@ export const CustomerBookings = () => {
                 </div>
               )}
 
-              {/* Actions: Pay and Review */}
-              <div
-                className="top-actions"
-                style={{
-                  justifyContent: 'flex-end',
-                  marginTop: '16px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid var(--line)'
-                }}
-              >
-                {isCompleted && !isPaid && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={CreditCard}
-                    onClick={() => payBooking(b.id)}
-                  >
-                    Pay ₹{Number(b.actual_amount || b.quote_amount).toFixed(2)} Online
-                  </Button>
-                )}
+              {/* Actions: Pay Balance & Rate / Review */}
+              {isCompleted && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    marginTop: '16px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid var(--line)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {isBalancePending && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={CreditCard}
+                        onClick={() => payBooking(b.id)}
+                      >
+                        Pay ₹{balanceDue.toFixed(2)} Balance Online
+                      </Button>
+                    )}
 
-                {isCompleted && isPaid && (
-                  <span
-                    className="badge green"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <Check size={12} /> Paid
-                  </span>
-                )}
-
-                {isCompleted && !b.rating && (
-                  <Button
-                    variant="gold"
-                    size="sm"
-                    icon={Star}
-                    onClick={() => setReviewingBooking(b)}
-                  >
-                    Rate & Review Professional
-                  </Button>
-                )}
-
-                {isCompleted && b.rating && (
-                  <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>
-                    Your Rating: <span className="star-rate">{'★'.repeat(b.rating)}</span> {b.comment ? `— "${b.comment}"` : ''}
+                    {!b.rating && (
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        icon={Star}
+                        onClick={() => setReviewingBooking(b)}
+                      >
+                        Rate & Review Professional
+                      </Button>
+                    )}
                   </div>
-                )}
-              </div>
+
+                  {b.rating && (
+                    <div
+                      style={{
+                        fontSize: '12.5px',
+                        color: 'var(--ink)',
+                        background: 'var(--cream)',
+                        padding: '9px 13px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--line)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <span style={{ fontWeight: '700', color: 'var(--ink-soft)' }}>Your Review:</span>
+                      <span className="star-rate">{'★'.repeat(b.rating)}</span>
+                      {b.comment && <span style={{ color: 'var(--ink)', fontStyle: 'italic' }}>— "{b.comment}"</span>}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
