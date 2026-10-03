@@ -714,7 +714,6 @@ export const BookingWizard = ({ onComplete }) => {
               options={TALUKAS}
               required
               error={errors.taluka}
-              hint="Determines schedule days and local climber allocation"
             />
           </div>
 
@@ -939,8 +938,8 @@ export const BookingWizard = ({ onComplete }) => {
       {/* Step 3: Schedule Selection (Section B.3: Server-driven availability) */}
       {step === 3 && (
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3>{t('wiz_step_3_title')}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <h3 style={{ margin: 0 }}>{t('wiz_step_3_title')}</h3>
             {bookingType === 'urgent' && (
               <span
                 style={{
@@ -978,6 +977,7 @@ export const BookingWizard = ({ onComplete }) => {
                   >
                     {availabilityData.available_dates.slice(0, 4).map((d) => {
                       const isSelected = scheduledDate === d.date;
+                      const cleanLabel = (d.label || '').replace(/[()]/g, '');
                       return (
                         <div
                           key={d.date}
@@ -993,16 +993,14 @@ export const BookingWizard = ({ onComplete }) => {
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
                             display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px'
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center'
                           }}
                         >
-                          <b style={{ fontSize: '13px', color: isSelected ? 'var(--teal)' : 'var(--ink)' }}>
-                            {d.label}
+                          <b style={{ fontSize: '13.5px', color: isSelected ? 'var(--teal)' : 'var(--ink)' }}>
+                            {cleanLabel}
                           </b>
-                          <span style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>
-                            {d.day_name}
-                          </span>
                         </div>
                       );
                     })}
@@ -1272,6 +1270,38 @@ export const BookingWizard = ({ onComplete }) => {
               })}
             </div>
 
+            {/* Add Another Service Button inside Cart */}
+            <div style={{ marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddAnotherService();
+                }}
+                style={{
+                  width: '100%',
+                  padding: '9px 14px',
+                  borderRadius: '8px',
+                  border: '1.5px dashed var(--teal)',
+                  background: 'rgba(31, 138, 130, 0.05)',
+                  color: 'var(--teal-dark)',
+                  fontSize: '13.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(31, 138, 130, 0.12)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(31, 138, 130, 0.05)')}
+              >
+                <Plus size={16} />
+                <span>{t('wiz_add_service', 'Add Another Service')}</span>
+              </button>
+            </div>
+
             {/* Amazon Style Price Breakdown Footer */}
             <div style={{
               marginTop: '16px',
@@ -1305,7 +1335,7 @@ export const BookingWizard = ({ onComplete }) => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
             <Button
               variant="ghost"
               type="button"
@@ -1317,38 +1347,19 @@ export const BookingWizard = ({ onComplete }) => {
             >
               {t('btn_back')}
             </Button>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <Button
-                variant="secondary"
-                type="button"
-                icon={Plus}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleAddAnotherService();
-                }}
-                style={{
-                  border: '1.5px solid var(--teal)',
-                  color: 'var(--teal-dark)',
-                  background: 'var(--paper)',
-                  fontWeight: '600'
-                }}
-              >
-                {t('wiz_add_service', 'Add Service')}
-              </Button>
-              <Button
-                variant="primary"
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (validateStep3()) {
-                    handleOpenPayment();
-                  }
-                }}
-              >
-                <span>{t('wiz_next_step')}</span>
-                <ArrowRight size={16} />
-              </Button>
-            </div>
+            <Button
+              variant="primary"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                if (validateStep3()) {
+                  handleOpenPayment();
+                }
+              }}
+            >
+              <span>{t('wiz_next_step')}</span>
+              <ArrowRight size={16} />
+            </Button>
           </div>
         </Card>
       )}

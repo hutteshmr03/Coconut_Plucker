@@ -45,6 +45,7 @@ export const RazorpayPaymentModal = ({
   // Processing state
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [completedRecord, setCompletedRecord] = useState(null);
   const [error, setError] = useState('');
 
   const numAmount = Number(amount || 0);
@@ -89,33 +90,55 @@ export const RazorpayPaymentModal = ({
         gateway: 'Razorpay',
         paid_at: new Date().toISOString()
       };
+      setCompletedRecord(paymentRecord);
+    }, 1200);
+  };
 
-      setTimeout(() => {
-        setIsSuccess(false);
-        onClose();
-        if (onPaymentSuccess) {
-          onPaymentSuccess(paymentRecord);
-        }
-      }, 1200);
-    }, 1500);
+  const handleOkClick = () => {
+    setIsSuccess(false);
+    onClose();
+    if (onPaymentSuccess && completedRecord) {
+      onPaymentSuccess(completedRecord);
+    }
+  };
+
+  const handleModalClose = () => {
+    if (isProcessing) return;
+    if (isSuccess && completedRecord) {
+      handleOkClick();
+    } else {
+      onClose();
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={isProcessing ? () => {} : onClose}
-      title="Secure Razorpay Payment Gateway"
+      onClose={handleModalClose}
+      title={isSuccess ? "Payment Status" : "Secure Payment Gateway"}
+      maxWidth={isSuccess ? '380px' : '520px'}
     >
       <div style={{ padding: '4px 0' }}>
         {isSuccess ? (
-          <div style={{ textAlign: 'center', padding: '36px 16px' }}>
-            <CheckCircle size={56} color="#38a169" style={{ margin: '0 auto 14px' }} />
-            <h3 style={{ color: '#276749', fontSize: '20px', marginBottom: '6px' }}>
+          <div style={{ textAlign: 'center', padding: '12px 12px 6px' }}>
+            <CheckCircle size={48} color="#38a169" style={{ margin: '0 auto 10px' }} />
+            <h3 style={{ color: '#276749', fontSize: '18px', marginBottom: '16px', fontWeight: '800' }}>
               Payment of ₹{numAmount.toFixed(2)} Successful!
             </h3>
-            <p className="cell-muted" style={{ fontSize: '13.5px' }}>
-              Razorpay Transaction Verified. Confirming your booking now...
-            </p>
+            <Button
+              variant="primary"
+              type="button"
+              onClick={handleOkClick}
+              style={{
+                minWidth: '100px',
+                padding: '8px 24px',
+                fontSize: '14px',
+                fontWeight: '700',
+                margin: '0 auto'
+              }}
+            >
+              OK
+            </Button>
           </div>
         ) : (
           <div>
@@ -245,7 +268,7 @@ export const RazorpayPaymentModal = ({
                 {upiMethod === 'id' ? (
                   <div>
                     <Input
-                      label="Enter Your Virtual Payment Address (UPI ID)"
+                      label="Enter Your UPI ID"
                       placeholder="e.g. 984253XXX4@paytm or name@okhdfcbank"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
@@ -404,7 +427,7 @@ export const RazorpayPaymentModal = ({
                 }}
               >
                 <Lock size={16} />
-                {isProcessing ? 'Verifying with Bank...' : `Pay ₹${numAmount.toFixed(2)} via Razorpay`}
+                {isProcessing ? 'Verifying with Bank...' : `Pay ₹${numAmount.toFixed(2)}`}
               </button>
             </div>
           </div>

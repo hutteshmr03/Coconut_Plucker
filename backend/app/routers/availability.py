@@ -83,7 +83,7 @@ def get_availability(
         if js_day in allowed_days:
             iso = candidate.strftime("%Y-%m-%d")
             day_name = day_names[js_day]
-            label = f"{candidate.strftime('%d %b')} ({day_name})"
+            label = f"{int(candidate.strftime('%d'))} {candidate.strftime('%b')} {day_name}"
             available_dates.append(
                 AvailableDate(
                     date=iso,

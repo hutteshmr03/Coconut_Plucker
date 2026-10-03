@@ -177,7 +177,7 @@ function getSimulatedServerAvailability(taluka = 'North Goa', serviceId = '', bo
       availableDates.push({
         date: iso,
         day_name: dayName,
-        label: `${formatted} (${dayName})`,
+        label: `${formatted} ${dayName}`,
         time_slots: [
           { value: '08:00', label: '08:00 AM – 10:00 AM' },
           { value: '10:00', label: '10:00 AM – 12:00 PM' },

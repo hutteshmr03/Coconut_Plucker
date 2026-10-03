@@ -201,7 +201,7 @@ export const formatScheduledDateLabel = (dateStr) => {
   if (isNaN(d.getTime())) return dateStr;
   const dayName = d.toLocaleDateString('en-IN', { weekday: 'long' });
   const formatted = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  return `${formatted} (${dayName})`;
+  return `${formatted} ${dayName}`;
 };
 
 // Global Service Real Photographic Images
