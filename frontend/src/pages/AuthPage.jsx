@@ -416,7 +416,7 @@ export const AuthPage = () => {
               {loginType === 'phone_otp' && loginStep === 'otp' && (
                 <form onSubmit={handleVerifyLoginOTP} autoComplete="off">
                   <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                    {t('auth_otp_sent_to')} <b>+91 {loginPhone}</b>
+                    {t('auth_otp_sent_to', 'OTP sent to')} <b>+91 {loginPhone}</b>
                   </p>
 
                   {pendingLoginUser && (
@@ -439,10 +439,10 @@ export const AuthPage = () => {
                   )}
 
                   <Input
-                    label={t('auth_otp_step_title')}
+                    label={t('auth_otp_step_title', 'Enter OTP')}
                     type="text"
                     autoComplete="one-time-code"
-                    placeholder="1 2 3 4"
+                    placeholder="XXXX"
                     maxLength={6}
                     value={loginOtp}
                     onChange={(e) => setLoginOtp(e.target.value)}
@@ -604,7 +604,7 @@ export const AuthPage = () => {
           {mode === 'signup' && signupStep === 'otp' && (
             <form onSubmit={handleVerifySignupOTP} autoComplete="off">
               <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                {t('auth_otp_sent_to')} <b>+91 {signupPhone}</b>
+                {t('auth_otp_sent_to', 'OTP sent to')} <b>+91 {signupPhone}</b>
               </p>
 
               {pendingSignupData && (
@@ -626,10 +626,10 @@ export const AuthPage = () => {
               )}
 
               <Input
-                label={t('auth_otp_step_title')}
+                label={t('auth_otp_step_title', 'Enter OTP')}
                 type="text"
                 autoComplete="one-time-code"
-                placeholder="1 2 3 4"
+                placeholder="XXXX"
                 maxLength={6}
                 value={signupOtp}
                 onChange={(e) => setSignupOtp(e.target.value)}
