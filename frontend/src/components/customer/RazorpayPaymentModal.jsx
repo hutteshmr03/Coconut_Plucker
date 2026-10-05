@@ -32,13 +32,13 @@ export const RazorpayPaymentModal = ({
 }) => {
   const [activeTab, setActiveTab] = useState('upi'); // 'upi' | 'card' | 'netbanking'
   const [upiMethod, setUpiMethod] = useState('id'); // 'id' | 'qr'
-  const [upiId, setUpiId] = useState('nanu@okhdfcbank');
+  const [upiId, setUpiId] = useState('');
   
   // Card details
-  const [cardNumber, setCardNumber] = useState('4532 8901 2345 6789');
-  const [cardExpiry, setCardExpiry] = useState('08/29');
-  const [cardCvv, setCardCvv] = useState('321');
-  const [cardHolder, setCardHolder] = useState('Nanu Prabhu');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
 
   // Bank selection
   const [selectedBank, setSelectedBank] = useState('hdfc');
@@ -326,7 +326,7 @@ export const RazorpayPaymentModal = ({
                   <div>
                     <Input
                       label="Enter Your UPI ID"
-                      placeholder="e.g. 984253XXX4@paytm or name@okhdfcbank"
+                      placeholder="e.g. mobile@upi or username@bank"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       required
@@ -374,34 +374,44 @@ export const RazorpayPaymentModal = ({
               <div>
                 <Input
                   label="Card Number (Visa, MasterCard, RuPay)"
-                  placeholder="4532 8901 2345 6789"
+                  placeholder="•••• •••• •••• ••••"
                   maxLength={19}
                   value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+                    const formatted = raw.match(/.{1,4}/g)?.join(' ') || raw;
+                    setCardNumber(formatted);
+                  }}
                   required
                 />
                 <div className="field-row">
                   <Input
                     label="Expiry Date (MM/YY)"
-                    placeholder="08/29"
+                    placeholder="MM / YY"
                     maxLength={5}
                     value={cardExpiry}
-                    onChange={(e) => setCardExpiry(e.target.value)}
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      if (v.length >= 3) {
+                        v = `${v.slice(0, 2)}/${v.slice(2)}`;
+                      }
+                      setCardExpiry(v);
+                    }}
                     required
                   />
                   <Input
                     label="CVV / CVC"
-                    placeholder="321"
+                    placeholder="•••"
                     type="password"
                     maxLength={4}
                     value={cardCvv}
-                    onChange={(e) => setCardCvv(e.target.value)}
+                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     required
                   />
                 </div>
                 <Input
                   label="Cardholder Name"
-                  placeholder="Full Name as printed on card"
+                  placeholder="Name as printed on card"
                   value={cardHolder}
                   onChange={(e) => setCardHolder(e.target.value)}
                   required
