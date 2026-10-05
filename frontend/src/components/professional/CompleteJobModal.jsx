@@ -16,29 +16,17 @@ export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
   const hasExtraCharge = isPaidUpfront && diff > 0;
 
   const handleComplete = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     onConfirm(booking.id, numericActual);
     onClose();
   };
 
   const getHintText = () => {
-    if (!isPaidUpfront) {
-      return "The customer will receive an instant payment link for this exact amount";
-    }
-    if (hasExtraCharge) {
-      return `Initial ₹${numericQuote.toFixed(2)} was paid upfront. Customer will receive a payment link for the extra ₹${diff.toFixed(2)}.`;
-    }
-    return `Full payment of ₹${numericQuote.toFixed(2)} was already collected upfront.`;
+    return `Full payment of ₹${numericQuote.toFixed(2)} was received upfront.`;
   };
 
   const getButtonLabel = () => {
-    if (hasExtraCharge) {
-      return `Mark Completed & Request Extra ₹${diff.toFixed(2)}`;
-    }
-    if (isPaidUpfront) {
-      return "Mark Job Completed";
-    }
-    return "Mark Completed & Request Payment";
+    return "Mark Job Completed";
   };
 
   return (

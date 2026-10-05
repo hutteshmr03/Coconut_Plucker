@@ -60,7 +60,9 @@ export const AppProvider = ({ children }) => {
       const saved = localStorage.getItem(STORAGE_KEY + "_bookings");
       const list = saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
       if (!Array.isArray(list)) return INITIAL_BOOKINGS;
-      return list.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) }));
+      return list
+        .filter((b) => b.id !== 'bkg_003' && b.booking_number !== 'CP-1003')
+        .map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) }));
     } catch {
       return INITIAL_BOOKINGS;
     }
@@ -274,29 +276,20 @@ export const AppProvider = ({ children }) => {
   };
 
   const completeJob = (bookingId, actualAmount) => {
-    let toastMsg = "Job marked complete.";
     setBookings((prev) =>
       prev.map((b) => {
         if (b.id !== bookingId) return b;
         const finalAmt = Number(actualAmount || b.quote_amount);
-        const initialPaid = Number(b.paid_amount != null ? b.paid_amount : (b.payment_status === 'paid' ? b.quote_amount : 0));
-        const extraBalance = Math.max(0, finalAmt - initialPaid);
-        const hasPendingBalance = extraBalance > 0;
-
-        toastMsg = hasPendingBalance
-          ? `Job completed! Balance payment link of ₹${extraBalance.toFixed(2)} requested from customer.`
-          : `Job marked complete. Full payment of ₹${finalAmt.toFixed(2)} received upfront.`;
-
         return {
           ...b,
           status: "completed",
           actual_amount: finalAmt,
-          paid_amount: initialPaid,
-          payment_status: hasPendingBalance ? "balance_pending" : "paid"
+          paid_amount: finalAmt,
+          payment_status: "paid"
         };
       })
     );
-    showToast(toastMsg, "success");
+    showToast("Job marked complete. Full payment received upfront.", "success");
   };
 
   const payBooking = (bookingId) => {

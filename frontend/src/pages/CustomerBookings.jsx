@@ -60,10 +60,6 @@ export const CustomerBookings = () => {
           const currentStepIdx = STATUS_ORDER.indexOf(b.status);
           const isCompleted = b.status === 'completed';
           const totalAmt = Number(b.actual_amount || b.quote_amount || 0);
-          const paidAmt = Number(b.paid_amount != null ? b.paid_amount : (b.payment_status === 'paid' ? (b.quote_amount || 0) : 0));
-          const balanceDue = Math.max(0, totalAmt - paidAmt);
-          const isFullyPaid = b.payment_status === 'paid' && balanceDue === 0;
-          const isBalancePending = balanceDue > 0;
 
           const formattedDate = new Date(b.scheduled_at).toLocaleDateString('en-IN', {
             weekday: 'short',
@@ -116,18 +112,11 @@ export const CustomerBookings = () => {
                     <div className="bk-price">
                       ₹{totalAmt.toFixed(2)}
                     </div>
-                    {isFullyPaid && (
-                      <div className="bk-payment-label" style={{ color: 'var(--teal)' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                          <Check size={12} strokeWidth={3} /> Paid · {b.payment_method ? (b.payment_method.startsWith('UPI') ? 'UPI' : b.payment_method.split(' ')[0]) : 'UPI'}
-                        </span>
-                      </div>
-                    )}
-                    {isBalancePending && (
-                      <div className="bk-payment-label" style={{ color: '#D97706' }}>
-                        ₹{balanceDue.toFixed(2)} Balance Due
-                      </div>
-                    )}
+                    <div className="bk-payment-label" style={{ color: 'var(--teal)' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <Check size={12} strokeWidth={3} /> Paid · {b.payment_method ? (b.payment_method.startsWith('UPI') ? 'UPI' : b.payment_method.split(' ')[0]) : 'UPI'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -138,20 +127,8 @@ export const CustomerBookings = () => {
                 <span>{b.address}, {b.taluka}</span>
               </div>
 
-              {/* Price Breakdown Box (2-column grid, labels left, values right) */}
-              {isBalancePending && (
-                <div className="bk-price-breakdown">
-                  <span style={{ color: '#92400E' }}>Paid Upfront:</span>
-                  <b style={{ color: '#92400E', textAlign: 'right' }}>₹{paidAmt.toFixed(2)}</b>
-                  <span style={{ color: '#92400E' }}>Revised Total:</span>
-                  <b style={{ color: '#92400E', textAlign: 'right' }}>₹{totalAmt.toFixed(2)}</b>
-                  <span style={{ color: '#92400E', fontWeight: '700' }}>Extra Balance Due:</span>
-                  <b style={{ color: '#B45309', textAlign: 'right', fontWeight: '800' }}>₹{balanceDue.toFixed(2)}</b>
-                </div>
-              )}
-
               {/* Urgent Price Breakdown Line Items */}
-              {b.booking_type === 'urgent' && b.surcharge_amount > 0 && !isBalancePending && (
+              {b.booking_type === 'urgent' && b.surcharge_amount > 0 && (
                 <div
                   style={{
                     background: 'var(--cream)',
@@ -347,20 +324,6 @@ export const CustomerBookings = () => {
                   <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
                     📸 Customer Tree Reference Photo attached
                   </span>
-                </div>
-              )}
-
-              {/* Bottom Actions Area (pinned to bottom with margin-top: auto) */}
-              {isCompleted && isBalancePending && (
-                <div className="bk-bottom-actions">
-                  <Button
-                    variant="primary"
-                    icon={CreditCard}
-                    className="bk-pay-btn"
-                    onClick={() => payBooking(b.id)}
-                  >
-                    Pay ₹{balanceDue.toFixed(2)} Balance Online
-                  </Button>
                 </div>
               )}
             </div>
