@@ -66,7 +66,10 @@ export const BookingWizard = ({ onComplete }) => {
 
   const [step, setStep] = useState(1);
   const [selectedServiceId, setSelectedServiceId] = useState(
-    selectedServiceForBooking?.id || services[0]?.id || ''
+    selectedServiceForBooking?.id || ''
+  );
+  const [isServiceChosen, setIsServiceChosen] = useState(
+    Boolean(selectedServiceForBooking?.id)
   );
   const [serviceCart, setServiceCart] = useState([]);
   const [treeCount, setTreeCount] = useState(1);
@@ -173,13 +176,13 @@ export const BookingWizard = ({ onComplete }) => {
       .then((res) => {
         if (isMounted && res) {
           setAvailabilityData(res);
-          // Set initial date from server's first available date if nothing chosen yet or invalid for current mode
+          // Validate existing date against new taluka schedule if already selected
           if (res.available_dates && res.available_dates.length > 0) {
             setScheduledDate((prev) => {
-              if (!prev) return res.available_dates[0].date;
+              if (!prev) return '';
               const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
               const cur = new Date(prev + 'T00:00:00');
-              return config.allowedIndices.includes(cur.getDay()) ? prev : res.available_dates[0].date;
+              return config.allowedIndices.includes(cur.getDay()) ? prev : '';
             });
           }
         }
@@ -280,8 +283,7 @@ export const BookingWizard = ({ onComplete }) => {
   }];
 
   const totalBase = currentItems.reduce((acc, item) => acc + (Number(item.base_rate || 0) * Math.max(1, Number(item.treeCount || 1))), 0);
-  const totalGst = totalBase * (bookingType === 'urgent' ? 0.20 : 0.18);
-  const totalAmount = totalBase + totalGst;
+  const totalAmount = totalBase;
   const totalTreeCount = currentItems.reduce((acc, item) => acc + Math.max(1, Number(item.treeCount || 1)), 0);
 
   // Upfront Payment Gateway Flow (Razorpay)
@@ -307,8 +309,8 @@ export const BookingWizard = ({ onComplete }) => {
       scheduled_at: scheduledAt,
       booking_type: bookingType,
       base_amount: totalBase,
-      surcharge_amount: Number(quoteData?.surcharge_amount || 0),
-      gst_amount: totalGst,
+      surcharge_amount: 0,
+      gst_amount: 0,
       quote_amount: finalAmount,
       actual_amount: finalAmount,
       payment_status: 'paid',
@@ -326,6 +328,7 @@ export const BookingWizard = ({ onComplete }) => {
 
   const handleSelectService = (svcId) => {
     setSelectedServiceId(svcId);
+    setIsServiceChosen(true);
     const existing = serviceCart.find(i => i.serviceId === svcId);
     if (existing) {
       setTreeCount(existing.treeCount);
@@ -358,11 +361,8 @@ export const BookingWizard = ({ onComplete }) => {
       return [...prev, newItem];
     });
 
-    const addedIds = (serviceCart.length > 0 ? serviceCart : [{ serviceId: activeService.id }]).map(i => i.serviceId);
-    const nextUnadded = services.find(s => !addedIds.includes(s.id) && s.status === 'active');
-    if (nextUnadded) {
-      setSelectedServiceId(nextUnadded.id);
-    }
+    setIsServiceChosen(false);
+    setSelectedServiceId('');
     setTreeCount(1);
     setHeightCategory('medium');
     setStep(1);
@@ -533,6 +533,7 @@ export const BookingWizard = ({ onComplete }) => {
           <div className="svc-pick-grid">
             {services
               .filter((s) => s.status === 'active')
+              .filter((s) => !isServiceChosen || s.id === selectedServiceId)
               .map((svc) => {
                 const isSelected = selectedServiceId === svc.id;
                 const inCart = serviceCart.find((i) => i.serviceId === svc.id);
@@ -546,7 +547,8 @@ export const BookingWizard = ({ onComplete }) => {
                     style={{
                       position: 'relative',
                       border: inCart ? '2px solid #FF9900' : isSelected ? '2px solid var(--teal)' : '1px solid var(--line)',
-                      boxShadow: inCart ? '0 4px 12px rgba(255, 153, 0, 0.18)' : 'none'
+                      boxShadow: inCart ? '0 4px 12px rgba(255, 153, 0, 0.18)' : isSelected ? '0 4px 16px rgba(31, 138, 130, 0.2)' : 'none',
+                      cursor: 'pointer'
                     }}
                   >
                     <div className="svc-pick-thumb-wrap">
@@ -598,27 +600,77 @@ export const BookingWizard = ({ onComplete }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginTop: '24px',
+            marginTop: '20px',
             paddingTop: '16px',
             borderTop: '1px solid var(--line)',
-            flexWrap: 'wrap',
-            gap: '12px'
+            gap: '10px'
           }}>
-            <div style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
-              {serviceCart.length > 0 && (
-                <>
-                  <span style={{ color: 'var(--ink-soft)' }}>Cart Subtotal ({serviceCart.length} service{serviceCart.length > 1 ? 's' : ''}):</span>{' '}
-                  <b style={{ fontSize: '16px', color: '#B12704', fontWeight: '800' }}>₹{totalBase.toFixed(2)}</b>
-                </>
+            <div>
+              {isServiceChosen ? (
+                <Button
+                  variant="ghost"
+                  size="md"
+                  type="button"
+                  onClick={() => {
+                    setIsServiceChosen(false);
+                    setSelectedServiceId('');
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 14px',
+                    fontSize: '13.5px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <ArrowLeft size={16} />
+                  <span>Choose Another</span>
+                </Button>
+              ) : (
+                <div style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
+                  {serviceCart.length > 0 && (
+                    <>
+                      <span>Cart Subtotal ({serviceCart.length} service{serviceCart.length > 1 ? 's' : ''}):</span>{' '}
+                      <b style={{ fontSize: '15px', color: '#B12704', fontWeight: '800' }}>₹{totalBase.toFixed(2)}</b>
+                    </>
+                  )}
+                </div>
               )}
             </div>
 
             <Button
-              variant="primary"
+              variant={selectedServiceId ? 'primary' : 'secondary'}
+              size="md"
               type="button"
+              disabled={!selectedServiceId}
               onClick={(e) => {
                 e.preventDefault();
                 if (selectedServiceId) setStep(2);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                fontSize: '14px',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                ...(selectedServiceId
+                  ? {
+                      backgroundColor: '#1F8A82',
+                      color: '#FFFFFF',
+                      boxShadow: '0 4px 14px rgba(31, 138, 130, 0.45), 0 0 10px rgba(31, 138, 130, 0.35)',
+                      opacity: 1,
+                      cursor: 'pointer'
+                    }
+                  : {
+                      backgroundColor: '#E2E8F0',
+                      color: '#94A3B8',
+                      boxShadow: 'none',
+                      opacity: 0.7,
+                      cursor: 'not-allowed'
+                    })
               }}
             >
               <span>{serviceCart.length > 0 ? 'Proceed to Details' : t('wiz_next_step')}</span>
@@ -632,7 +684,7 @@ export const BookingWizard = ({ onComplete }) => {
       {step === 2 && (
         <Card>
           <h3>
-            {activeService.icon} {activeService.name} — {t('wiz_step_2_title')}
+            {activeService.icon} {activeService.name}
           </h3>
 
           <div className="field-row">
@@ -982,8 +1034,13 @@ export const BookingWizard = ({ onComplete }) => {
                         <div
                           key={d.date}
                           onClick={() => {
-                            setScheduledDate(d.date);
+                            if (scheduledDate === d.date) {
+                              setScheduledDate('');
+                            } else {
+                              setScheduledDate(d.date);
+                            }
                             setCustomDateError('');
+                            setErrors((prev) => ({ ...prev, scheduledDate: '' }));
                           }}
                           style={{
                             padding: '12px 14px',
@@ -1013,72 +1070,74 @@ export const BookingWizard = ({ onComplete }) => {
                 {errors.scheduledDate && <div className="field-error">{errors.scheduledDate}</div>}
               </div>
 
-              {/* Custom / Future Date Picker with Taluka Schedule Validation */}
-              <div style={{
-                marginTop: '18px',
-                padding: '14px 16px',
-                background: 'var(--cream)',
-                border: '1px solid var(--line)',
-                borderRadius: '10px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
-                  <label style={{ fontWeight: '700', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
-                    🗓️ {t('wiz_customize_date', 'Customize Date')}
-                  </label>
-                  <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
-                    {bookingType === 'urgent'
-                      ? '⚡ Urgent: Any future day except Sunday'
-                      : `🌿 Normal: ${getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}`
-                    }
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <input
-                    type="date"
-                    min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
-                    value={scheduledDate}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) return;
-                      const chosen = new Date(val + 'T00:00:00');
-                      const dayOfWeek = chosen.getDay();
-                      const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
-                      if (!config.allowedIndices.includes(dayOfWeek)) {
-                        setCustomDateError(
-                          bookingType === 'urgent'
-                            ? 'Urgent bookings cannot be scheduled on Sundays. Please choose Monday through Saturday.'
-                            : `Selected day (${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dayOfWeek]}) is not an allocated day for ${taluka} (${config.description}).`
-                        );
-                      } else {
-                        setCustomDateError('');
-                        setScheduledDate(val);
+              {/* Custom / Future Date Picker with Taluka Schedule Validation - automatically invisible if a slot is selected */}
+              {!availabilityData?.available_dates?.slice(0, 4)?.some((d) => d.date === scheduledDate) && (
+                <div style={{
+                  marginTop: '14px',
+                  padding: '14px 16px',
+                  background: 'var(--cream)',
+                  border: '1px solid var(--line)',
+                  borderRadius: '10px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
+                      🗓️ {t('wiz_customize_date', 'Customize Date')}
+                    </label>
+                    <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                      {bookingType === 'urgent'
+                        ? '⚡ Urgent: Any future day except Sunday'
+                        : `🌿 Normal: ${getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}`
                       }
-                    }}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: customDateError ? '1.5px solid var(--danger)' : '1.5px solid var(--line)',
-                      background: 'var(--paper)',
-                      fontSize: '13.5px',
-                      fontWeight: '600',
-                      color: 'var(--ink)',
-                      outline: 'none',
-                      flex: 1,
-                      minWidth: '200px'
-                    }}
-                  />
-                  {scheduledDate && (
-                    <span style={{ fontSize: '13px', color: 'var(--teal-dark)', fontWeight: '700' }}>
-                      ✓ {formatScheduledDateLabel(scheduledDate)}
                     </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="date"
+                      min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                      value={scheduledDate}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) return;
+                        const chosen = new Date(val + 'T00:00:00');
+                        const dayOfWeek = chosen.getDay();
+                        const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
+                        if (!config.allowedIndices.includes(dayOfWeek)) {
+                          setCustomDateError(
+                            bookingType === 'urgent'
+                              ? 'Urgent bookings cannot be scheduled on Sundays. Please choose Monday through Saturday.'
+                              : `Selected day (${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dayOfWeek]}) is not an allocated day for ${taluka} (${config.description}).`
+                          );
+                        } else {
+                          setCustomDateError('');
+                          setScheduledDate(val);
+                        }
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: customDateError ? '1.5px solid var(--danger)' : '1.5px solid var(--line)',
+                        background: 'var(--paper)',
+                        fontSize: '13.5px',
+                        fontWeight: '600',
+                        color: 'var(--ink)',
+                        outline: 'none',
+                        flex: 1,
+                        minWidth: '200px'
+                      }}
+                    />
+                    {scheduledDate && (
+                      <span style={{ fontSize: '13px', color: 'var(--teal-dark)', fontWeight: '700' }}>
+                        ✓ {formatScheduledDateLabel(scheduledDate)}
+                      </span>
+                    )}
+                  </div>
+                  {customDateError && (
+                    <div className="field-error" style={{ marginTop: '8px', fontSize: '12px' }}>
+                      {customDateError}
+                    </div>
                   )}
                 </div>
-                {customDateError && (
-                  <div className="field-error" style={{ marginTop: '8px', fontSize: '12px' }}>
-                    {customDateError}
-                  </div>
-                )}
-              </div>
+              )}
             </>
           )}
 
@@ -1298,11 +1357,11 @@ export const BookingWizard = ({ onComplete }) => {
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(31, 138, 130, 0.05)')}
               >
                 <Plus size={16} />
-                <span>{t('wiz_add_service', 'Add Another Service')}</span>
+                <span>{t('wiz_add_service', 'Add More Services')}</span>
               </button>
             </div>
 
-            {/* Amazon Style Price Breakdown Footer */}
+            {/* Price Breakdown Footer (GST Included in Items Subtotal) */}
             <div style={{
               marginTop: '16px',
               paddingTop: '14px',
@@ -1314,10 +1373,6 @@ export const BookingWizard = ({ onComplete }) => {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)' }}>
                 <span>Items Subtotal:</span>
                 <span>₹{totalBase.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)' }}>
-                <span>{bookingType === 'urgent' ? '⚡ Urgent GST (20%):' : 'Estimated GST (18%):'}</span>
-                <span>+ ₹{totalGst.toFixed(2)}</span>
               </div>
               <div style={{
                 display: 'flex',

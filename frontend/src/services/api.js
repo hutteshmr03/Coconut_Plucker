@@ -65,21 +65,16 @@ export const bookingsAPI = {
         body: JSON.stringify({ service_id: serviceId, tree_count: treeCount, booking_type: bookingType })
       });
     } catch {
-      // Backend calculation simulation: 20% GST for urgent, 18% GST for normal
+      // Rates are GST-inclusive
       const base = Number(baseRate || 0) * Number(treeCount || 1);
-      const isUrgent = bookingType === 'urgent';
-      const gstRate = isUrgent ? 0.20 : 0.18;
-      const gstLabel = isUrgent ? '20% Urgent GST' : '18% GST';
-      const gstAmount = Math.round(base * gstRate * 100) / 100;
-      const total = Math.round((base + gstAmount) * 100) / 100;
       return {
         base_amount: base,
         surcharge_rate: 0,
-        surcharge_label: gstLabel,
+        surcharge_label: null,
         surcharge_amount: 0,
-        gst_rate: gstRate,
-        gst_amount: gstAmount,
-        quote_amount: total
+        gst_rate: 0,
+        gst_amount: 0,
+        quote_amount: base
       };
     }
   },

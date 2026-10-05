@@ -24,22 +24,15 @@ def calculate_quote(req: QuoteRequest, db: Session = Depends(get_db)):
         pass
 
     base_amount = base_rate * max(req.tree_count, 1)
-    is_urgent = req.booking_type == "urgent"
-    
-    # User requirement: Only 20% GST for urgent bookings (no separate surcharge)
-    gst_rate = 0.20 if is_urgent else 0.18
-    gst_label = "20% Urgent GST" if is_urgent else "18% GST"
-    gst_amount = round(base_amount * gst_rate, 2)
-    total_quote = round(base_amount + gst_amount, 2)
 
     return QuoteResponse(
         base_amount=base_amount,
         surcharge_rate=0.0,
-        surcharge_label=gst_label,
+        surcharge_label=None,
         surcharge_amount=0.0,
-        gst_rate=gst_rate,
-        gst_amount=gst_amount,
-        quote_amount=total_quote
+        gst_rate=0.0,
+        gst_amount=0.0,
+        quote_amount=base_amount
     )
 
 @router.get("", response_model=List[BookingOut])
@@ -87,10 +80,7 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
         pass
 
     base_amt = base_rate * max(req.tree_count, 1)
-    is_urgent = req.booking_type == "urgent"
-    gst_rate = 0.20 if is_urgent else 0.18
-    gst_amt = round(base_amt * gst_rate, 2)
-    quote_amt = round(base_amt + gst_amt, 2)
+    quote_amt = base_amt
 
     # Resolve customer
     customer = None
