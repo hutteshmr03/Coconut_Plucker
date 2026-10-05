@@ -11,6 +11,7 @@ import {
   Lock,
   ArrowRight
 } from 'lucide-react';
+import { formatScheduledDateLabel } from '../../utils/helpers';
 
 const POPULAR_BANKS = [
   { id: 'hdfc', name: 'HDFC Bank', icon: '🏛️' },
@@ -115,26 +116,82 @@ export const RazorpayPaymentModal = ({
     <Modal
       isOpen={isOpen}
       onClose={handleModalClose}
-      title={isSuccess ? "Payment Status" : "Secure Payment Gateway"}
-      maxWidth={isSuccess ? '380px' : '520px'}
+      title={isSuccess ? "Booking Confirmed" : "Secure Payment Gateway"}
+      maxWidth={isSuccess ? '440px' : '520px'}
     >
       <div style={{ padding: '4px 0' }}>
         {isSuccess ? (
-          <div style={{ textAlign: 'center', padding: '12px 12px 6px' }}>
-            <CheckCircle size={48} color="#38a169" style={{ margin: '0 auto 10px' }} />
-            <h3 style={{ color: '#276749', fontSize: '18px', marginBottom: '16px', fontWeight: '800' }}>
-              Payment of ₹{numAmount.toFixed(2)} Successful!
+          <div style={{ textAlign: 'center', padding: '6px 4px 4px' }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(56, 161, 105, 0.12)',
+              border: '2px solid #38a169',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 12px'
+            }}>
+              <CheckCircle size={36} color="#38a169" />
+            </div>
+
+            <h3 style={{ color: '#0F1111', fontSize: '19px', fontWeight: '800', marginBottom: '4px' }}>
+              Thanks for your booking!
             </h3>
+            <p style={{ fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '16px' }}>
+              Your payment of <b style={{ color: '#0F1111' }}>₹{numAmount.toFixed(2)}</b> was received successfully.
+            </p>
+
+            {/* Amazon / Flipkart Style Booking Summary Card */}
+            <div style={{
+              background: 'var(--paper)',
+              border: '1px solid var(--line)',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              textAlign: 'left',
+              marginBottom: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+            }}>
+              {bookingDetails?.scheduledDate && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                  <span style={{ color: 'var(--ink-soft)' }}>Scheduled Date:</span>
+                  <span style={{ fontWeight: '700', color: '#0F1111' }}>
+                    {formatScheduledDateLabel(bookingDetails.scheduledDate)}
+                  </span>
+                </div>
+              )}
+
+              {bookingDetails?.taluka && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                  <span style={{ color: 'var(--ink-soft)' }}>Location:</span>
+                  <span style={{ fontWeight: '600', color: '#0F1111' }}>
+                    {bookingDetails.taluka}, Goa
+                  </span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', paddingTop: '6px', borderTop: '1px dashed var(--line)' }}>
+                <span style={{ color: 'var(--ink-soft)' }}>Amount Paid:</span>
+                <span style={{ fontWeight: '800', color: '#B12704', fontSize: '13.5px' }}>
+                  ₹{numAmount.toFixed(2)} <span style={{ fontSize: '11px', color: '#38a169', fontWeight: '700' }}>✓ Paid</span>
+                </span>
+              </div>
+            </div>
+
             <Button
               variant="primary"
+              size="lg"
+              className="btn-block"
               type="button"
               onClick={handleOkClick}
               style={{
-                minWidth: '100px',
-                padding: '8px 24px',
-                fontSize: '14px',
                 fontWeight: '700',
-                margin: '0 auto'
+                fontSize: '14px',
+                padding: '10px 20px'
               }}
             >
               OK
