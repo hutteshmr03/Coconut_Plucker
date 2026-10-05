@@ -115,7 +115,7 @@ export const AssignWorkerModal = ({
                   {getDisplayName(pro)}
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
-                  {pro.experience_years} yrs exp · Taluka: <b>{pro.taluka}</b> · ★ {pro.rating_avg}
+                  {pro.experience_years} yrs exp · Taluka: <b>{pro.taluka}</b>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
                   {isTalukaMatch && (

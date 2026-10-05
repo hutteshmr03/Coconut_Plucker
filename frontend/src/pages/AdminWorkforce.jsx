@@ -91,7 +91,6 @@ export const AdminWorkforce = () => {
               <th>Experience</th>
               <th>Safety Certification</th>
               <th>Skills Count</th>
-              <th>Rating</th>
               <th>Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
@@ -125,11 +124,6 @@ export const AdminWorkforce = () => {
                 </td>
                 <td>
                   <span className="badge blue">{pro.skills.length} Services</span>
-                </td>
-                <td>
-                  <span style={{ fontWeight: '700', color: 'var(--gold)' }}>
-                    ★ {pro.rating_avg}
-                  </span>
                 </td>
                 <td>
                   <StatusBadge status={pro.status} />

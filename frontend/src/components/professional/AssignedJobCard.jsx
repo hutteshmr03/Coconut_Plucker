@@ -88,38 +88,40 @@ export const AssignedJobCard = ({
 
         <div className="bk-right">
           <StatusBadge status={booking.status} />
-          <div className="bk-price">
-            ₹{totalAmt.toFixed(2)}
-          </div>
-          {isPaid ? (
-            <div style={{ textAlign: 'right', marginTop: '2px' }}>
-              <div
-                className="bk-payment-label"
-                style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-              >
-                <Check size={12} strokeWidth={3} /> Paid · {methodLabel}
-              </div>
-              {upiHandle && (
+          <div className="bk-right-price">
+            <div className="bk-price">
+              ₹{totalAmt.toFixed(2)}
+            </div>
+            {isPaid ? (
+              <div style={{ textAlign: 'right', marginTop: '2px' }}>
                 <div
-                  style={{
-                    fontSize: '11px',
-                    color: 'var(--ink-soft)',
-                    maxWidth: '140px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                  title={upiHandle}
+                  className="bk-payment-label"
+                  style={{ color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                 >
-                  {upiHandle}
+                  <Check size={12} strokeWidth={3} /> Paid · {methodLabel}
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="bk-payment-label" style={{ color: 'var(--ink-soft)' }}>
-              <span style={{ textTransform: 'capitalize' }}>{booking.payment_status || 'Pending'}</span>
-            </div>
-          )}
+                {upiHandle && (
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: 'var(--ink-soft)',
+                      maxWidth: '140px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title={upiHandle}
+                  >
+                    {upiHandle}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bk-payment-label" style={{ color: 'var(--ink-soft)' }}>
+                <span style={{ textTransform: 'capitalize' }}>{booking.payment_status || 'Pending'}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -280,16 +282,6 @@ export const AssignedJobCard = ({
               <Check size={16} strokeWidth={3} />
               <span>Job Completed</span>
             </div>
-            {booking.rating ? (
-              <div className="bk-completed-rating">
-                <span className="star-rate">{'★'.repeat(booking.rating)}{'☆'.repeat(Math.max(0, 5 - booking.rating))}</span>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-soft)' }}>({booking.rating}/5)</span>
-              </div>
-            ) : (
-              <div className="bk-completed-rating unrated">
-                <span>Pending Review</span>
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -5,8 +5,7 @@ import { useApp } from '../context/AppContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
-import { ReviewModal } from '../components/customer/ReviewModal';
-import { Star, CreditCard, Plus, MapPin, Check, Phone } from 'lucide-react';
+import { CreditCard, Plus, MapPin, Check, Phone } from 'lucide-react';
 
 const WhatsAppIcon = ({ size = 18, color = '#FFFFFF' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
@@ -24,11 +23,8 @@ export const CustomerBookings = () => {
     professionals,
     currentCustomerId,
     payBooking,
-    reviewBooking,
     setCurrentView
   } = useApp();
-
-  const [reviewingBooking, setReviewingBooking] = useState(null);
 
   const activeCustId = currentUser?.id || currentCustomerId;
   const customerBookings = bookings
@@ -78,7 +74,7 @@ export const CustomerBookings = () => {
 
           return (
             <div key={b.id} className="booking-card">
-              {/* Header: Grid 64px 1fr auto, gap 12px */}
+              {/* Header: Grid 56px 1fr auto, gap 12px */}
               <div className="bk-head">
                 <img
                   src={getServiceImage(svc || b)}
@@ -116,21 +112,23 @@ export const CustomerBookings = () => {
 
                 <div className="bk-right">
                   <StatusBadge status={b.status} />
-                  <div className="bk-price">
-                    ₹{totalAmt.toFixed(2)}
+                  <div className="bk-right-price">
+                    <div className="bk-price">
+                      ₹{totalAmt.toFixed(2)}
+                    </div>
+                    {isFullyPaid && (
+                      <div className="bk-payment-label" style={{ color: 'var(--teal)' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <Check size={12} strokeWidth={3} /> Paid · {b.payment_method ? (b.payment_method.startsWith('UPI') ? 'UPI' : b.payment_method.split(' ')[0]) : 'UPI'}
+                        </span>
+                      </div>
+                    )}
+                    {isBalancePending && (
+                      <div className="bk-payment-label" style={{ color: '#D97706' }}>
+                        ₹{balanceDue.toFixed(2)} Balance Due
+                      </div>
+                    )}
                   </div>
-                  {isFullyPaid && (
-                    <div className="bk-payment-label" style={{ color: 'var(--teal)' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                        <Check size={12} strokeWidth={3} /> Paid ({b.payment_method || 'UPI'})
-                      </span>
-                    </div>
-                  )}
-                  {isBalancePending && (
-                    <div className="bk-payment-label" style={{ color: '#D97706' }}>
-                      ₹{balanceDue.toFixed(2)} Balance Due
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -211,13 +209,13 @@ export const CustomerBookings = () => {
                       { key: 'requested', label: 'Requested', isDone: true, isCurrent: false },
                       {
                         key: 'call',
-                        label: b.call_confirmed ? 'Call Confirmed' : 'Confirmation Call',
+                        label: b.call_confirmed ? 'Confirmed' : 'Call Check',
                         isDone: b.call_confirmed || currentStepIdx >= 1,
                         isCurrent: !b.call_confirmed && b.status === 'requested'
                       },
                       {
                         key: 'assigned',
-                        label: 'Climber Assigned',
+                        label: 'Assigned',
                         isDone: currentStepIdx >= 1 || isCompleted,
                         isCurrent: b.call_confirmed && b.status === 'requested'
                       },
@@ -251,7 +249,7 @@ export const CustomerBookings = () => {
                       const isCurrent = idx === currentStepIdx && !isCompleted;
                       const stepLabels = {
                         requested: 'Requested',
-                        assigned: 'Professional Assigned',
+                        assigned: 'Assigned',
                         in_progress: 'In Progress',
                         completed: 'Completed'
                       };
@@ -288,12 +286,8 @@ export const CustomerBookings = () => {
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <b style={{ fontSize: '14px', color: 'var(--ink)', display: 'block' }}>{getDisplayName(pro)}</b>
-                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
                         <span>{pro.experience_years || 5} yrs exp · {pro.taluka || b.taluka}</span>
-                        <span>·</span>
-                        <span className="star-rate">
-                          {'★'.repeat(Math.round(pro.rating_avg || 5))} ({pro.rating_avg || '5.0'})
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -357,8 +351,8 @@ export const CustomerBookings = () => {
               )}
 
               {/* Bottom Actions Area (pinned to bottom with margin-top: auto) */}
-              <div className="bk-bottom-actions">
-                {isCompleted && isBalancePending && (
+              {isCompleted && isBalancePending && (
+                <div className="bk-bottom-actions">
                   <Button
                     variant="primary"
                     icon={CreditCard}
@@ -367,45 +361,12 @@ export const CustomerBookings = () => {
                   >
                     Pay ₹{balanceDue.toFixed(2)} Balance Online
                   </Button>
-                )}
-
-                {isCompleted && !b.rating && (
-                  <Button
-                    variant="gold"
-                    icon={Star}
-                    style={{ width: '100%', height: '48px', minHeight: '48px' }}
-                    onClick={() => setReviewingBooking(b)}
-                  >
-                    Rate & Review Professional
-                  </Button>
-                )}
-
-                {isCompleted && b.rating && (
-                  <div className="bk-review-box">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: '700', color: 'var(--ink-soft)' }}>Your Review:</span>
-                      <span className="star-rate">{'★'.repeat(b.rating)}</span>
-                    </div>
-                    {b.comment && (
-                      <p style={{ margin: '6px 0 0 0', fontStyle: 'italic', color: 'var(--ink)', lineHeight: '1.4' }}>
-                        "{b.comment}"
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
-
-      {/* Review Modal */}
-      <ReviewModal
-        isOpen={!!reviewingBooking}
-        onClose={() => setReviewingBooking(null)}
-        booking={reviewingBooking}
-        onSubmit={reviewBooking}
-      />
     </div>
   );
 };

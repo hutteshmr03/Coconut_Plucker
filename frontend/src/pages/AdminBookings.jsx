@@ -205,7 +205,7 @@ export const AdminBookings = () => {
                             <span>{getDisplayName(pro)}</span>
                           </div>
                           <div className="cell-muted" style={{ fontSize: '11.5px' }}>
-                            ★ {pro.rating_avg} · {pro.taluka}
+                            {pro.taluka}
                           </div>
                         </div>
                       ) : (

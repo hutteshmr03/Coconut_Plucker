@@ -34,6 +34,7 @@ export const ProfessionalDashboard = () => {
   );
 
   const completedJobs = myBookings.filter((b) => b.status === 'completed');
+  const totalTreesServiced = completedJobs.reduce((acc, b) => acc + Number(b.tree_count || 1), 0);
 
   return (
     <div>
@@ -52,9 +53,9 @@ export const ProfessionalDashboard = () => {
         </div>
 
         <div className="stat-card" style={{ '--accent': 'var(--leaf)' }}>
-          <div className="stat-label">Average Rating</div>
-          <div className="stat-value">★ {currentProfessional?.rating_avg || 5.0}</div>
-          <div className="stat-foot">from customer reviews</div>
+          <div className="stat-label">Trees Serviced</div>
+          <div className="stat-value">{totalTreesServiced}</div>
+          <div className="stat-foot">harvested & trimmed</div>
         </div>
 
         <div className="stat-card" style={{ '--accent': 'var(--navy)' }}>

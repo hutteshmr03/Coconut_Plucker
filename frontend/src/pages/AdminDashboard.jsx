@@ -52,7 +52,7 @@ export const AdminDashboard = () => {
 
   // Top professionals
   const topPros = [...professionals]
-    .sort((a, b) => b.rating_avg - a.rating_avg)
+    .sort((a, b) => (Number(b.experience_years) || 0) - (Number(a.experience_years) || 0))
     .slice(0, 4);
 
   return (
@@ -229,8 +229,8 @@ export const AdminDashboard = () => {
                       Taluka: {pro.taluka} · {pro.experience_years} yrs exp
                     </div>
                   </div>
-                  <div style={{ fontWeight: '700', color: 'var(--gold)' }}>
-                    ★ {pro.rating_avg}
+                  <div>
+                    <span className="badge green" style={{ fontSize: '11px', padding: '2px 8px' }}>Verified</span>
                   </div>
                 </div>
               ))}
