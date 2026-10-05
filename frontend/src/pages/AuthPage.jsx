@@ -431,9 +431,11 @@ export const AuthPage = () => {
                     required
                   />
 
-                  <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+                  <div className="auth-btn-row">
                     <Button
                       variant="ghost"
+                      size="lg"
+                      className="auth-btn-back"
                       type="button"
                       icon={ArrowLeft}
                       onClick={() => {
@@ -447,7 +449,7 @@ export const AuthPage = () => {
                     <Button
                       variant="primary"
                       size="lg"
-                      className="btn-block"
+                      className="auth-btn-submit"
                       type="submit"
                       icon={LogIn}
                     >
@@ -494,9 +496,11 @@ export const AuthPage = () => {
                     required
                   />
 
-                  <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+                  <div className="auth-btn-row">
                     <Button
                       variant="ghost"
+                      size="lg"
+                      className="auth-btn-back"
                       type="button"
                       icon={ArrowLeft}
                       onClick={() => {
@@ -510,7 +514,7 @@ export const AuthPage = () => {
                     <Button
                       variant="primary"
                       size="lg"
-                      className="btn-block"
+                      className="auth-btn-submit"
                       type="submit"
                       icon={LogIn}
                     >
@@ -614,9 +618,11 @@ export const AuthPage = () => {
                 required
               />
 
-              <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
+              <div className="auth-btn-row">
                 <Button
                   variant="ghost"
+                  size="lg"
+                  className="auth-btn-back"
                   type="button"
                   icon={ArrowLeft}
                   onClick={() => {
@@ -630,7 +636,7 @@ export const AuthPage = () => {
                 <Button
                   variant="gold"
                   size="lg"
-                  className="btn-block"
+                  className="auth-btn-submit"
                   type="submit"
                   icon={KeyRound}
                 >
