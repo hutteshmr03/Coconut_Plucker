@@ -628,8 +628,8 @@ export const BookingWizard = ({ onComplete }) => {
             })()}
 
             {/* Action / Continue & Undo Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', gap: '12px', flexWrap: 'wrap' }}>
-              <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', gap: '12px', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                 {selectedServiceId ? (
                   <Button
                     variant="secondary"
@@ -653,14 +653,15 @@ export const BookingWizard = ({ onComplete }) => {
                       color: 'var(--ink)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      fontWeight: '600'
+                      fontWeight: '600',
+                      flexShrink: 0
                     }}
                   >
                     <Undo2 size={16} />
                     <span>{t('undo', 'Undo')}</span>
                   </Button>
                 ) : (
-                  <span style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: '600' }}>
+                  <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)', fontWeight: '600' }}>
                     Select a service to continue
                   </span>
                 )}
@@ -676,6 +677,7 @@ export const BookingWizard = ({ onComplete }) => {
                   setStep(2);
                 }}
                 style={{
+                  marginLeft: 'auto',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -684,6 +686,7 @@ export const BookingWizard = ({ onComplete }) => {
                   whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease',
                   borderRadius: '8px',
+                  flexShrink: 0,
                   ...(selectedServiceId
                     ? {
                         backgroundColor: '#1F8A82',

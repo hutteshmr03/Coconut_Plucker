@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getDisplayName } from '../../utils/helpers';
@@ -28,6 +28,21 @@ export const Sidebar = () => {
   const { currentUser, logout, role, adminAccounts } = useAuth();
   const { bookings, professionals, incidents, currentView, setCurrentView, isMobileSidebarOpen, setIsMobileSidebarOpen } = useApp();
   const { t, language } = useLanguage();
+
+  // Lock body scrolling when mobile drawer is open
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isMobileSidebarOpen]);
 
   // Customer navigation items (CustomerRateCard and CustomerHome removed per instruction)
   const safeBookings = bookings || [];
@@ -199,8 +214,8 @@ export const Sidebar = () => {
       />
 
       <aside className={`sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
-        {/* Brand Header */}
-        <div className="brand" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Section 1: Brand Header (Fixed top) */}
+        <div className="brand">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <img
               src={logoImg}
@@ -229,112 +244,84 @@ export const Sidebar = () => {
           </button>
         </div>
 
-        {/* User Info Badge (Hidden for Professional role per instruction) */}
-        {role !== 'professional' && (
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '10px',
-              padding: '12px 14px',
-              marginBottom: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}
-          >
-            {currentUser?.avatar_url ? (
-              <img
-                src={currentUser.avatar_url}
-                alt={currentUser.full_name || 'User'}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid var(--gold)',
-                  flexShrink: 0
-                }}
-              />
-            ) : (
-              <div
-                className="worker-avatar"
-                style={{ width: '36px', height: '36px', fontSize: '13px', flexShrink: 0 }}
-              >
-                {(currentUser?.full_name || currentUser?.name || currentUser?.username || 'SF')
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  color: '#FFFFFF',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}
-              >
-                {getDisplayName(currentUser, language)}
-              </div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: '#8CAABB'
-                }}
-              >
-                {t(`role_${currentUser?.role}`, currentUser?.role || '')}
-                {currentUser?.taluka ? ` · ${t(`taluka_${currentUser.taluka.toLowerCase().replace(/\s+/g, '_')}`, currentUser.taluka)}` : ''}
+        {/* Section 2: Middle Scrollable Area (User Info + Navigation) */}
+        <div className="sidebar-middle">
+          {/* User Info Badge (Hidden for Professional role per instruction) */}
+          {role !== 'professional' && (
+            <div className="sidebar-user-card">
+              {currentUser?.avatar_url ? (
+                <img
+                  src={currentUser.avatar_url}
+                  alt={currentUser.full_name || 'User'}
+                  className="sidebar-user-avatar"
+                />
+              ) : (
+                <div
+                  className="worker-avatar"
+                  style={{ width: '36px', height: '36px', fontSize: '13px', flexShrink: 0 }}
+                >
+                  {(currentUser?.full_name || currentUser?.name || currentUser?.username || 'SF')
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="sidebar-user-name">
+                  {getDisplayName(currentUser, language)}
+                </div>
+                <div className="sidebar-user-role">
+                  {t(`role_${currentUser?.role}`, currentUser?.role || '')}
+                  {currentUser?.taluka ? ` · ${t(`taluka_${currentUser.taluka.toLowerCase().replace(/\s+/g, '_')}`, currentUser.taluka)}` : ''}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Role-Specific Navigation */}
-        <nav style={{ flex: 1 }}>
-          {activeNav.map((group, gIdx) => (
-            <div key={gIdx} className="nav-group">
-              <div className="nav-label">{group.group}</div>
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentView === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    className={`nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => {
-                      setCurrentView(item.id);
-                      setIsMobileSidebarOpen(false);
-                    }}
-                  >
-                    <span className="nav-ic">
-                      <Icon size={16} />
-                    </span>
-                    <span>{item.label}</span>
-                    {item.count > 0 && <span className="nav-count">{item.count}</span>}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
+          {/* Role-Specific Navigation Groups */}
+          <nav className="sidebar-nav">
+            {activeNav.map((group, gIdx) => (
+              <div key={gIdx} className="nav-group">
+                <div className="nav-label">{group.group}</div>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentView === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`nav-item ${isActive ? 'active' : ''}`}
+                      onClick={() => {
+                        setCurrentView(item.id);
+                        setIsMobileSidebarOpen(false);
+                      }}
+                    >
+                      <span className="nav-ic">
+                        <Icon size={16} />
+                      </span>
+                      <span>{item.label}</span>
+                      {item.count > 0 && <span className="nav-count">{item.count}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+        </div>
 
-        {/* Footer & Sign Out */}
+        {/* Section 3: Footer & Sign Out (Always visible & pinned at bottom) */}
         <div className="sidebar-foot">
           <button
-            className="nav-item"
-            style={{ width: '100%', color: '#E4A15E' }}
+            type="button"
+            className="sidebar-logout-btn"
             onClick={() => {
               logout();
               setIsMobileSidebarOpen(false);
             }}
+            aria-label="Sign Out"
           >
-            <LogOut size={16} />
+            <LogOut size={17} />
             <span>{t('sign_out')}</span>
           </button>
         </div>
