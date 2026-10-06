@@ -58,12 +58,6 @@ export const SuperAdminScheduling = () => {
 
   return (
     <div style={{ maxWidth: '980px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <h3>Taluka & Regional Scheduling Governance</h3>
-        </div>
-      </div>
-
       {savedNotice && (
         <div
           style={{
@@ -93,13 +87,10 @@ export const SuperAdminScheduling = () => {
         }}>
           {/* Card 1: North Goa Region */}
           <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <MapPin size={18} color="var(--teal)" />
               <h3 style={{ margin: 0, fontSize: '15.5px' }}>North Goa Region</h3>
             </div>
-            <p className="cell-muted" style={{ fontSize: '12px', marginBottom: '14px', minHeight: '32px' }}>
-              Bardez, Tiswadi, Bicholim, Sattari, Pernem.
-            </p>
 
             <div className="field">
               <label style={{ fontSize: '12px', fontWeight: '700', marginBottom: '6px', display: 'block' }}>
@@ -139,13 +130,10 @@ export const SuperAdminScheduling = () => {
 
           {/* Card 2: South Goa Region */}
           <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <MapPin size={18} color="var(--gold)" />
               <h3 style={{ margin: 0, fontSize: '15.5px' }}>South Goa Region</h3>
             </div>
-            <p className="cell-muted" style={{ fontSize: '12px', marginBottom: '14px', minHeight: '32px' }}>
-              Salcete, Mormugao, Ponda, Quepem, Sanguem, Canacona.
-            </p>
 
             <div className="field">
               <label style={{ fontSize: '12px', fontWeight: '700', marginBottom: '6px', display: 'block' }}>
@@ -185,13 +173,10 @@ export const SuperAdminScheduling = () => {
 
           {/* Card 3: Kushavati Region */}
           <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <MapPin size={18} color="var(--amber)" />
               <h3 style={{ margin: 0, fontSize: '15.5px' }}>Kushavati Region</h3>
             </div>
-            <p className="cell-muted" style={{ fontSize: '12px', marginBottom: '14px', minHeight: '32px' }}>
-              Dedicated agricultural & river basin agricultural territory.
-            </p>
 
             <div className="field">
               <label style={{ fontSize: '12px', fontWeight: '700', marginBottom: '6px', display: 'block' }}>
@@ -241,7 +226,6 @@ export const SuperAdminScheduling = () => {
               min="1"
               max="50"
             />
-            <div className="field-hint">Prevents overbooking beyond active verified workforce.</div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>

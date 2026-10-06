@@ -93,7 +93,7 @@ export const TRANSLATIONS = {
     top_pro_profile_sub: 'Manage experience, safety certification, and service capabilities',
     top_adm_overview_title: 'Admin Operations Overview',
     top_adm_overview_sub: 'Live overview of bookings, workforce verification, and service metrics',
-    top_adm_scheduling_title: 'Regional Scheduling Governance',
+    top_adm_scheduling_title: 'Taluka Days Scheduling',
     top_adm_scheduling_sub: 'Manage Taluka schedule day mappings and daily dispatch capacity limits',
     top_adm_admins_title: 'Administrator Management',
     top_adm_admins_sub: 'Provision, configure, and deactivate platform administrator accounts',

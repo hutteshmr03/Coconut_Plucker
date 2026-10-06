@@ -64,7 +64,7 @@ export const AdminWorkforce = () => {
           icon={UserPlus}
           onClick={() => setIsCreateModalOpen(true)}
         >
-          + Onboard Professional
+          Onboard Professional
         </Button>
       </div>
 

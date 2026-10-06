@@ -348,10 +348,6 @@ export const AdminProfile = () => {
           </h3>
         </div>
 
-        <p className="cell-muted" style={{ marginBottom: '18px', fontSize: '13px' }}>
-          Update your administrator password. Current password confirmation is required.
-        </p>
-
         {passwordError && (
           <div
             className="field-error"

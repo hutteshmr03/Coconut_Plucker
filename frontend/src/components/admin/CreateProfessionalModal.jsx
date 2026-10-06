@@ -104,10 +104,6 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
       }
     >
       <form onSubmit={handleSubmit} autoComplete="off">
-        <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-          Create a verified professional climber account. The climber can immediately log in with their phone number using OTP.
-        </p>
-
         {error && (
           <div className="field-error" style={{ marginBottom: '14px' }}>
             {error}
@@ -116,7 +112,7 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
 
         <div className="field-row">
           <Input
-            label="Full Name (English) *"
+            label="Full Name"
             placeholder="e.g. Anand Gaonkar"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -128,23 +124,21 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
             placeholder="उदा. आनंद गावकर"
             value={fullNameLocal}
             onChange={(e) => setFullNameLocal(e.target.value)}
-            hint="For Hindi & Marathi display"
           />
         </div>
 
         <div className="field-row">
           <Input
-            label="Mobile Phone Number *"
+            label="Phone Number"
             type="tel"
             placeholder="e.g. 9822300004"
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
             required
-            hint="Used for Climber OTP Login"
           />
 
           <Select
-            label="Taluka (Base Region) *"
+            label="Taluka"
             value={taluka}
             onChange={(e) => setTaluka(e.target.value)}
             options={TALUKAS}
@@ -154,7 +148,7 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
 
         <div className="field-row">
           <Input
-            label="Climbing Experience (Years) *"
+            label="Climbing Experience (Years)"
             type="number"
             min="1"
             max="40"
@@ -172,18 +166,16 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
           required
         />
 
-        <div className="field-row">
-          <Select
-            label="Initial Account Verification Status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            options={[
-              { value: 'approved', label: 'Approved & Active (Instant Dispatch Ready)' },
-              { value: 'pending_verification', label: 'Pending Verification (Requires Manual Approval)' }
-            ]}
-            required
-          />
-        </div>
+        <Select
+          label="Initial Account Verification Status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          options={[
+            { value: 'approved', label: 'Approved & Active (Instant Dispatch Ready)' },
+            { value: 'pending_verification', label: 'Pending Verification (Requires Manual Approval)' }
+          ]}
+          required
+        />
 
         {/* Tree Skills Checklist */}
         <div style={{ marginTop: '14px' }}>

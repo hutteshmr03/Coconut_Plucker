@@ -5,7 +5,7 @@ import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { ServiceFormModal } from '../components/admin/ServiceFormModal';
 import { getServiceImage } from '../utils/helpers';
-import { Plus, Edit2, Power, Ruler, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Power, Trash2, AlertTriangle } from 'lucide-react';
 
 export const AdminServices = () => {
   const { services, addService, updateService, toggleServiceStatus, deleteService } = useApp();
@@ -43,7 +43,7 @@ export const AdminServices = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h3>Dynamic Service Catalog Management</h3>
+          <h3>Service Management</h3>
         </div>
         <Button variant="primary" icon={Plus} onClick={handleOpenAdd}>
           Add New Service
@@ -58,7 +58,7 @@ export const AdminServices = () => {
               <th>Service</th>
               <th>Unit</th>
               <th>Base Rate</th>
-              <th>Height Category Required?</th>
+              <th>Height?</th>
               <th>Status</th>
               <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
@@ -82,9 +82,6 @@ export const AdminServices = () => {
                     />
                     <div>
                       <div className="cell-strong">{svc.name}</div>
-                      <div className="cell-muted" style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {svc.desc}
-                      </div>
                     </div>
                   </div>
                 </td>
@@ -96,9 +93,7 @@ export const AdminServices = () => {
                 </td>
                 <td>
                   {svc.requires_height_category ? (
-                    <span className="badge gold">
-                      <Ruler size={12} /> Yes (Trimming Tier)
-                    </span>
+                    <span className="badge gold">Yes</span>
                   ) : (
                     <span className="badge gray">No</span>
                   )}

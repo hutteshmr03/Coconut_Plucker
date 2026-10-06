@@ -252,6 +252,8 @@ export const BookingWizard = ({ onComplete }) => {
     return Object.keys(errs).length === 0;
   };
 
+  const isStep2Valid = Number(treeCount) >= 1 && Boolean(taluka) && Boolean(address?.trim()) && (!isHeightCategoryRequired || Boolean(heightCategory));
+
   // Validation Step 3 (Schedule)
   const validateStep3 = () => {
     const errs = {};
@@ -673,7 +675,7 @@ export const BookingWizard = ({ onComplete }) => {
                     })
               }}
             >
-              <span>{serviceCart.length > 0 ? 'Proceed to Details' : t('wiz_next_step')}</span>
+              <span>{t('wiz_next_step')}</span>
               <ArrowRight size={16} />
             </Button>
           </div>
@@ -952,7 +954,8 @@ export const BookingWizard = ({ onComplete }) => {
               {t('btn_back')}
             </Button>
             <Button
-              variant="primary"
+              variant={isStep2Valid ? 'primary' : 'secondary'}
+              size="md"
               type="button"
               onClick={(e) => {
                 e.preventDefault();
@@ -978,6 +981,30 @@ export const BookingWizard = ({ onComplete }) => {
                   });
                   setStep(3);
                 }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                fontSize: '14px',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                ...(isStep2Valid
+                  ? {
+                      backgroundColor: '#1F8A82',
+                      color: '#FFFFFF',
+                      boxShadow: '0 4px 14px rgba(31, 138, 130, 0.45), 0 0 10px rgba(31, 138, 130, 0.35)',
+                      opacity: 1,
+                      cursor: 'pointer'
+                    }
+                  : {
+                      backgroundColor: '#E2E8F0',
+                      color: '#94A3B8',
+                      boxShadow: 'none',
+                      opacity: 0.7,
+                      cursor: 'not-allowed'
+                    })
               }}
             >
               <span>{t('wiz_next_step')}</span>
@@ -1403,13 +1430,39 @@ export const BookingWizard = ({ onComplete }) => {
               {t('btn_back')}
             </Button>
             <Button
-              variant="primary"
+              variant={scheduledDate ? 'primary' : 'secondary'}
+              size="md"
               type="button"
+              disabled={!scheduledDate}
               onClick={(e) => {
                 e.preventDefault();
                 if (validateStep3()) {
                   handleOpenPayment();
                 }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                fontSize: '14px',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                ...(scheduledDate
+                  ? {
+                      backgroundColor: '#1F8A82',
+                      color: '#FFFFFF',
+                      boxShadow: '0 4px 14px rgba(31, 138, 130, 0.45), 0 0 10px rgba(31, 138, 130, 0.35)',
+                      opacity: 1,
+                      cursor: 'pointer'
+                    }
+                  : {
+                      backgroundColor: '#E2E8F0',
+                      color: '#94A3B8',
+                      boxShadow: 'none',
+                      opacity: 0.7,
+                      cursor: 'not-allowed'
+                    })
               }}
             >
               <span>{t('wiz_next_step')}</span>
