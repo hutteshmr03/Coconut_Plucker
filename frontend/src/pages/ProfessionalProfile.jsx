@@ -89,10 +89,8 @@ export const ProfessionalProfile = () => {
   return (
     <div style={{ maxWidth: '750px', margin: '0 auto' }}>
       <Card>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-          <div>
-            <h3 style={{ margin: 0 }}>Professional Skills & Safety Profile</h3>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ margin: 0, lineHeight: 1.2 }}>Skills & Safety Profile</h3>
           <StatusBadge status={currentUser?.status || 'approved'} />
         </div>
 
@@ -101,12 +99,12 @@ export const ProfessionalProfile = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '20px',
-            padding: '16px',
+            gap: '16px',
+            padding: '14px 16px',
             background: 'var(--cream)',
             border: '1px solid var(--line)',
             borderRadius: 'var(--radius)',
-            marginBottom: '24px'
+            marginBottom: '18px'
           }}
         >
           <div style={{ position: 'relative' }}>
@@ -230,26 +228,24 @@ export const ProfessionalProfile = () => {
               onChange={(e) => setTaluka(e.target.value)}
               options={TALUKAS}
               required
-              hint="Only bookings in this Taluka are assigned to you"
             />
             <Input
               label="Safety Certification / Training Body"
               placeholder="e.g. Certified Master Climber (CPCRI / Agricultural Dept)"
               value={safetyCert}
               onChange={(e) => setSafetyCert(e.target.value)}
-              hint="Approved climbers receive verified badges"
             />
           </div>
 
           {/* Service Skills Selection (Bridge Table: professional_skills) */}
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '6px' }}>
             <label
               style={{
                 display: 'block',
                 fontSize: '12px',
                 fontWeight: '700',
                 color: 'var(--ink-soft)',
-                marginBottom: '10px',
+                marginBottom: '8px',
                 textTransform: 'uppercase'
               }}
             >
@@ -259,7 +255,7 @@ export const ProfessionalProfile = () => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '10px'
               }}
             >
@@ -270,7 +266,7 @@ export const ProfessionalProfile = () => {
                     key={svc.id}
                     className="checkline"
                     style={{
-                      padding: '12px 14px',
+                      padding: '10px 12px',
                       background: isChecked ? 'rgba(31, 138, 130, 0.08)' : 'var(--cream)',
                       borderRadius: '8px',
                       border: `1px solid ${isChecked ? 'rgba(31, 138, 130, 0.3)' : 'var(--line)'}`,
@@ -293,7 +289,7 @@ export const ProfessionalProfile = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
             <Button variant="primary" icon={Save} type="submit">
               Save Capabilities
             </Button>

@@ -56,7 +56,7 @@ export const AdminDashboard = () => {
     .slice(0, 4);
 
   return (
-    <div>
+    <div style={{ width: '100%', minWidth: 0 }}>
       {/* Stat Grid */}
       <div className="stat-grid">
         <div className="stat-card" style={{ '--accent': 'var(--teal)' }}>
@@ -86,7 +86,7 @@ export const AdminDashboard = () => {
 
       <div className="dash-grid">
         {/* Needs Assignment Queue */}
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3>Bookings Awaiting Assignment</h3>
             <Button variant="ghost" size="sm" onClick={() => setCurrentView('adm-bookings')}>
@@ -107,11 +107,11 @@ export const AdminDashboard = () => {
                     <div
                       key={b.id}
                       className="list-item"
-                      style={{ padding: '12px 0' }}
+                      style={{ padding: '12px 0', flexWrap: 'wrap', gap: '10px' }}
                     >
                       <div className={`li-dot ${isCallPending ? 'gold' : 'amber'}`} />
-                      <div className="li-main">
-                        <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div className="li-main" style={{ minWidth: 0, flex: '1 1 200px' }}>
+                        <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span>{svc?.icon} {svc?.name} · {b.booking_number}</span>
                           {b.booking_type === 'urgent' && (
                             <span
@@ -144,7 +144,7 @@ export const AdminDashboard = () => {
                           <span>· Taluka: <b>{b.taluka}</b> · {b.tree_count} trees</span>
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         {isCallPending ? (
                           <Button
                             variant="gold"
@@ -213,7 +213,7 @@ export const AdminDashboard = () => {
         </div>
 
         {/* Sidebar Widgets */}
-        <div>
+        <div style={{ minWidth: 0 }}>
           {/* Top Rated Workforce */}
           <Card style={{ marginBottom: '20px' }}>
             <h3>Top Verified Climbers</h3>
@@ -255,7 +255,7 @@ export const AdminDashboard = () => {
                 style={{ justifyContent: 'flex-start' }}
                 onClick={() => setCurrentView('sadm-scheduling')}
               >
-                🗓️ Regional Scheduling Governance
+                🗓️ Taluka Days Scheduling
               </Button>
               <Button
                 variant="ghost"

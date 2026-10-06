@@ -41,7 +41,7 @@ export const AdminSafety = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h3>Safety Incident & Near-Miss Log</h3>
+          <h3>Safety Incidents</h3>
         </div>
         <Button variant="danger" icon={Plus} onClick={() => setIsLogModalOpen(true)}>
           Log Safety Incident
