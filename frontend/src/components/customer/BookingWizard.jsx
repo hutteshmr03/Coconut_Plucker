@@ -32,7 +32,8 @@ import {
   Trash2,
   Edit3,
   ChevronDown,
-  MapPin
+  MapPin,
+  Undo2
 } from 'lucide-react';
 import { getTalukaDayConfig, formatScheduledDateLabel, getServiceImage, SERVICE_IMAGES, compressImageFile } from '../../utils/helpers';
 
@@ -69,6 +70,9 @@ export const BookingWizard = ({ onComplete }) => {
     selectedServiceForBooking?.id || ''
   );
   const [isServiceChosen, setIsServiceChosen] = useState(
+    Boolean(selectedServiceForBooking?.id)
+  );
+  const [isServiceConfirmed, setIsServiceConfirmed] = useState(
     Boolean(selectedServiceForBooking?.id)
   );
   const [serviceCart, setServiceCart] = useState([]);
@@ -139,6 +143,7 @@ export const BookingWizard = ({ onComplete }) => {
   useEffect(() => {
     if (selectedServiceForBooking) {
       setSelectedServiceId(selectedServiceForBooking.id);
+      setIsServiceConfirmed(true);
       setStep(2);
     }
   }, [selectedServiceForBooking]);
@@ -329,15 +334,22 @@ export const BookingWizard = ({ onComplete }) => {
   };
 
   const handleSelectService = (svcId) => {
-    setSelectedServiceId(svcId);
-    setIsServiceChosen(true);
-    const existing = serviceCart.find(i => i.serviceId === svcId);
-    if (existing) {
-      setTreeCount(existing.treeCount);
-      if (existing.heightCategory) setHeightCategory(existing.heightCategory);
+    if (selectedServiceId === svcId) {
+      setSelectedServiceId('');
+      setIsServiceChosen(false);
+      setIsServiceConfirmed(false);
     } else {
-      setTreeCount(1);
-      setHeightCategory('medium');
+      setSelectedServiceId(svcId);
+      setIsServiceChosen(true);
+      setIsServiceConfirmed(true);
+      const existing = serviceCart.find(i => i.serviceId === svcId);
+      if (existing) {
+        setTreeCount(existing.treeCount);
+        if (existing.heightCategory) setHeightCategory(existing.heightCategory);
+      } else {
+        setTreeCount(1);
+        setHeightCategory('medium');
+      }
     }
   };
 
@@ -364,6 +376,7 @@ export const BookingWizard = ({ onComplete }) => {
     });
 
     setIsServiceChosen(false);
+    setIsServiceConfirmed(false);
     setSelectedServiceId('');
     setTreeCount(1);
     setHeightCategory('medium');
@@ -485,202 +498,214 @@ export const BookingWizard = ({ onComplete }) => {
   );
 
   return (
-    <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '820px', margin: '0 auto', paddingBottom: '90px' }}>
       <div key={step} className="wizard-step-container">
         {/* Step 1: Choose Service */}
         {step === 1 && (
           <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>{t('wiz_step_1_title')}</h3>
-            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>
+                  {t('wiz_step_1_title', 'Choose Service')}
+                </h3>
+              </div>
 
-            {serviceCart.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setStep(3)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'flex-end',
-                  gap: '4px',
-                  background: '#131921',
-                  color: '#FFFFFF',
-                  border: '1px solid #232f3e',
-                  padding: '5px 12px 5px 8px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-                  transition: 'all 0.15s ease'
-                }}
-                title="View Shopping Cart"
-              >
-                <svg width="28" height="20" viewBox="0 0 38 26" fill="none" style={{ display: 'block' }}>
-                  <path
-                    d="M2 3h5l3.8 13.5h17l3.8-9.5H9"
-                    stroke="#FFFFFF"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="13" cy="22.5" r="2.2" fill="#FFFFFF" />
-                  <circle cx="26" cy="22.5" r="2.2" fill="#FFFFFF" />
-                </svg>
-                <span style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF', lineHeight: 1, paddingBottom: '2px' }}>
-                  Cart
-                </span>
-              </button>
-            )}
-          </div>
-
-          <div className="svc-pick-grid">
-            {services
-              .filter((s) => s.status === 'active')
-              .filter((s) => !isServiceChosen || s.id === selectedServiceId)
-              .map((svc) => {
-                const isSelected = selectedServiceId === svc.id;
-                const inCart = serviceCart.find((i) => i.serviceId === svc.id);
-                const bgImg = getServiceImage(svc);
-
-                return (
-                  <div
-                    key={svc.id}
-                    className={`svc-pick ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleSelectService(svc.id)}
-                    style={{
-                      position: 'relative',
-                      border: inCart ? '2px solid #FF9900' : isSelected ? '2px solid var(--teal)' : '1px solid var(--line)',
-                      boxShadow: inCart ? '0 4px 12px rgba(255, 153, 0, 0.18)' : isSelected ? '0 4px 16px rgba(31, 138, 130, 0.2)' : 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <div className="svc-pick-thumb-wrap">
-                      <img src={bgImg} alt={svc.name} className="svc-pick-thumb" />
-                      {isSelected && !inCart && (
-                        <span className="svc-pick-selected-badge">
-                          <Check size={14} strokeWidth={3} />
-                        </span>
-                      )}
-                      {inCart && (
-                        <span style={{
-                          position: 'absolute',
-                          top: '8px',
-                          left: '8px',
-                          background: '#FFD814',
-                          color: '#0F1111',
-                          border: '1px solid #FCD200',
-                          padding: '3px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '800',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.18)'
-                        }}>
-                          🛒 In Cart ({inCart.treeCount})
-                        </span>
-                      )}
-                      {svc.requires_height_category && (
-                        <span className="svc-pick-height-chip">
-                          {t('badge_big_tree')}
-                        </span>
-                      )}
-                    </div>
-                    <div className="svc-pick-body">
-                      <h4>{svc.name}</h4>
-                      <div className="svc-pick-rate">
-                        <span className="rate-num">₹{svc.base_rate}</span>
-                        <span className="rate-unit">/{svc.unit.replace('per ', '')}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '20px',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--line)',
-            gap: '10px'
-          }}>
-            <div>
-              {isServiceChosen ? (
-                <Button
-                  variant="ghost"
-                  size="md"
+              {serviceCart.length > 0 && (
+                <button
                   type="button"
-                  onClick={() => {
-                    setIsServiceChosen(false);
-                    setSelectedServiceId('');
-                  }}
+                  onClick={() => setStep(3)}
                   style={{
                     display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '10px 14px',
-                    fontSize: '13.5px',
-                    whiteSpace: 'nowrap'
+                    alignItems: 'flex-end',
+                    gap: '4px',
+                    background: '#131921',
+                    color: '#FFFFFF',
+                    border: '1px solid #232f3e',
+                    padding: '5px 12px 5px 8px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                    transition: 'all 0.15s ease'
                   }}
+                  title="View Shopping Cart"
                 >
-                  <ArrowLeft size={16} />
-                  <span>Choose Another</span>
-                </Button>
-              ) : (
-                <div style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
-                  {serviceCart.length > 0 && (
-                    <>
-                      <span>Cart Subtotal ({serviceCart.length} service{serviceCart.length > 1 ? 's' : ''}):</span>{' '}
-                      <b style={{ fontSize: '15px', color: '#B12704', fontWeight: '800' }}>₹{totalBase.toFixed(2)}</b>
-                    </>
-                  )}
-                </div>
+                  <svg width="28" height="20" viewBox="0 0 38 26" fill="none" style={{ display: 'block' }}>
+                    <path
+                      d="M2 3h5l3.8 13.5h17l3.8-9.5H9"
+                      stroke="#FFFFFF"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="13" cy="22.5" r="2.2" fill="#FFFFFF" />
+                    <circle cx="26" cy="22.5" r="2.2" fill="#FFFFFF" />
+                  </svg>
+                  <span style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF', lineHeight: 1, paddingBottom: '2px' }}>
+                    Cart
+                  </span>
+                </button>
               )}
             </div>
 
-            <Button
-              variant={selectedServiceId ? 'primary' : 'secondary'}
-              size="md"
-              type="button"
-              disabled={!selectedServiceId}
-              onClick={(e) => {
-                e.preventDefault();
-                if (selectedServiceId) setStep(2);
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 18px',
-                fontSize: '14px',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease',
-                ...(selectedServiceId
-                  ? {
-                      backgroundColor: '#1F8A82',
-                      color: '#FFFFFF',
-                      boxShadow: '0 4px 14px rgba(31, 138, 130, 0.45), 0 0 10px rgba(31, 138, 130, 0.35)',
-                      opacity: 1,
-                      cursor: 'pointer'
-                    }
-                  : {
-                      backgroundColor: '#E2E8F0',
-                      color: '#94A3B8',
-                      boxShadow: 'none',
-                      opacity: 0.7,
-                      cursor: 'not-allowed'
-                    })
-              }}
-            >
-              <span>{t('wiz_next_step')}</span>
-              <ArrowRight size={16} />
-            </Button>
-          </div>
-        </Card>
-      )}
+            {/* Services Grid (Single Selected Card or All Cards) */}
+            {(() => {
+              const visibleServices = selectedServiceId
+                ? services.filter((s) => s.id === selectedServiceId)
+                : services.filter((s) => s.status === 'active');
+
+              return (
+                <div
+                  className={`svc-pick-grid ${selectedServiceId ? 'single-selected' : ''}`}
+                  role="radiogroup"
+                  aria-label="Choose Service"
+                >
+                  {visibleServices.map((svc) => {
+                    const isSelected = selectedServiceId === svc.id;
+                    const inCart = serviceCart.find((i) => i.serviceId === svc.id);
+                    const bgImg = getServiceImage(svc);
+
+                    return (
+                      <div
+                        key={svc.id}
+                        role="radio"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        className={`svc-pick ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleSelectService(svc.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleSelectService(svc.id);
+                          }
+                        }}
+                      >
+                        <div className="svc-pick-thumb-wrap">
+                          <img src={bgImg} alt={svc.name} className="svc-pick-thumb" />
+                          {isSelected && (
+                            <span className="svc-pick-selected-badge" aria-hidden="true">
+                              <Check size={14} strokeWidth={3} />
+                            </span>
+                          )}
+                          {inCart && (
+                            <span style={{
+                              position: 'absolute',
+                              bottom: '8px',
+                              left: '8px',
+                              background: '#FFD814',
+                              color: '#0F1111',
+                              border: '1px solid #FCD200',
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: '800',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.18)',
+                              zIndex: 3
+                            }}>
+                              🛒 In Cart ({inCart.treeCount})
+                            </span>
+                          )}
+                          {svc.requires_height_category && (
+                            <span className="svc-pick-height-chip">
+                              {t('badge_big_tree', 'Big Tree / Chainsaw Work')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="svc-pick-body">
+                          <h4>{svc.name}</h4>
+                          <div className="svc-pick-rate">
+                            <span className="rate-num">₹{svc.base_rate}</span>
+                            <span className="rate-unit">/{svc.unit?.replace('per ', '')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {/* Action / Continue & Undo Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', gap: '12px', flexWrap: 'wrap' }}>
+              <div>
+                {selectedServiceId ? (
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedServiceId('');
+                      setIsServiceChosen(false);
+                      setIsServiceConfirmed(false);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '10px 16px',
+                      fontSize: '14px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--line)',
+                      background: 'var(--paper)',
+                      color: 'var(--ink)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <Undo2 size={16} />
+                    <span>{t('undo', 'Undo')}</span>
+                  </Button>
+                ) : (
+                  <span style={{ fontSize: '13px', color: 'var(--ink-soft)', fontWeight: '600' }}>
+                    Select a service to continue
+                  </span>
+                )}
+              </div>
+              <Button
+                variant={selectedServiceId ? 'primary' : 'secondary'}
+                size="md"
+                type="button"
+                disabled={!selectedServiceId}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!selectedServiceId) return;
+                  setStep(2);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 18px',
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease',
+                  borderRadius: '8px',
+                  ...(selectedServiceId
+                    ? {
+                        backgroundColor: '#1F8A82',
+                        color: '#FFFFFF',
+                        boxShadow: '0 4px 14px rgba(31, 138, 130, 0.45), 0 0 10px rgba(31, 138, 130, 0.35)',
+                        cursor: 'pointer'
+                      }
+                    : {
+                        backgroundColor: '#E2E8F0',
+                        color: '#94A3B8',
+                        boxShadow: 'none',
+                        opacity: 0.7,
+                        cursor: 'not-allowed'
+                      })
+                }}
+              >
+                <span>{t('wiz_next_step', 'Continue')}</span>
+                <ArrowRight size={16} />
+              </Button>
+            </div>
+          </Card>
+        )}
 
       {/* Step 2: Property & Job Details */}
       {step === 2 && (
