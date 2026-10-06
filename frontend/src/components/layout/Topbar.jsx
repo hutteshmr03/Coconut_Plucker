@@ -78,7 +78,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
       // Admin Views (Also accessible by Super Admin)
       case 'adm-overview':
         return {
-          title: role === 'super_admin' ? `${t('top_adm_overview_title')} (Full Authority)` : t('top_adm_overview_title'),
+          title: t('top_adm_overview_title'),
           sub: t('top_adm_overview_sub')
         };
       case 'adm-bookings':

@@ -122,7 +122,7 @@ export const SuperAdminAdmins = () => {
         <div>
           <b style={{ color: 'var(--ink)', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldAlert size={18} color="#7C3AED" />
-            Manage Administrators
+            Manage Admins
           </b>
         </div>
         <Button

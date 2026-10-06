@@ -147,7 +147,7 @@ export const Sidebar = () => {
       ]
     },
     {
-      group: 'Platform Operations (Full Authority)',
+      group: 'Platform Operations',
       items: [
         { id: 'adm-overview', label: t('nav_dashboard'), icon: LayoutDashboard },
         {
