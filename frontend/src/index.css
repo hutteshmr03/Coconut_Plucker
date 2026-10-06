@@ -2326,6 +2326,479 @@ tbody tr:hover {
   border-radius: 8px;
 }
 
+/* ===================== WORKFORCE RESPONSIVE MOBILE CARDS ===================== */
+.desktop-workforce-table {
+  display: block;
+}
+
+.mobile-workforce-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .desktop-workforce-table {
+    display: none;
+  }
+  .mobile-workforce-cards {
+    display: flex;
+  }
+}
+
+.pro-mobile-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pro-mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pro-mobile-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  background: var(--cream);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.pro-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pro-meta-lbl {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.pro-meta-val {
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pro-mobile-cert {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.pro-mobile-card-footer {
+  margin-top: 2px;
+}
+
+/* ===================== BOOKINGS RESPONSIVE DISPATCH CARDS ===================== */
+.desktop-booking-table {
+  display: block;
+}
+
+.mobile-booking-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .desktop-booking-table {
+    display: none;
+  }
+  .mobile-booking-cards {
+    display: flex;
+  }
+}
+
+.booking-dispatch-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bd-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.bd-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bd-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--cream);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.bd-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bd-meta-lbl {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.bd-meta-val {
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.bd-card-footer {
+  margin-top: 2px;
+}
+
+/* ===================== ADMINS RESPONSIVE MOBILE CARDS ===================== */
+.desktop-admin-table {
+  display: block;
+}
+
+.mobile-admin-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .desktop-admin-table {
+    display: none;
+  }
+  .mobile-admin-cards {
+    display: flex;
+  }
+}
+
+.admin-mobile-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-mobile-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--cream);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.admin-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-meta-lbl {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.admin-meta-val {
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.admin-mobile-card-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* ===================== SERVICES RESPONSIVE MOBILE CARDS ===================== */
+.desktop-service-table {
+  display: block;
+}
+
+.mobile-service-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .desktop-service-table {
+    display: none;
+  }
+  .mobile-service-cards {
+    display: flex;
+  }
+}
+
+.service-mobile-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.service-mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.service-mobile-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--cream);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.service-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.service-meta-lbl {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.service-meta-val {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.service-mobile-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+  border-top: 1px dashed var(--line);
+  padding-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* ===================== AUDIT TRAIL RESPONSIVE MOBILE CARDS ===================== */
+.desktop-audit-table {
+  display: block;
+}
+
+.mobile-audit-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .desktop-audit-table {
+    display: none;
+  }
+  .mobile-audit-cards {
+    display: flex;
+  }
+}
+
+.audit-mobile-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.audit-timestamp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.audit-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.audit-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12.5px;
+}
+
+.audit-meta-lbl {
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 52px;
+  flex-shrink: 0;
+}
+
+.audit-meta-actor {
+  color: var(--navy-mid);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.audit-meta-target {
+  color: var(--ink);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.audit-details-box {
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+}
+
+.audit-details-text {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+/* ===================== SAFETY RESPONSIVE MOBILE CARDS ===================== */
+.desktop-safety-table {
+  display: block;
+}
+
+.mobile-safety-cards {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .desktop-safety-table {
+    display: none;
+  }
+  .mobile-safety-cards {
+    display: flex;
+  }
+}
+
+.safety-mobile-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.safety-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.safety-card-reporter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.safety-card-desc {
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.safety-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
 .mobile-nav-item.active {
   color: var(--teal);
 }
+

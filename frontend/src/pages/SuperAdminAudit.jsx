@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Card } from '../components/common/Card';
-import { Search, ShieldAlert, FileText, UserCheck, CheckCircle } from 'lucide-react';
+import { Search, Clock } from 'lucide-react';
 
 const INITIAL_AUDIT_LOGS = [
   {
@@ -45,6 +44,15 @@ const INITIAL_AUDIT_LOGS = [
   }
 ];
 
+const getActionBadgeColor = (action = '') => {
+  const a = action.toLowerCase();
+  if (a.includes('verified') || a.includes('approved') || a.includes('confirmed')) return 'green';
+  if (a.includes('provisioned') || a.includes('admin')) return 'purple';
+  if (a.includes('rate') || a.includes('price') || a.includes('service')) return 'gold';
+  if (a.includes('delete') || a.includes('deactivate')) return 'red';
+  return 'blue';
+};
+
 export const SuperAdminAudit = () => {
   const [search, setSearch] = useState('');
 
@@ -79,7 +87,8 @@ export const SuperAdminAudit = () => {
         </div>
       </div>
 
-      <div className="table-wrap">
+      {/* Desktop Audit Table */}
+      <div className="desktop-audit-table table-wrap">
         <table>
           <thead>
             <tr>
@@ -107,7 +116,7 @@ export const SuperAdminAudit = () => {
                   </div>
                 </td>
                 <td>
-                  <span className="badge blue">{log.action}</span>
+                  <span className={`badge ${getActionBadgeColor(log.action)}`}>{log.action}</span>
                 </td>
                 <td className="cell-strong">{log.target}</td>
                 <td className="cell-muted" style={{ maxWidth: '320px' }}>
@@ -118,6 +127,55 @@ export const SuperAdminAudit = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile Audit Cards (Zero Horizontal Scrolling) */}
+      <div className="mobile-audit-cards">
+        {filteredLogs.map((log) => (
+          <div key={log.id} className="audit-mobile-card">
+            {/* Header: Action Badge + Formatted Time */}
+            <div className="audit-card-header">
+              <span className={`badge ${getActionBadgeColor(log.action)}`}>
+                {log.action}
+              </span>
+              <span className="audit-timestamp">
+                <Clock size={12} />
+                <span>
+                  {new Date(log.timestamp).toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              </span>
+            </div>
+
+            {/* Actor & Target */}
+            <div className="audit-card-body">
+              <div className="audit-meta-row">
+                <span className="audit-meta-lbl">Actor:</span>
+                <span className="audit-meta-actor">{log.actor}</span>
+              </div>
+              <div className="audit-meta-row">
+                <span className="audit-meta-lbl">Target:</span>
+                <span className="audit-meta-target">{log.target}</span>
+              </div>
+            </div>
+
+            {/* Details Box */}
+            <div className="audit-details-box">
+              <div className="audit-details-text">{log.details}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredLogs.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--ink-soft)' }}>
+          No audit records found matching your search.
+        </div>
+      )}
     </div>
   );
 };
+

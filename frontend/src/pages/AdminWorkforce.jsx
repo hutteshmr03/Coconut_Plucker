@@ -81,8 +81,8 @@ export const AdminWorkforce = () => {
         </div>
       </div>
 
-      {/* Workforce Table */}
-      <div className="table-wrap">
+      {/* Desktop Workforce Table */}
+      <div className="table-wrap desktop-workforce-table">
         <table>
           <thead>
             <tr>
@@ -153,6 +153,85 @@ export const AdminWorkforce = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile Workforce Card View (Zero Horizontal Scrolling) */}
+      <div className="mobile-workforce-cards">
+        {filteredPros.map((pro) => (
+          <div key={pro.id} className="pro-mobile-card">
+            <div className="pro-mobile-card-header">
+              <div>
+                <div className="cell-strong" style={{ fontSize: '15px' }}>{getDisplayName(pro)}</div>
+                <div style={{ marginTop: '4px' }}>
+                  {pro?.phone ? (
+                    <a
+                      href={`tel:${String(pro.phone).replace(/[^0-9+]/g, '')}`}
+                      className="phone-link-pill"
+                      title={`Click to call ${getDisplayName(pro)} (${pro.phone})`}
+                    >
+                      <Phone size={11} />
+                      <span>{pro.phone}</span>
+                    </a>
+                  ) : '—'}
+                </div>
+              </div>
+              <StatusBadge status={pro.status} />
+            </div>
+
+            <div className="pro-mobile-card-body">
+              <div className="pro-meta-item">
+                <span className="pro-meta-lbl">Taluka</span>
+                <b className="pro-meta-val">{pro.taluka}</b>
+              </div>
+              <div className="pro-meta-item">
+                <span className="pro-meta-lbl">Experience</span>
+                <span className="pro-meta-val">{pro.experience_years} yrs</span>
+              </div>
+              <div className="pro-meta-item">
+                <span className="pro-meta-lbl">Skills</span>
+                <span className="badge blue" style={{ fontSize: '11px', padding: '2px 6px', display: 'inline-block' }}>
+                  {pro.skills.length} Services
+                </span>
+              </div>
+            </div>
+
+            {pro.safety_cert && (
+              <div className="pro-mobile-cert">
+                <span className="pro-meta-lbl">Cert: </span>
+                <span className="cell-muted">{pro.safety_cert}</span>
+              </div>
+            )}
+
+            <div className="pro-mobile-card-footer">
+              {pro.status === 'pending_verification' ? (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={UserCheck}
+                  className="btn-block"
+                  onClick={() => setVerifyingPro(pro)}
+                >
+                  Review & Verify
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="btn-block"
+                  onClick={() => setVerifyingPro(pro)}
+                >
+                  Inspect Profile
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {filteredPros.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--ink-soft)' }}>
+          No professionals found matching your search or filter.
+        </div>
+      )}
 
       {/* Verification Modal */}
       <VerificationModal

@@ -48,8 +48,8 @@ export const AdminSafety = () => {
         </Button>
       </div>
 
-      {/* Incidents Table */}
-      <div className="table-wrap">
+      {/* Incidents Table (Desktop View) */}
+      <div className="desktop-safety-table table-wrap">
         <table>
           <thead>
             <tr>
@@ -109,6 +109,75 @@ export const AdminSafety = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Incidents Cards (Mobile View - Zero Horizontal Scrolling) */}
+      <div className="mobile-safety-cards">
+        {incidents.map((inc) => (
+          <div key={inc.id} className="safety-mobile-card">
+            {/* Header: Date + Classification & Severity */}
+            <div className="safety-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="cell-strong" style={{ fontSize: '14px' }}>
+                  {inc.type}
+                </span>
+                <span
+                  className={`badge ${
+                    inc.severity === 'high' ? 'red' : inc.severity === 'medium' ? 'amber' : 'gray'
+                  }`}
+                >
+                  {inc.severity}
+                </span>
+              </div>
+              <span className="cell-muted" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+                {new Date(inc.created_at).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+
+            {/* Reporter Info */}
+            <div className="safety-card-reporter">
+              <span className="cell-muted" style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.04em' }}>
+                Reported by:
+              </span>
+              <span className="cell-strong" style={{ color: 'var(--ink)' }}>
+                {inc.reported_by_name}
+              </span>
+            </div>
+
+            {/* Description & Action */}
+            <div className="safety-card-desc">
+              {inc.description}
+            </div>
+
+            {/* Footer: Status + Resolve action */}
+            <div className="safety-card-footer">
+              <div>
+                <StatusBadge status={inc.status} />
+              </div>
+              <div>
+                {inc.status === 'open' ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={CheckCircle}
+                    onClick={() => resolveIncident(inc.id)}
+                  >
+                    Mark Resolved
+                  </Button>
+                ) : (
+                  <span className="cell-muted" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <CheckCircle size={13} color="var(--leaf)" />
+                    <span>Audit Closed</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Log Modal */}

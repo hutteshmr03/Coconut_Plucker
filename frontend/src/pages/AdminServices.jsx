@@ -50,8 +50,8 @@ export const AdminServices = () => {
         </Button>
       </div>
 
-      {/* Services Table */}
-      <div className="table-wrap">
+      {/* Services Table (Desktop) */}
+      <div className="desktop-service-table table-wrap">
         <table>
           <thead>
             <tr>
@@ -131,6 +131,89 @@ export const AdminServices = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Services Cards (Mobile View - Zero Horizontal Scrolling) */}
+      <div className="mobile-service-cards">
+        {services.map((svc) => (
+          <div key={svc.id} className="service-mobile-card">
+            {/* Header: Thumbnail + Title & Unit + Status */}
+            <div className="service-mobile-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                <img
+                  src={getServiceImage(svc)}
+                  alt={svc.name}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                    border: '1px solid var(--line)',
+                    flexShrink: 0
+                  }}
+                />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: '700', fontSize: '14.5px', color: 'var(--ink)' }}>
+                    {svc.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                    {svc.unit}
+                  </div>
+                </div>
+              </div>
+              <StatusBadge status={svc.status} />
+            </div>
+
+            {/* Meta Details Grid */}
+            <div className="service-mobile-card-body">
+              <div className="service-meta-item">
+                <span className="service-meta-lbl">Base Rate</span>
+                <span className="service-meta-val" style={{ color: 'var(--teal)', fontWeight: '700', fontSize: '14.5px' }}>
+                  ₹{Number(svc.base_rate).toFixed(2)}
+                </span>
+              </div>
+              <div className="service-meta-item">
+                <span className="service-meta-lbl">Height Surcharge</span>
+                <span className="service-meta-val">
+                  {svc.requires_height_category ? (
+                    <span className="badge gold">Yes (Tiered)</span>
+                  ) : (
+                    <span className="badge gray">No (Flat)</span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="service-mobile-card-footer">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Edit2}
+                onClick={() => handleOpenEdit(svc)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Power}
+                onClick={() => toggleServiceStatus(svc.id)}
+              >
+                {svc.status === 'active' ? 'Deactivate' : 'Activate'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Trash2}
+                style={{ color: 'var(--danger)' }}
+                onClick={() => setDeletingService(svc)}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Service Create / Edit Modal */}

@@ -86,8 +86,8 @@ export const AdminBookings = () => {
         </div>
       </div>
 
-      {/* Bookings Table */}
-      <div className="table-wrap">
+      {/* Desktop Bookings Table */}
+      <div className="table-wrap desktop-booking-table">
         <table>
           <thead>
             <tr>
@@ -300,6 +300,206 @@ export const AdminBookings = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Bookings Dispatch Cards (Zero Horizontal Scrolling) */}
+      <div className="mobile-booking-cards">
+        {filteredBookings.length > 0 ? (
+          filteredBookings.map((b) => {
+            const svc = services.find((s) => s.id === b.service_id);
+            const cust = customers.find((c) => c.id === b.customer_id);
+            const pro = professionals.find((p) => p.id === b.professional_id);
+            const isCallPending = b.booking_type === 'urgent' && !b.call_confirmed && b.status === 'requested';
+
+            return (
+              <div key={b.id} className="booking-dispatch-card">
+                {/* Header: Booking #, Date, Status */}
+                <div className="bd-card-header">
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <b style={{ color: 'var(--teal)', fontSize: '14px' }}>{b.booking_number}</b>
+                      {b.booking_type === 'urgent' && (
+                        <span
+                          style={{
+                            padding: '1px 6px',
+                            borderRadius: '10px',
+                            backgroundColor: '#FEF3C7',
+                            color: '#D97706',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            border: '1px solid #FDE68A',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '2px'
+                          }}
+                        >
+                          <Zap size={10} /> URGENT
+                        </span>
+                      )}
+                    </div>
+                    <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '2px' }}>
+                      📅 {new Date(b.scheduled_at).toLocaleDateString('en-IN', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    {isCallPending ? (
+                      <span className="badge gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <PhoneCall size={11} /> Call Needed
+                      </span>
+                    ) : (
+                      <StatusBadge status={b.status} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Body Details */}
+                <div className="bd-card-body">
+                  {/* Service & Qty */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: '600', fontSize: '13px' }}>
+                      {svc?.icon} {svc?.name} · {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s
+                      {b.height_category ? ` (${b.height_category})` : ''}
+                    </div>
+                    {b.tree_photo && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewPhotoBooking(b)}
+                        style={{
+                          background: 'rgba(31, 138, 130, 0.08)',
+                          border: '1px solid var(--teal)',
+                          color: 'var(--teal-dark)',
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Camera size={11} /> Snap
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Customer & Location */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ fontSize: '12.5px' }}>
+                      <span className="cell-muted">Customer: </span>
+                      <b>{getDisplayName(cust)}</b>
+                    </div>
+                    {cust?.phone && (
+                      <a
+                        href={`tel:${String(cust.phone).replace(/[^0-9+]/g, '')}`}
+                        className="phone-link-pill"
+                        title={`Click to call ${getDisplayName(cust)} (${cust.phone})`}
+                      >
+                        <Phone size={10} />
+                        <span>{cust.phone}</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* 2-Column Info Grid */}
+                  <div className="bd-meta-grid">
+                    <div className="bd-meta-item">
+                      <span className="bd-meta-lbl">Taluka / Region</span>
+                      <b className="bd-meta-val">{b.taluka}</b>
+                    </div>
+
+                    <div className="bd-meta-item">
+                      <span className="bd-meta-lbl">Assigned Climber</span>
+                      {pro ? (
+                        <span className="bd-meta-val" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          {pro.avatar_url && (
+                            <img
+                              src={pro.avatar_url}
+                              alt={getDisplayName(pro)}
+                              style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }}
+                            />
+                          )}
+                          {getDisplayName(pro)}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--amber)', fontSize: '11.5px', fontWeight: '700' }}>
+                          ⚠️ Unassigned
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="bd-meta-item">
+                      <span className="bd-meta-lbl">Amount</span>
+                      <b className="bd-meta-val" style={{ color: 'var(--teal)', fontSize: '13px' }}>
+                        ₹{Number(b.actual_amount || b.quote_amount).toFixed(2)}
+                      </b>
+                    </div>
+
+                    <div className="bd-meta-item">
+                      <span className="bd-meta-lbl">Payment Status</span>
+                      <span className="bd-meta-val" style={{ color: b.payment_status === 'paid' ? 'var(--success)' : 'var(--amber)', fontWeight: '600' }}>
+                        {b.payment_status === 'paid' ? '● Paid' : '○ Pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Action Button */}
+                <div className="bd-card-footer">
+                  {b.status === 'requested' ? (
+                    isCallPending ? (
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        icon={PhoneCall}
+                        className="btn-block"
+                        onClick={() => {
+                          const rawPhone = cust?.phone || b.customer_phone || b.phone || '';
+                          const cleanPhone = String(rawPhone).replace(/[^0-9+]/g, '');
+                          if (cleanPhone) {
+                            window.location.href = `tel:${cleanPhone}`;
+                          }
+                          confirmBookingCall(b.id, cust);
+                        }}
+                      >
+                        Confirm via Call
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={UserPlus}
+                        className="btn-block"
+                        onClick={() => setAssigningBooking(b)}
+                      >
+                        Assign Pro
+                      </Button>
+                    )
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="btn-block"
+                      onClick={() => setAssigningBooking(b)}
+                    >
+                      Reassign Climber
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--ink-soft)' }}>
+            No bookings match the search criteria.
+          </div>
+        )}
       </div>
 
       {/* Assign Professional Modal */}

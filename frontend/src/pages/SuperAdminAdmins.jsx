@@ -14,7 +14,8 @@ import {
   Trash2,
   Power,
   Lock,
-  UserCheck
+  UserCheck,
+  Phone
 } from 'lucide-react';
 
 const TALUKAS = [
@@ -171,8 +172,8 @@ export const SuperAdminAdmins = () => {
         </div>
       </div>
 
-      {/* Admins Table */}
-      <div className="table-wrap">
+      {/* Desktop Admins Table */}
+      <div className="table-wrap desktop-admin-table">
         <table>
           <thead>
             <tr>
@@ -247,6 +248,102 @@ export const SuperAdminAdmins = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Admins Card View (Zero Horizontal Scrolling) */}
+      <div className="mobile-admin-cards">
+        {filteredAdmins.length > 0 ? (
+          filteredAdmins.map((admin) => (
+            <div key={admin.id} className="admin-mobile-card">
+              {/* Header */}
+              <div className="admin-mobile-card-header">
+                <div>
+                  <div className="cell-strong" style={{ fontSize: '15px' }}>{getDisplayName(admin)}</div>
+                  <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '1px' }}>
+                    @{admin.username}
+                  </div>
+                </div>
+                <span
+                  className={`badge ${
+                    admin.status === 'active' ? 'green' : 'gray'
+                  }`}
+                >
+                  {admin.status === 'active' ? 'Active' : 'Deactivated'}
+                </span>
+              </div>
+
+              {/* Body Details */}
+              <div className="admin-mobile-card-body">
+                <div className="admin-meta-item">
+                  <span className="admin-meta-lbl">Contact Phone</span>
+                  <div style={{ marginTop: '2px' }}>
+                    {admin?.phone ? (
+                      <a
+                        href={`tel:${String(admin.phone).replace(/[^0-9+]/g, '')}`}
+                        className="phone-link-pill"
+                        title={`Click to call ${getDisplayName(admin)} (${admin.phone})`}
+                      >
+                        <Phone size={10} />
+                        <span>{admin.phone}</span>
+                      </a>
+                    ) : '—'}
+                  </div>
+                </div>
+
+                <div className="admin-meta-item">
+                  <span className="admin-meta-lbl">Region / Taluka</span>
+                  <div style={{ marginTop: '2px' }}>
+                    <span className="badge blue" style={{ fontSize: '11px', padding: '2px 7px' }}>
+                      {admin.taluka || 'All Talukas'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="admin-meta-item">
+                  <span className="admin-meta-lbl">Provisioned</span>
+                  <span className="admin-meta-val" style={{ color: 'var(--ink-soft)' }}>
+                    {admin.created_at
+                      ? new Date(admin.created_at).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })
+                      : 'Initial Seed'}
+                  </span>
+                </div>
+
+                <div className="admin-meta-item" style={{ justifyContent: 'flex-end' }}>
+                  <Button
+                    variant={admin.status === 'active' ? 'outline' : 'primary'}
+                    size="sm"
+                    icon={Power}
+                    style={{ width: '100%', padding: '5px 8px', fontSize: '11.5px' }}
+                    onClick={() => setDeactivatingAdmin(admin)}
+                  >
+                    {admin.status === 'active' ? 'Deactivate' : 'Activate'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Delete Button under the whole card */}
+              <div className="admin-mobile-card-footer">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={Trash2}
+                  className="btn-block"
+                  onClick={() => setDeletingAdmin(admin)}
+                >
+                  Delete Admin Account
+                </Button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--ink-soft)' }}>
+            No administrator accounts match your search.
+          </div>
+        )}
       </div>
 
       {/* Modal: Create Admin */}
@@ -332,9 +429,6 @@ export const SuperAdminAdmins = () => {
       >
         <p style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
           Are you sure you want to {deactivatingAdmin?.status === 'active' ? 'deactivate' : 'reactivate'} the administrator account for <b>{getDisplayName(deactivatingAdmin)}</b> ({deactivatingAdmin?.phone})?
-        </p>
-        <p className="cell-muted" style={{ marginTop: '10px', fontSize: '12px' }}>
-          Deactivated admins will be immediately blocked from signing in to the operations dashboard. Existing booking assignment history will be preserved.
         </p>
       </Modal>
 
