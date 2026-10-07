@@ -484,8 +484,11 @@ export const BookingWizard = ({ onComplete }) => {
         setTreeCount(updated[0].treeCount);
         if (updated[0].heightCategory) setHeightCategory(updated[0].heightCategory);
       } else {
-        setSelectedServiceId(services[0]?.id || '');
+        setSelectedServiceId('');
+        setIsServiceChosen(false);
+        setIsServiceConfirmed(false);
         setTreeCount(1);
+        setHeightCategory('medium');
         setStep(1);
       }
       return updated;

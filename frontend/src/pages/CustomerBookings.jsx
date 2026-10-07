@@ -306,7 +306,7 @@ export const CustomerBookings = () => {
                         }}
                       >
                         <WhatsAppIcon size={18} color="#FFFFFF" />
-                        <span>WhatsApp Location</span>
+                        <span>WhatsApp</span>
                       </a>
                     </div>
                   )}
