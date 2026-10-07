@@ -150,10 +150,10 @@ export const BookingWizard = ({ onComplete }) => {
 
   const activeService = services.find((s) => s.id === selectedServiceId) || services[0];
 
-  // Backend calculation contract: Request quote from backend API
+  // Backend calculation contract: Request quote from backend API only when service is selected
   useEffect(() => {
     let isMounted = true;
-    if (activeService) {
+    if (selectedServiceId && activeService && step > 1) {
       bookingsAPI
         .calculateQuote(activeService.id, activeService.base_rate, treeCount, bookingType)
         .then((res) => {
@@ -168,41 +168,43 @@ export const BookingWizard = ({ onComplete }) => {
     return () => {
       isMounted = false;
     };
-  }, [activeService?.id, activeService?.base_rate, treeCount, bookingType]);
+  }, [selectedServiceId, activeService?.id, activeService?.base_rate, treeCount, bookingType, step]);
 
-  // Section B.3: Fetch server-driven availability whenever taluka, service, or bookingType changes
+  // Section B.3: Fetch server-driven availability on scheduling steps
   useEffect(() => {
     let isMounted = true;
-    setIsLoadingAvailability(true);
-    setCustomDateError('');
+    if (step >= 2) {
+      setIsLoadingAvailability(true);
+      setCustomDateError('');
 
-    availabilityAPI
-      .getAvailability(taluka, activeService?.id, bookingType, schedulingConfig)
-      .then((res) => {
-        if (isMounted && res) {
-          setAvailabilityData(res);
-          // Validate existing date against new taluka schedule if already selected
-          if (res.available_dates && res.available_dates.length > 0) {
-            setScheduledDate((prev) => {
-              if (!prev) return '';
-              const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
-              const cur = new Date(prev + 'T00:00:00');
-              return config.allowedIndices.includes(cur.getDay()) ? prev : '';
-            });
+      availabilityAPI
+        .getAvailability(taluka, activeService?.id, bookingType, schedulingConfig)
+        .then((res) => {
+          if (isMounted && res) {
+            setAvailabilityData(res);
+            // Validate existing date against new taluka schedule if already selected
+            if (res.available_dates && res.available_dates.length > 0) {
+              setScheduledDate((prev) => {
+                if (!prev) return '';
+                const config = getTalukaDayConfig(taluka, bookingType, schedulingConfig);
+                const cur = new Date(prev + 'T00:00:00');
+                return config.allowedIndices.includes(cur.getDay()) ? prev : '';
+              });
+            }
           }
-        }
-      })
-      .catch((err) => {
-        console.warn('Availability load error:', err);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingAvailability(false);
-      });
+        })
+        .catch((err) => {
+          console.warn('Availability load error:', err);
+        })
+        .finally(() => {
+          if (isMounted) setIsLoadingAvailability(false);
+        });
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [taluka, activeService?.id, bookingType, schedulingConfig]);
+  }, [taluka, activeService?.id, bookingType, schedulingConfig, step]);
 
   // Section A.1: Height Category strictly gated by service object's requires_height_category flag
   const isHeightCategoryRequired = activeService?.requires_height_category === true;
