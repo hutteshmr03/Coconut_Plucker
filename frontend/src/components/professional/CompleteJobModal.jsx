@@ -1,32 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
-import { Input } from '../common/Input';
 import { CheckCircle2 } from 'lucide-react';
 
 export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
-  const [actualAmount, setActualAmount] = useState(booking?.quote_amount || '');
-
   if (!booking) return null;
 
-  const isPaidUpfront = booking.payment_status === 'paid';
-  const numericActual = Number(actualAmount) || Number(booking.quote_amount || 0);
   const numericQuote = Number(booking.quote_amount || 0);
-  const diff = numericActual - numericQuote;
-  const hasExtraCharge = isPaidUpfront && diff > 0;
 
   const handleComplete = (e) => {
     if (e) e.preventDefault();
-    onConfirm(booking.id, numericActual);
+    onConfirm(booking.id, numericQuote);
     onClose();
-  };
-
-  const getHintText = () => {
-    return `Full payment of ₹${numericQuote.toFixed(2)} was received upfront.`;
-  };
-
-  const getButtonLabel = () => {
-    return "Mark Job Completed";
   };
 
   return (
@@ -40,19 +25,15 @@ export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
             Cancel
           </Button>
           <Button variant="gold" icon={CheckCircle2} onClick={handleComplete}>
-            {getButtonLabel()}
+            Mark Job Completed
           </Button>
         </>
       }
     >
       <form onSubmit={handleComplete}>
-        <p className="cell-muted" style={{ marginBottom: '16px' }}>
-          Confirm the final billed amount for this service. Adjust only if additional trees were serviced on customer request.
-        </p>
-
         <div className="kpi-line">
           <span>Initial Quoted Amount</span>
-          <b>₹{Number(booking.quote_amount).toFixed(2)}</b>
+          <b>₹{numericQuote.toFixed(2)}</b>
         </div>
         <div className="kpi-line">
           <span>Tree Count Serviced</span>
@@ -65,15 +46,17 @@ export const CompleteJobModal = ({ isOpen, onClose, onConfirm, booking }) => {
           </div>
         )}
 
-        <div style={{ marginTop: '16px' }}>
-          <Input
-            label="Final Amount to Bill (₹)"
-            type="number"
-            value={actualAmount}
-            onChange={(e) => setActualAmount(e.target.value)}
-            required
-            hint={getHintText()}
-          />
+        <div style={{
+          marginTop: '16px',
+          padding: '10px 14px',
+          background: 'rgba(31, 138, 130, 0.08)',
+          border: '1px solid rgba(31, 138, 130, 0.2)',
+          borderRadius: '8px',
+          fontSize: '12.5px',
+          color: 'var(--teal)',
+          fontWeight: '600'
+        }}>
+          ✓ Full payment of ₹{numericQuote.toFixed(2)} was received upfront.
         </div>
       </form>
     </Modal>
