@@ -1146,7 +1146,7 @@ export const BookingWizard = ({ onComplete }) => {
                     <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
                       {bookingType === 'urgent'
                         ? '⚡ Urgent: Any future day except Sunday'
-                        : `🌿 Normal: ${getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}`
+                        : `Normal Days: ${getTalukaDayConfig(taluka, 'standard', schedulingConfig).description}`
                       }
                     </span>
                   </div>
