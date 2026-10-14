@@ -243,7 +243,16 @@ export const AuthProvider = ({ children }) => {
       created_at: new Date().toISOString()
     };
 
-    setRegisteredUsers((prev) => [...prev, newAdmin]);
+    setRegisteredUsers((prev) => {
+      const updated = [...prev, newAdmin];
+      // Write synchronously so the account is available for login immediately
+      try {
+        localStorage.setItem('cp_registered_users_v5', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist new admin to localStorage:', e);
+      }
+      return updated;
+    });
     return newAdmin;
   };
 
@@ -278,7 +287,15 @@ export const AuthProvider = ({ children }) => {
       created_at: new Date().toISOString()
     };
 
-    setRegisteredUsers((prev) => [...prev, newProUser]);
+    setRegisteredUsers((prev) => {
+      const updated = [...prev, newProUser];
+      try {
+        localStorage.setItem('cp_registered_users_v5', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist new professional to localStorage:', e);
+      }
+      return updated;
+    });
     return newProUser;
   };
 
