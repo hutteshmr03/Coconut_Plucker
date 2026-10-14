@@ -463,7 +463,7 @@ export const AuthPage = () => {
               {loginStep === 'password' && (
                 <form onSubmit={handleAdminPasswordSubmit} autoComplete="off">
                   <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                    Enter password for <b>+91 {loginPhone}</b>
+                    Enter password for <b>{loginPhone}</b>
                   </p>
 
                   {pendingLoginUser && (
