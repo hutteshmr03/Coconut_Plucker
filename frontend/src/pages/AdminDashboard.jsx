@@ -107,7 +107,7 @@ export const AdminDashboard = () => {
                     <div
                       key={b.id}
                       className="list-item"
-                      style={{ padding: '12px 0', flexWrap: 'wrap', gap: '10px' }}
+                      style={{ padding: '12px 0', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}
                     >
                       <div className={`li-dot ${isCallPending ? 'gold' : 'amber'}`} />
                       <div className="li-main" style={{ minWidth: 0, flex: '1 1 200px' }}>
