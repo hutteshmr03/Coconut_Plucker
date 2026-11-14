@@ -161,7 +161,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
             fontWeight: '600'
           }}
         >
-          <span>{role === 'super_admin' ? 'Super Admin' : getDisplayName(currentUser, language)}</span>
+          {role !== 'super_admin' && <span>{getDisplayName(currentUser, language)}</span>}
 
           {role === 'super_admin' && (
             <span
