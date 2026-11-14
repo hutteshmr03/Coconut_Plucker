@@ -161,27 +161,7 @@ export const Topbar = ({ onOpenAddService, onOpenLogIncident }) => {
             fontWeight: '600'
           }}
         >
-          {role !== 'super_admin' && <span>{getDisplayName(currentUser, language)}</span>}
-
-          {role === 'super_admin' && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: 'rgba(124, 58, 237, 0.14)',
-                color: '#6D28D9',
-                border: '1px solid rgba(124, 58, 237, 0.3)',
-                fontSize: '11px',
-                fontWeight: '700',
-                padding: '2px 8px',
-                borderRadius: '12px'
-              }}
-            >
-              <ShieldAlert size={12} color="#6D28D9" strokeWidth={2.5} />
-              {t('super_admin_badge')}
-            </span>
-          )}
+          <span>{role === 'super_admin' ? 'Super Admin' : getDisplayName(currentUser, language)}</span>
 
           {role === 'professional' && (
             <span
