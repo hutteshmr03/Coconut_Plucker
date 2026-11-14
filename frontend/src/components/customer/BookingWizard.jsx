@@ -612,7 +612,7 @@ export const BookingWizard = ({ onComplete }) => {
                               boxShadow: '0 2px 4px rgba(0,0,0,0.18)',
                               zIndex: 3
                             }}>
-                              🛒 In Cart ({inCart.treeCount})
+                              🛒 In Cart
                             </span>
                           )}
                           {svc.requires_height_category && (
