@@ -1153,6 +1153,7 @@ export const BookingWizard = ({ onComplete }) => {
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <input
                       type="date"
+                      placeholder="DD-MM-YYYY"
                       min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
                       value={scheduledDate}
                       onChange={(e) => {
