@@ -107,10 +107,10 @@ export const AdminDashboard = () => {
                     <div
                       key={b.id}
                       className="list-item"
-                      style={{ padding: '12px 0', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}
+                      style={{ padding: '12px 0', flexWrap: 'nowrap', gap: '10px', alignItems: 'center' }}
                     >
-                      <div className={`li-dot ${isCallPending ? 'gold' : 'amber'}`} />
-                      <div className="li-main" style={{ minWidth: 0, flex: '1 1 200px' }}>
+                      <div className={`li-dot ${isCallPending ? 'gold' : 'amber'}`} style={{ alignSelf: 'flex-start', marginTop: '5px' }} />
+                      <div className="li-main" style={{ minWidth: 0, flex: 1 }}>
                         <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span>{svc?.icon} {svc?.name} · {b.booking_number}</span>
                           {b.booking_type === 'urgent' && (
@@ -141,10 +141,12 @@ export const AdminDashboard = () => {
                               <span>{cust.phone}</span>
                             </a>
                           )}
-                          <span>· Taluka: <b>{b.taluka}</b> · {b.tree_count} trees</span>
+                        </div>
+                        <div className="li-sub" style={{ marginTop: '2px' }}>
+                          · Taluka: <b>{b.taluka}</b> · {b.tree_count} trees
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0, alignSelf: 'center' }}>
                         {isCallPending ? (
                           <Button
                             variant="gold"
