@@ -14,9 +14,9 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"), default=uuid.uuid4)
     phone = Column(String(15), unique=True, nullable=False, index=True)
     full_name = Column(String(120), nullable=False)
-    role = Column(String(20), nullable=False)
-    status = Column(String(20), nullable=False, server_default="active", default="active")
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    role = Column(String(20), nullable=False, index=True)
+    status = Column(String(20), nullable=False, server_default="active", default="active", index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"), index=True)
 
     # Relationships
     customer_profile = relationship("CustomerProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")

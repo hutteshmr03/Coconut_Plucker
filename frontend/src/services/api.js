@@ -1,9 +1,35 @@
 // API client module connecting the React frontend to the FastAPI backend (/api)
 // Designed according to Backend Specification API-001 through API-035
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+// In-memory cache for API queries and instant calculations
+const apiCache = new Map();
+const CACHE_TTL_MS = 45000; // 45 seconds cache TTL
+
+const quoteCache = new Map();
+const availabilityCache = new Map();
+
+let isBackendReachable = null;
 
 async function request(endpoint, options = {}) {
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
+  const cacheKey = `${endpoint}_${localStorage.getItem('cp_auth_token') || ''}`;
+
+  // Return cached response instantly if still fresh
+  if (isGet && apiCache.has(cacheKey)) {
+    const entry = apiCache.get(cacheKey);
+    if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
+      return entry.data;
+    }
+    apiCache.delete(cacheKey);
+  }
+
+  // Fast-fail if backend is known to be unavailable (e.g. running on static SPA host)
+  if (isBackendReachable === false && !import.meta.env.VITE_API_BASE_URL) {
+    throw new Error('API server offline (using high-speed local data)');
+  }
+
   const token = localStorage.getItem('cp_auth_token');
   const headers = {
     'Content-Type': 'application/json',
@@ -11,20 +37,41 @@ async function request(endpoint, options = {}) {
     ...options.headers
   };
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3500);
+
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers
+      headers,
+      signal: controller.signal
     });
+    clearTimeout(timer);
+
+    const contentType = response.headers.get('content-type') || '';
+    // If backend returns HTML (e.g. Vercel SPA rewrite fallback for /api)
+    if (contentType.includes('text/html')) {
+      if (!import.meta.env.VITE_API_BASE_URL) {
+        isBackendReachable = false;
+      }
+      throw new Error(`Endpoint ${endpoint} returned HTML instead of JSON`);
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error?.message || `API Error: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    isBackendReachable = true;
+
+    if (isGet) {
+      apiCache.set(cacheKey, { data, timestamp: Date.now() });
+    }
+
+    return data;
   } catch (err) {
-    console.warn(`[API] Fallback for ${endpoint}:`, err.message);
+    clearTimeout(timer);
     throw err;
   }
 }
@@ -59,15 +106,21 @@ export const servicesAPI = {
 export const bookingsAPI = {
   createBooking: (data) => request('/bookings', { method: 'POST', body: JSON.stringify(data) }),
   calculateQuote: async (serviceId, baseRate, treeCount, bookingType = 'standard') => {
+    const key = `${serviceId}_${baseRate}_${treeCount}_${bookingType}`;
+    if (quoteCache.has(key)) {
+      return quoteCache.get(key);
+    }
     try {
-      return await request('/bookings/quote', {
+      const res = await request('/bookings/quote', {
         method: 'POST',
         body: JSON.stringify({ service_id: serviceId, tree_count: treeCount, booking_type: bookingType })
       });
+      if (res) quoteCache.set(key, res);
+      return res;
     } catch {
       // Rates are GST-inclusive
       const base = Number(baseRate || 0) * Number(treeCount || 1);
-      return {
+      const res = {
         base_amount: base,
         surcharge_rate: 0,
         surcharge_label: null,
@@ -76,6 +129,8 @@ export const bookingsAPI = {
         gst_amount: 0,
         quote_amount: base
       };
+      quoteCache.set(key, res);
+      return res;
     }
   },
   getMyBookings: () => request('/bookings'),
@@ -95,6 +150,12 @@ export const availabilityAPI = {
       } catch {}
     }
 
+    const schedKey = JSON.stringify(sched || {});
+    const key = `${taluka}_${serviceId}_${bookingType}_${schedKey}`;
+    if (availabilityCache.has(key)) {
+      return availabilityCache.get(key);
+    }
+
     const queryParams = new URLSearchParams({
       taluka: taluka || '',
       service_id: serviceId || '',
@@ -106,10 +167,14 @@ export const availabilityAPI = {
     if (sched?.kushavatiDays?.length) queryParams.set('kushavati_days', sched.kushavatiDays.join(','));
 
     try {
-      return await request(`/availability?${queryParams.toString()}`);
+      const res = await request(`/availability?${queryParams.toString()}`);
+      if (res) availabilityCache.set(key, res);
+      return res;
     } catch {
       // Fallback server calculation simulation until live FastAPI route is invoked
-      return getSimulatedServerAvailability(taluka, serviceId, bookingType, sched);
+      const res = getSimulatedServerAvailability(taluka, serviceId, bookingType, sched);
+      availabilityCache.set(key, res);
+      return res;
     }
   }
 };

@@ -15,14 +15,14 @@ class Booking(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"), default=uuid.uuid4)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    professional_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    service_id = Column(UUID(as_uuid=True), ForeignKey("services.id", ondelete="SET NULL"), nullable=True)
+    customer_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    professional_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    service_id = Column(UUID(as_uuid=True), ForeignKey("services.id", ondelete="SET NULL"), nullable=True, index=True)
     height_category = Column(String(20), nullable=True)
-    scheduled_at = Column(DateTime(timezone=True), nullable=False)
-    status = Column(String(20), nullable=False, server_default="requested", default="requested")
+    scheduled_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    status = Column(String(20), nullable=False, server_default="requested", default="requested", index=True)
     quote_amount = Column(Numeric(8, 2), nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"), index=True)
 
     # Relationships
     customer = relationship("User", foreign_keys=[customer_id], back_populates="customer_bookings")

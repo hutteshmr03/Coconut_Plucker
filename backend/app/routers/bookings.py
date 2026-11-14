@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.models.booking import Booking
 from app.models.service import Service
@@ -37,7 +37,7 @@ def calculate_quote(req: QuoteRequest, db: Session = Depends(get_db)):
 
 @router.get("", response_model=List[BookingOut])
 def get_my_bookings(db: Session = Depends(get_db)):
-    bookings = db.query(Booking).all()
+    bookings = db.query(Booking).options(joinedload(Booking.service)).all()
     results = []
     for b in bookings:
         results.append(
@@ -136,9 +136,9 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
 def get_booking_detail(booking_id: str, db: Session = Depends(get_db)):
     try:
         bid = uuid.UUID(booking_id)
-        booking = db.query(Booking).filter(Booking.id == bid).first()
+        booking = db.query(Booking).options(joinedload(Booking.service)).filter(Booking.id == bid).first()
     except Exception:
-        booking = db.query(Booking).first()
+        booking = db.query(Booking).options(joinedload(Booking.service)).first()
 
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")

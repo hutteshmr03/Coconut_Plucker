@@ -11,7 +11,7 @@ class ProfessionalProfile(Base):
     experience_years = Column(Integer, nullable=True)
     safety_cert = Column(String(80), nullable=True)
     rating_avg = Column(Numeric(2, 1), server_default=text("0"), default=0.0)
-    taluka = Column(String(80), nullable=False)
+    taluka = Column(String(80), nullable=False, index=True)
 
     # Relationships
     user = relationship("User", back_populates="professional_profile")

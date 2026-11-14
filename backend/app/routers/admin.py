@@ -1,10 +1,11 @@
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.models.user import User
+from app.models.professional import ProfessionalProfile
 from app.models.booking import Booking
 from app.models.incident import Incident
 from app.models.payment import Payment
@@ -41,12 +42,24 @@ def get_admin_dashboard(db: Session = Depends(get_db)):
 
 @router.get("/customers", response_model=List[UserOut])
 def get_admin_customers(db: Session = Depends(get_db)):
-    customers = db.query(User).filter(User.role == "customer").all()
+    customers = (
+        db.query(User)
+        .options(joinedload(User.customer_profile))
+        .filter(User.role == "customer")
+        .all()
+    )
     return [format_user_out(c, db) for c in customers]
 
 @router.get("/professionals", response_model=List[UserOut])
 def get_admin_professionals(db: Session = Depends(get_db)):
-    professionals = db.query(User).filter(User.role == "professional").all()
+    professionals = (
+        db.query(User)
+        .options(
+            joinedload(User.professional_profile).joinedload(ProfessionalProfile.skills)
+        )
+        .filter(User.role == "professional")
+        .all()
+    )
     return [format_user_out(p, db) for p in professionals]
 
 @router.post("/professionals/{professional_id}/verify")
