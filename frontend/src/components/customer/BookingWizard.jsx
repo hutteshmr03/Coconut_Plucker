@@ -520,33 +520,36 @@ export const BookingWizard = ({ onComplete }) => {
                   type="button"
                   onClick={() => setStep(3)}
                   style={{
+                    position: 'relative',
                     display: 'inline-flex',
-                    alignItems: 'flex-end',
-                    gap: '4px',
-                    background: '#131921',
-                    color: '#FFFFFF',
-                    border: '1px solid #232f3e',
-                    padding: '5px 12px 5px 8px',
-                    borderRadius: '6px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '6px',
+                    borderRadius: '50%',
                     cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-                    transition: 'all 0.15s ease'
                   }}
                   title="View Shopping Cart"
                 >
-                  <svg width="28" height="20" viewBox="0 0 38 26" fill="none" style={{ display: 'block' }}>
-                    <path
-                      d="M2 3h5l3.8 13.5h17l3.8-9.5H9"
-                      stroke="#FFFFFF"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="13" cy="22.5" r="2.2" fill="#FFFFFF" />
-                    <circle cx="26" cy="22.5" r="2.2" fill="#FFFFFF" />
-                  </svg>
-                  <span style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF', lineHeight: 1, paddingBottom: '2px' }}>
-                    Cart
+                  <ShoppingCart size={26} color="var(--ink)" strokeWidth={1.8} />
+                  <span style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    background: 'var(--teal)',
+                    color: '#fff',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    borderRadius: '50%',
+                    width: '16px',
+                    height: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1
+                  }}>
+                    {serviceCart.length}
                   </span>
                 </button>
               )}
