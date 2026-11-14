@@ -109,7 +109,6 @@ export const AdminDashboard = () => {
                       className="list-item"
                       style={{ padding: '12px 0', flexWrap: 'nowrap', gap: '10px', alignItems: 'center' }}
                     >
-                      <div className={`li-dot ${isCallPending ? 'gold' : 'amber'}`} style={{ alignSelf: 'flex-start', marginTop: '5px' }} />
                       <div className="li-main" style={{ minWidth: 0, flex: 1 }}>
                         <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span>{svc?.icon} {svc?.name} · {b.booking_number}</span>
