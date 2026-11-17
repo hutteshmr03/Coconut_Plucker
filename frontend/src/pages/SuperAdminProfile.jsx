@@ -182,7 +182,7 @@ export const SuperAdminProfile = () => {
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>Super Admin Account</h3>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>Super Admin</h3>
           </div>
           <span
             className="badge"
