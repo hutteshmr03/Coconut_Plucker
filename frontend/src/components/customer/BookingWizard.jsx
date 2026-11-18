@@ -10,6 +10,7 @@ import { Card } from '../common/Card';
 import { Modal } from '../common/Modal';
 import { EmergencyBookingModal } from './EmergencyBookingModal';
 import { RazorpayPaymentModal } from './RazorpayPaymentModal';
+import { launchRazorpayCheckout } from '../../services/razorpay';
 import {
   Check,
   ArrowRight,
@@ -296,8 +297,36 @@ export const BookingWizard = ({ onComplete }) => {
   const totalTreeCount = currentItems.reduce((acc, item) => acc + Math.max(1, Number(item.treeCount || 1)), 0);
 
   // Upfront Payment Gateway Flow (Razorpay)
-  const handleOpenPayment = (e) => {
+  const handleOpenPayment = async (e) => {
     if (e) e.preventDefault();
+
+    const activeKey =
+      import.meta.env.VITE_RAZORPAY_KEY_ID ||
+      localStorage.getItem('cp_razorpay_key_id');
+
+    if (activeKey) {
+      try {
+        await launchRazorpayCheckout({
+          amount: totalAmount,
+          serviceName: currentItems.map((i) => `${i.serviceName} (${i.treeCount})`).join(', '),
+          customerName: currentUser?.full_name || '',
+          customerPhone: currentUser?.phone || '',
+          customerEmail: currentUser?.email || '',
+          key: activeKey,
+          onSuccess: (paymentRecord) => {
+            handlePaymentSuccess(paymentRecord);
+          },
+          onError: (errMsg) => {
+            console.warn('Razorpay checkout error:', errMsg);
+            setIsPaymentModalOpen(true);
+          }
+        });
+        return;
+      } catch (err) {
+        console.warn('Razorpay launch fallback:', err);
+      }
+    }
+
     setIsPaymentModalOpen(true);
   };
 

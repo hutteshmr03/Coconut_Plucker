@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-react';
 import { formatScheduledDateLabel } from '../../utils/helpers';
+import { launchRazorpayCheckout } from '../../services/razorpay';
 
 const POPULAR_BANKS = [
   { id: 'hdfc', name: 'HDFC Bank', icon: '🏛️' },
@@ -87,9 +88,40 @@ export const RazorpayPaymentModal = ({
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const handlePay = (e) => {
+  const handlePay = async (e) => {
     if (e) e.preventDefault();
     setError('');
+
+    const activeKey =
+      import.meta.env.VITE_RAZORPAY_KEY_ID ||
+      localStorage.getItem('cp_razorpay_key_id');
+
+    if (activeKey) {
+      try {
+        setIsProcessing(true);
+        await launchRazorpayCheckout({
+          amount: numAmount,
+          serviceName,
+          key: activeKey,
+          onSuccess: (paymentRecord) => {
+            setIsProcessing(false);
+            setIsSuccess(true);
+            setCompletedRecord(paymentRecord);
+          },
+          onError: (errMsg) => {
+            setIsProcessing(false);
+            setError(errMsg || 'Payment failed. Please try again.');
+          },
+          onDismiss: () => {
+            setIsProcessing(false);
+          }
+        });
+        return;
+      } catch (err) {
+        setIsProcessing(false);
+        console.warn('Real checkout fallback in modal:', err);
+      }
+    }
 
     if (activeTab === 'upi' && upiMethod === 'id' && (!upiId || !upiId.includes('@'))) {
       setError('Please enter a valid UPI ID (e.g. mobile@upi or name@okhdfcbank)');
