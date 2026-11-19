@@ -49,7 +49,7 @@ async function request(endpoint, options = {}) {
     clearTimeout(timer);
 
     const contentType = response.headers.get('content-type') || '';
-    // If backend returns HTML (e.g. Vercel SPA rewrite fallback for /api)
+    // If backend returns HTML (e.g. SPA rewrite fallback for /api)
     if (contentType.includes('text/html')) {
       if (!import.meta.env.VITE_API_BASE_URL) {
         isBackendReachable = false;
