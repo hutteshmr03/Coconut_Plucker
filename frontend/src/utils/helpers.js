@@ -250,6 +250,16 @@ export const getServiceImage = (svc) => {
   return coconutImg;
 };
 
+export const getCleanServiceIcon = (svc, defaultIcon = '🌴') => {
+  if (!svc) return defaultIcon;
+  const icon = typeof svc === 'string' ? svc : svc.icon;
+  if (!icon || typeof icon !== 'string') return defaultIcon;
+  if (icon.startsWith('data:') || icon.startsWith('http') || icon.startsWith('/') || icon.length > 10) {
+    return defaultIcon;
+  }
+  return icon;
+};
+
 /**
  * Compresses an image file using lightweight Blob Object URLs and HTML5 Canvas.
  * Prevents mobile memory exhaustion and localStorage quota overflow.

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getDisplayName } from '../../utils/helpers';
+import { getDisplayName, getCleanServiceIcon } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { UserCheck, Star, MapPin, CheckCircle } from 'lucide-react';
@@ -63,7 +63,7 @@ export const AssignWorkerModal = ({
       <div style={{ marginBottom: '16px', background: 'var(--cream)', padding: '12px 14px', borderRadius: '10px' }}>
         <div className="kpi-line" style={{ padding: '4px 0' }}>
           <span>Service Needed</span>
-          <b>{activeService?.icon} {activeService?.name}</b>
+          <b>{getCleanServiceIcon(activeService)} {activeService?.name}</b>
         </div>
         <div className="kpi-line" style={{ padding: '4px 0' }}>
           <span>Customer Taluka</span>

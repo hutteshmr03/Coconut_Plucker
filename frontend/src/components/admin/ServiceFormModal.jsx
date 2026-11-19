@@ -69,7 +69,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       unit: unit.trim(),
       image_url: imageUrl || (service?.image_url || null),
       image: imageUrl || (service?.image || null),
-      icon: imageUrl || service?.icon || '🌴',
+      icon: (service?.icon && !service.icon.startsWith('data:') && service.icon.length <= 10) ? service.icon : '🌴',
       desc: desc.trim(),
       requires_height_category: requiresHeightCategory
     };

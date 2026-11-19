@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
-import { getDisplayName } from '../utils/helpers';
+import { getDisplayName, getCleanServiceIcon } from '../utils/helpers';
 import { Card } from '../components/common/Card';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
@@ -111,7 +111,7 @@ export const AdminDashboard = () => {
                     >
                       <div className="li-main" style={{ minWidth: 0, flex: 1 }}>
                         <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span>{svc?.icon} {svc?.name} · {b.booking_number}</span>
+                          <span>{getCleanServiceIcon(svc)} {svc?.name} · {b.booking_number}</span>
                           {b.booking_type === 'urgent' && (
                             <span
                               style={{
@@ -197,13 +197,7 @@ export const AdminDashboard = () => {
                 return (
                   <div key={service.id} className="bar-row">
                     <div className="lbl" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>
-                        {service.icon && (service.icon.startsWith('data:image') || service.icon.startsWith('http') || service.icon.startsWith('/')) ? (
-                          <img src={service.icon} alt="" style={{ width: '18px', height: '18px', borderRadius: '3px', objectFit: 'cover' }} />
-                        ) : (
-                          service.icon || '🌴'
-                        )}
-                      </span>
+                      <span>{getCleanServiceIcon(service)}</span>
                       <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {service.name.split(' ')[0]}
                       </span>

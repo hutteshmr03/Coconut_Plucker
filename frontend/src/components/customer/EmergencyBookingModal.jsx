@@ -6,6 +6,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { getCleanServiceIcon } from '../../utils/helpers';
 
 const TALUKAS = [
   { value: 'North Goa', label: 'North Goa' },
@@ -132,7 +133,7 @@ export const EmergencyBookingModal = ({ isOpen, onClose, onSuccess }) => {
             label="Emergency Service Type"
             value={selectedServiceId}
             onChange={(e) => setSelectedServiceId(e.target.value)}
-            options={activeServices.map((s) => ({ value: s.id, label: `${s.icon} ${s.name} (₹${s.base_rate}/${s.unit})` }))}
+            options={activeServices.map((s) => ({ value: s.id, label: `${getCleanServiceIcon(s)} ${s.name} (₹${s.base_rate}/${s.unit})` }))}
             required
           />
 

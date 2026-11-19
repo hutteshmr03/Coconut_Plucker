@@ -1,4 +1,5 @@
 import React from 'react';
+import { getCleanServiceIcon } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
@@ -93,7 +94,7 @@ export const VerificationModal = ({ isOpen, onClose, professional, services, onD
                   fontWeight: '600'
                 }}
               >
-                {svc?.icon} {svc?.name}
+                {getCleanServiceIcon(svc)} {svc?.name}
               </span>
             );
           })}

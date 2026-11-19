@@ -7,6 +7,7 @@ import { CompleteJobModal } from '../components/professional/CompleteJobModal';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { getCleanServiceIcon } from '../utils/helpers';
 import { ShieldCheck, Star, Briefcase, CheckCircle, Check } from 'lucide-react';
 
 export const ProfessionalDashboard = () => {
@@ -158,7 +159,7 @@ export const ProfessionalDashboard = () => {
                         gap: '6px'
                       }}
                     >
-                      {s?.icon} {s?.name}
+                      {getCleanServiceIcon(s)} {s?.name}
                     </span>
                   );
                 })}

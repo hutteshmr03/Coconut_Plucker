@@ -27,6 +27,20 @@ export const AppProvider = ({ children }) => {
       if (!Array.isArray(list) || list.length === 0) list = INITIAL_SERVICES;
       // Filter out legacy discontinued services
       list = list.filter((s) => s.id !== 'svc_orchard' && s.id !== 'svc_waste');
+      // Sanitize icon so base64 strings never leak into icon text
+      list = list.map((s) => {
+        let cleanIcon = s.icon;
+        if (!cleanIcon || cleanIcon.startsWith('data:') || cleanIcon.length > 10) {
+          const defaultSvc = INITIAL_SERVICES.find((init) => init.id === s.id);
+          cleanIcon = defaultSvc?.icon || '🌴';
+        }
+        return {
+          ...s,
+          icon: cleanIcon,
+          image: s.image || (s.icon && s.icon.startsWith('data:image') ? s.icon : null) || s.image_url,
+          image_url: s.image_url || (s.icon && s.icon.startsWith('data:image') ? s.icon : null) || s.image
+        };
+      });
       return list;
     } catch {
       return INITIAL_SERVICES;

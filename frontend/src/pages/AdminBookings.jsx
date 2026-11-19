@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { getDisplayName } from '../utils/helpers';
+import { getDisplayName, getCleanServiceIcon } from '../utils/helpers';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
@@ -160,7 +160,7 @@ export const AdminBookings = () => {
 
                     <td>
                       <div style={{ fontWeight: '600' }}>
-                        {svc?.icon} {svc?.name}
+                        {getCleanServiceIcon(svc)} {svc?.name}
                       </div>
                       <div className="cell-muted" style={{ fontSize: '11.5px' }}>
                         {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s
@@ -363,7 +363,7 @@ export const AdminBookings = () => {
                   {/* Service & Qty */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontWeight: '600', fontSize: '13px' }}>
-                      {svc?.icon} {svc?.name} · {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s
+                      {getCleanServiceIcon(svc)} {svc?.name} · {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s
                       {b.height_category ? ` (${b.height_category})` : ''}
                     </div>
                     {b.tree_photo && (
