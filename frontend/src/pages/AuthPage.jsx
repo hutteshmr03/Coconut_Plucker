@@ -6,7 +6,7 @@ import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
-import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone } from 'lucide-react';
+import { LogIn, ArrowRight, ArrowLeft, Smartphone } from 'lucide-react';
 import { authAPI } from '../services/api';
 import logoImg from '../assets/logo.png';
 
@@ -31,7 +31,6 @@ export const AuthPage = () => {
   const [pendingLoginUser, setPendingLoginUser] = useState(null);
 
   // Sign Up form fields (Only Full Name, Phone Number, Role, Taluka, and Address)
-  const [signupStep, setSignupStep] = useState('details'); // 'details' | 'otp'
   const [fullName, setFullName] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [role, setRole] = useState('customer');
@@ -39,16 +38,12 @@ export const AuthPage = () => {
   const [address, setAddress] = useState('');
   const [experienceYears, setExperienceYears] = useState('5');
   const [safetyCert, setSafetyCert] = useState('');
-  const [signupOtp, setSignupOtp] = useState('');
-  const [pendingSignupData, setPendingSignupData] = useState(null);
 
   // Switch between Login and Sign Up
   const switchMode = (newMode) => {
     setMode(newMode);
     setLoginStep('phone');
-    setSignupStep('details');
     setError('');
-    setSignupOtp('');
     setAdminPassword('');
     setPendingLoginUser(null);
   };
@@ -186,27 +181,9 @@ export const AuthPage = () => {
       address: address.trim() || `${taluka}, Goa`
     };
 
-    try {
-      await authAPI.requestOTP(pClean);
-    } catch {
-      // Fallback
-    }
-
+    // Directly register without OTP verification
     setError('');
-    setPendingSignupData(userData);
-    setSignupStep('otp');
-  };
-
-  // ===================== 5. SIGN UP: STEP 2 (OTP VERIFICATION) =====================
-  const handleVerifySignupOTP = async (e) => {
-    e.preventDefault();
-    if (!signupOtp || signupOtp.length < 4) {
-      setError('Please enter the 4-digit OTP verification code (e.g. 1234)');
-      return;
-    }
-
-    setError('');
-    await registerUser(pendingSignupData);
+    await registerUser(userData);
   };
 
   return (
@@ -474,69 +451,6 @@ export const AuthPage = () => {
             </form>
           )}
 
-          {/* ===================== SECTION 3: SIGN UP OTP ===================== */}
-          {mode === 'signup' && signupStep === 'otp' && (
-            <form onSubmit={handleVerifySignupOTP} autoComplete="off">
-              <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                {t('auth_otp_sent_to', 'OTP sent to')} <b>+91 {signupPhone}</b>
-              </p>
-
-              {pendingSignupData && (
-                <div
-                  style={{
-                    background: 'var(--cream)',
-                    padding: '14px 16px',
-                    borderRadius: '10px',
-                    marginBottom: '18px',
-                    fontSize: '13px',
-                    border: '1px solid var(--line)',
-                    lineHeight: '1.6'
-                  }}
-                >
-                  <div>Name: <b>{pendingSignupData.full_name}</b></div>
-                  <div>Mobile Number: <b>+91 {pendingSignupData.phone}</b> · Taluka: <b>{pendingSignupData.taluka}</b></div>
-                  <div>Address: <b>{pendingSignupData.address}</b></div>
-                </div>
-              )}
-
-              <Input
-                label={t('auth_otp_step_title', 'Enter OTP')}
-                type="text"
-                autoComplete="one-time-code"
-                placeholder="XXXX"
-                maxLength={6}
-                value={signupOtp}
-                onChange={(e) => setSignupOtp(e.target.value)}
-                required
-              />
-
-              <div className="auth-btn-row">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="auth-btn-back"
-                  type="button"
-                  icon={ArrowLeft}
-                  onClick={() => {
-                    setError('');
-                    setSignupOtp('');
-                    setSignupStep('details');
-                  }}
-                >
-                  {t('btn_back')}
-                </Button>
-                <Button
-                  variant="gold"
-                  size="lg"
-                  className="auth-btn-submit"
-                  type="submit"
-                  icon={KeyRound}
-                >
-                  {t('signup_btn_complete')}
-                </Button>
-              </div>
-            </form>
-          )}
         </Card>
       </div>
     </div>
