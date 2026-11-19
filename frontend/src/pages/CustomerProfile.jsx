@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { Card } from '../components/common/Card';
@@ -32,6 +32,12 @@ export const CustomerProfile = () => {
     return initial.length > 0 ? initial : [''];
   });
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar_url || '');
+
+  useEffect(() => {
+    if (Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0) {
+      setAddresses(currentUser.addresses);
+    }
+  }, [currentUser?.addresses]);
 
   const handleAddressChange = (index, value) => {
     setAddresses((prev) => {

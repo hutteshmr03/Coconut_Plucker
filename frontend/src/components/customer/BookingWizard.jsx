@@ -39,7 +39,7 @@ import {
 import { getTalukaDayConfig, formatScheduledDateLabel, getServiceImage, SERVICE_IMAGES, compressImageFile } from '../../utils/helpers';
 
 export const BookingWizard = ({ onComplete }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, updateCurrentUser } = useAuth();
   const { t } = useLanguage();
   const {
     services,
@@ -48,16 +48,20 @@ export const BookingWizard = ({ onComplete }) => {
     addBooking,
     selectedServiceForBooking,
     setSelectedServiceForBooking,
-    schedulingConfig
+    schedulingConfig,
+    updateCustomerProfile,
+    showToast
   } = useApp();
 
   const customerProfile = customers?.find((c) => c.id === currentUser?.id || c.phone === currentUser?.phone) || currentUser;
 
-  const savedAddresses = (
-    Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0
+  const allAddressesSource = (Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0)
+    ? currentUser.addresses
+    : (Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0)
       ? customerProfile.addresses
-      : [customerProfile?.address || currentUser?.address, customerProfile?.secondary_address || currentUser?.secondary_address]
-  ).filter(Boolean);
+      : [currentUser?.address || customerProfile?.address, currentUser?.secondary_address || customerProfile?.secondary_address];
+
+  const savedAddresses = Array.from(new Set(allAddressesSource.filter(Boolean)));
 
   const TALUKAS = [
     { value: '', label: '-- Select one --' },
@@ -86,6 +90,47 @@ export const BookingWizard = ({ onComplete }) => {
     customerProfile?.address || currentUser?.address || ''
   );
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [newAddressInput, setNewAddressInput] = useState('');
+
+  const handleAddNewAddress = (explicitAddr = null) => {
+    const raw = typeof explicitAddr === 'string' ? explicitAddr : newAddressInput;
+    const cleanAddr = (raw || '').trim();
+    if (!cleanAddr) return;
+
+    setAddress(cleanAddr);
+    setIsAddingNewAddress(false);
+    setNewAddressInput('');
+    setShowAddressDropdown(false);
+
+    // Persist to customer profile for future usage
+    const currentList = Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0
+      ? [...currentUser.addresses]
+      : (Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0)
+        ? [...customerProfile.addresses]
+        : [currentUser?.address || customerProfile?.address].filter(Boolean);
+
+    if (!currentList.includes(cleanAddr)) {
+      currentList.push(cleanAddr);
+    }
+
+    const updates = {
+      addresses: currentList,
+      address: currentList[0] || cleanAddr,
+      secondary_address: currentList[1] || null
+    };
+
+    if (updateCurrentUser) {
+      updateCurrentUser(updates);
+    }
+    if (updateCustomerProfile) {
+      updateCustomerProfile(updates);
+    }
+
+    if (showToast) {
+      showToast('New address saved to your profile!', 'success');
+    }
+  };
   const [bookingType, setBookingType] = useState('standard'); // 'standard' | 'urgent'
 
   // Backend quote calculation breakdown
@@ -1004,11 +1049,126 @@ export const BookingWizard = ({ onComplete }) => {
                       </div>
                     );
                   })}
+
+                  {/* Add New Address option at bottom of dropdown */}
+                  <div
+                    onClick={() => {
+                      setShowAddressDropdown(false);
+                      setIsAddingNewAddress(true);
+                      setNewAddressInput('');
+                    }}
+                    style={{
+                      padding: '10px 14px',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      color: 'var(--teal)',
+                      fontWeight: '700',
+                      background: 'var(--cream)',
+                      borderTop: '1px solid var(--line)'
+                    }}
+                  >
+                    <Plus size={14} /> + Add New Address
+                  </div>
                 </div>
               </>
             )}
 
             {errors.address && <span className="field-error">{errors.address}</span>}
+
+            {/* Add New Address option directly below address field */}
+            {!isAddingNewAddress ? (
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingNewAddress(true);
+                    setNewAddressInput('');
+                    setShowAddressDropdown(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--teal)',
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    padding: '4px 0',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Plus size={15} /> + Add New Address
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginTop: '10px',
+                  padding: '14px',
+                  background: 'var(--cream)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--line)'
+                }}
+              >
+                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <MapPin size={14} color="var(--teal)" />
+                  <span>Enter New Address (Will be saved to your profile)</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="House No, Village/Town, Landmark, Goa"
+                  value={newAddressInput}
+                  onChange={(e) => setNewAddressInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddNewAddress();
+                    }
+                  }}
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '8px 12px',
+                    boxSizing: 'border-box',
+                    borderRadius: '6px',
+                    border: '1px solid var(--line)',
+                    background: 'var(--paper)',
+                    color: 'var(--ink)',
+                    fontSize: '13px',
+                    outline: 'none',
+                    marginBottom: '10px'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    type="button"
+                    icon={Plus}
+                    onClick={() => handleAddNewAddress()}
+                    disabled={!newAddressInput.trim()}
+                  >
+                    Save & Use Address
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      setIsAddingNewAddress(false);
+                      setNewAddressInput('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
@@ -1030,6 +1190,26 @@ export const BookingWizard = ({ onComplete }) => {
               onClick={(e) => {
                 e.preventDefault();
                 if (validateStep2()) {
+                  // Ensure current address is also saved to customer profile if not already there
+                  const cleanCurrentAddr = (address || '').trim();
+                  if (cleanCurrentAddr) {
+                    const currentList = Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0
+                      ? [...currentUser.addresses]
+                      : (Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0)
+                        ? [...customerProfile.addresses]
+                        : [currentUser?.address || customerProfile?.address].filter(Boolean);
+
+                    if (!currentList.includes(cleanCurrentAddr)) {
+                      currentList.push(cleanCurrentAddr);
+                      const updates = {
+                        addresses: currentList,
+                        address: currentList[0] || cleanCurrentAddr,
+                        secondary_address: currentList[1] || null
+                      };
+                      if (updateCurrentUser) updateCurrentUser(updates);
+                      if (updateCustomerProfile) updateCustomerProfile(updates);
+                    }
+                  }
                   setServiceCart((prev) => {
                     const existingIdx = prev.findIndex(item => item.serviceId === activeService.id);
                     const newItem = {
