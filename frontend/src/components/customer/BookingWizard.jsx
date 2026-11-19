@@ -750,8 +750,17 @@ export const BookingWizard = ({ onComplete }) => {
       {/* Step 2: Property & Job Details */}
       {step === 2 && (
         <Card>
-          <h3>
-            {activeService.icon} {activeService.name}
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {activeService.icon && (activeService.icon.startsWith('data:image') || activeService.icon.startsWith('http') || activeService.icon.startsWith('/')) ? (
+              <img
+                src={activeService.icon}
+                alt={activeService.name}
+                style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }}
+              />
+            ) : (
+              <span>{activeService.icon || '🌴'}</span>
+            )}
+            <span>{activeService.name}</span>
           </h3>
 
           <div className="field-row">

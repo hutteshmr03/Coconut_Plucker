@@ -280,8 +280,13 @@ export const ProfessionalProfile = () => {
                       checked={isChecked}
                       onChange={() => {}}
                     />
-                    <label htmlFor={`skill_${svc.id}`} style={{ cursor: 'pointer', fontWeight: isChecked ? '600' : '400' }}>
-                      {svc.icon} {svc.name}
+                    <label htmlFor={`skill_${svc.id}`} style={{ cursor: 'pointer', fontWeight: isChecked ? '600' : '400', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {svc.icon && (svc.icon.startsWith('data:image') || svc.icon.startsWith('http') || svc.icon.startsWith('/')) ? (
+                        <img src={svc.icon} alt="" style={{ width: '18px', height: '18px', borderRadius: '3px', objectFit: 'cover' }} />
+                      ) : (
+                        <span>{svc.icon || '🌴'}</span>
+                      )}
+                      <span>{svc.name}</span>
                     </label>
                   </div>
                 );

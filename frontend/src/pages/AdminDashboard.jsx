@@ -197,7 +197,13 @@ export const AdminDashboard = () => {
                 return (
                   <div key={service.id} className="bar-row">
                     <div className="lbl" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>{service.icon}</span>
+                      <span>
+                        {service.icon && (service.icon.startsWith('data:image') || service.icon.startsWith('http') || service.icon.startsWith('/')) ? (
+                          <img src={service.icon} alt="" style={{ width: '18px', height: '18px', borderRadius: '3px', objectFit: 'cover' }} />
+                        ) : (
+                          service.icon || '🌴'
+                        )}
+                      </span>
                       <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {service.name.split(' ')[0]}
                       </span>
