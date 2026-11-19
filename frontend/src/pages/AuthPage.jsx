@@ -396,7 +396,7 @@ export const AuthPage = () => {
           )}
 
           {/* ===================== SECTION 2: SIGN UP ===================== */}
-          {mode === 'signup' && signupStep === 'details' && (
+          {mode === 'signup' && (
             <form onSubmit={handleSignupDetailsSubmit} autoComplete="off">
               <Input
                 label={t('signup_full_name')}
