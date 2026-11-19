@@ -22,7 +22,7 @@ export const TRANSLATIONS = {
     auth_mobile_label: 'Phone Number',
     auth_mobile_placeholder: 'e.g. 984253XXX4',
     auth_mobile_hint: 'A 4-digit verification code will be sent to your mobile',
-    auth_btn_send_otp: 'Send Login OTP',
+    auth_btn_send_otp: 'Log In',
     auth_btn_sending_otp: 'Sending OTP...',
     auth_switch_to_admin: 'Administrator & Super Admin Password Login',
     auth_switch_to_mobile: 'Back to Customer & Climber Mobile OTP Login',
@@ -53,8 +53,8 @@ export const TRANSLATIONS = {
     signup_exp: 'Experience (Years)',
     signup_safety: 'Safety / Certification Details',
     signup_safety_placeholder: 'e.g. CPCRI Climber / 5+ yrs tree climbing',
-    signup_btn_continue: 'Continue & Verify Phone',
-    signup_btn_complete: 'Verify & Create Account',
+    signup_btn_continue: 'Create Account',
+    signup_btn_complete: 'Create Account',
 
     // Nav & Common Topbar
     nav_book_service: 'Book a Service',
@@ -179,7 +179,7 @@ export const TRANSLATIONS = {
     auth_mobile_label: 'फ़ोन नंबर',
     auth_mobile_placeholder: 'उदा. 984253XXX4',
     auth_mobile_hint: 'आपके मोबाइल पर 4 अंकों का सत्यापन कोड भेजा जाएगा',
-    auth_btn_send_otp: 'लॉगिन ओटीपी भेजें',
+    auth_btn_send_otp: 'लॉगिन करें',
     auth_btn_sending_otp: 'ओटीपी भेजा जा रहा है...',
     auth_switch_to_admin: 'एडमिनिस्ट्रेटर एवं सुपर एडमिन पासवर्ड लॉगिन',
     auth_switch_to_mobile: 'ग्राहक और प्लकर मोबाइल ओटीपी लॉगिन पर वापस जाएं',
@@ -210,8 +210,8 @@ export const TRANSLATIONS = {
     signup_exp: 'अनुभव (वर्ष)',
     signup_safety: 'सुरक्षा / प्रमाणन विवरण',
     signup_safety_placeholder: 'उदा. सीपीसीआरआई क्लाइंबर / 5+ वर्ष अनुभव',
-    signup_btn_continue: 'आगे बढ़ें और फ़ोन सत्यापित करें',
-    signup_btn_complete: 'सत्यापित करें और खाता बनाएं',
+    signup_btn_continue: 'खाता बनाएं',
+    signup_btn_complete: 'खाता बनाएं',
 
     // Nav & Common Topbar
     nav_book_service: 'सेवा बुक करें',
@@ -336,7 +336,7 @@ export const TRANSLATIONS = {
     auth_mobile_label: 'फोन नंबर',
     auth_mobile_placeholder: 'उदा. 984253XXX4',
     auth_mobile_hint: 'आपल्या मोबाइलवर ४ अंकी पडताळणी कोड पाठवला जाईल',
-    auth_btn_send_otp: 'लॉगिन ओटीपी पाठवा',
+    auth_btn_send_otp: 'लॉगिन करा',
     auth_btn_sending_otp: 'ओटीपी पाठवत आहे...',
     auth_switch_to_admin: 'अ‍ॅडमिनिस्ट्रेटर आणि सुपर अ‍ॅडमिन पासवर्ड लॉगिन',
     auth_switch_to_mobile: 'ग्राहक आणि क्लाइंबर मोबाइल ओटीपी लॉगिनकडे परत जा',
@@ -367,8 +367,8 @@ export const TRANSLATIONS = {
     signup_exp: 'अनुभव (वर्षे)',
     signup_safety: 'सुरक्षा / प्रमाणपत्र तपशील',
     signup_safety_placeholder: 'उदा. सीपीसीआरआय क्लाइंबर / ५+ वर्षे अनुभव',
-    signup_btn_continue: 'पुढे जा आणि फोन पडताळा',
-    signup_btn_complete: 'पडताळा आणि खाते तयार करा',
+    signup_btn_continue: 'खाते तयार करा',
+    signup_btn_complete: 'खाते तयार करा',
 
     // Nav & Common Topbar
     nav_book_service: 'सेवा बुक करा',
