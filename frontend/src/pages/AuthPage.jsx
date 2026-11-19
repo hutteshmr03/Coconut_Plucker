@@ -6,7 +6,7 @@ import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher';
-import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone, ShieldCheck } from 'lucide-react';
+import { LogIn, KeyRound, ArrowRight, ArrowLeft, Smartphone } from 'lucide-react';
 import { authAPI } from '../services/api';
 import logoImg from '../assets/logo.png';
 
@@ -24,10 +24,9 @@ export const AuthPage = () => {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [error, setError] = useState('');
 
-  // Login state: 'phone' (entry) -> 'otp' (for Customer/Climber) or 'password' (for Admin/SuperAdmin)
-  const [loginStep, setLoginStep] = useState('phone'); // 'phone' | 'otp' | 'password'
+  // Login state: 'phone' (entry) -> 'password' (for Admin/SuperAdmin only)
+  const [loginStep, setLoginStep] = useState('phone'); // 'phone' | 'password'
   const [loginPhone, setLoginPhone] = useState('');
-  const [loginOtp, setLoginOtp] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [pendingLoginUser, setPendingLoginUser] = useState(null);
 
@@ -49,7 +48,6 @@ export const AuthPage = () => {
     setLoginStep('phone');
     setSignupStep('details');
     setError('');
-    setLoginOtp('');
     setSignupOtp('');
     setAdminPassword('');
     setPendingLoginUser(null);
@@ -94,51 +92,10 @@ export const AuthPage = () => {
       setAdminPassword('');
       setLoginStep('password');
     } else {
-      // Customer or Climber (Professional) -> Request OTP
-      try {
-        await authAPI.requestOTP(pClean || digitsOnly);
-      } catch {
-        // Offline / demo fallback
-      }
-      setLoginOtp('');
-      setLoginStep('otp');
+      // Customer or Professional -> Direct login, no OTP required
+      setError('');
+      login(found);
     }
-  };
-
-  // ===================== 2. LOGIN: STEP 2A (VERIFY OTP & LOG IN) =====================
-  const handleVerifyLoginOTP = async (e) => {
-    e.preventDefault();
-    if (!loginOtp || loginOtp.length < 4) {
-      setError('Please enter the 4-digit OTP verification code (e.g. 1234)');
-      return;
-    }
-
-    const digitsOnly = loginPhone.replace(/\D/g, '');
-    const pClean = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
-    let authedUser = pendingLoginUser;
-
-    try {
-      const res = await authAPI.verifyOTP(pClean, loginOtp);
-      if (res?.user) {
-        const serverUser = res.user;
-        const localUser = pendingLoginUser || {};
-        authedUser = {
-          ...serverUser,
-          ...localUser,
-          full_name: localUser.full_name || serverUser.full_name,
-          avatar_url: localUser.avatar_url || serverUser.avatar_url || null,
-          addresses: localUser.addresses || (localUser.address ? [localUser.address] : [serverUser.address || '']),
-          address: localUser.address || serverUser.address || '',
-          taluka: localUser.taluka || serverUser.taluka || 'North Goa',
-          token: res.access_token || undefined
-        };
-      }
-    } catch {
-      // Offline / simulated fallback
-    }
-
-    setError('');
-    login(authedUser);
   };
 
   // ===================== 3. LOGIN: STEP 2B (ADMIN PASSWORD SUBMISSION) =====================
@@ -389,71 +346,6 @@ export const AuthPage = () => {
                       icon={Smartphone}
                     >
                       {t('auth_btn_send_otp')}
-                    </Button>
-                  </div>
-                </form>
-              )}
-
-              {/* Step 2A: Customer & Professional OTP Verification */}
-              {loginStep === 'otp' && (
-                <form onSubmit={handleVerifyLoginOTP} autoComplete="off">
-                  <p className="cell-muted" style={{ marginBottom: '16px', fontSize: '13px' }}>
-                    {t('auth_otp_sent_to', 'OTP sent to')} <b>+91 {loginPhone}</b>
-                  </p>
-
-                  {pendingLoginUser && (
-                    <div
-                      style={{
-                        background: 'var(--cream)',
-                        padding: '12px 14px',
-                        borderRadius: '8px',
-                        marginBottom: '16px',
-                        fontSize: '13px',
-                        border: '1px solid var(--line)',
-                        lineHeight: '1.5'
-                      }}
-                    >
-                      <div>Welcome, <b>{pendingLoginUser.full_name}</b></div>
-                      <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
-                        Role: <span style={{ textTransform: 'capitalize', fontWeight: '600' }}>{pendingLoginUser.role}</span> · {pendingLoginUser.taluka || 'Goa'}
-                      </div>
-                    </div>
-                  )}
-
-                  <Input
-                    label={t('auth_otp_step_title', 'Enter OTP')}
-                    type="text"
-                    autoComplete="one-time-code"
-                    placeholder="XXXX"
-                    maxLength={6}
-                    value={loginOtp}
-                    onChange={(e) => setLoginOtp(e.target.value)}
-                    required
-                  />
-
-                  <div className="auth-btn-row">
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="auth-btn-back"
-                      type="button"
-                      icon={ArrowLeft}
-                      onClick={() => {
-                        setLoginStep('phone');
-                        setError('');
-                        setLoginOtp('');
-                      }}
-                    >
-                      {t('auth_btn_back')}
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      className="auth-btn-submit"
-                      type="submit"
-                      icon={LogIn}
-                    >
-                      {t('auth_btn_verify')}
                     </Button>
                   </div>
                 </form>
