@@ -617,7 +617,7 @@ export const BookingWizard = ({ onComplete }) => {
                         }}
                       >
                         <div className="svc-pick-thumb-wrap">
-                          <img src={bgImg} alt={svc.name} className="svc-pick-thumb" />
+                          <img src={bgImg} alt={svc.name} className="svc-pick-thumb" loading="eager" decoding="async" />
                           {isSelected && (
                             <span className="svc-pick-selected-badge" aria-hidden="true">
                               <Check size={14} strokeWidth={3} />

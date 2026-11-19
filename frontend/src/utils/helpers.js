@@ -224,7 +224,7 @@ export const SERVICE_IMAGES = {
 export const getServiceImage = (svc) => {
   if (!svc) return coconutImg;
   if (typeof svc === 'string') {
-    if (svc.startsWith('data:image') || svc.startsWith('http')) return svc;
+    if (svc.startsWith('data:image') || svc.startsWith('http') || svc.startsWith('/assets') || svc.startsWith('blob:')) return svc;
     if (SERVICE_IMAGES[svc]) return SERVICE_IMAGES[svc];
     const s = svc.toLowerCase();
     if (s.includes('coconut')) return coconutImg;
@@ -235,11 +235,15 @@ export const getServiceImage = (svc) => {
     if (s.includes('trim') || s.includes('branch') || s.includes('chainsaw')) return trimImg;
     return coconutImg;
   }
-  if (svc.image && typeof svc.image === 'string') return svc.image;
-  if (svc.image_url && typeof svc.image_url === 'string') return svc.image_url;
-  if (svc.icon && (svc.icon.startsWith('data:image') || svc.icon.startsWith('http'))) return svc.icon;
   const id = svc.id || svc.serviceId || svc.service_id || '';
+  // Check custom uploaded image first (if valid)
+  const customImg = svc.image || svc.image_url;
+  if (customImg && typeof customImg === 'string' && (customImg.startsWith('data:image') || customImg.startsWith('http') || customImg.startsWith('/assets') || customImg.startsWith('blob:'))) {
+    return customImg;
+  }
+  // Fast direct mapping by service ID
   if (SERVICE_IMAGES[id]) return SERVICE_IMAGES[id];
+  // Name-based fallback
   const name = (svc.name || svc.serviceName || svc.service_name || svc.title || '').toLowerCase();
   if (name.includes('coconut')) return coconutImg;
   if (name.includes('areca') || name.includes('supari')) return arecaImg;
