@@ -978,103 +978,103 @@ export const BookingWizard = ({ onComplete }) => {
                   />
                 </button>
               )}
-            </div>
 
-            {showAddressDropdown && savedAddresses.length > 0 && (
-              <>
-                <div
-                  onClick={() => setShowAddressDropdown(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 25 }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    zIndex: 30,
-                    marginTop: '4px',
-                    background: 'var(--paper)',
-                    border: '1px solid var(--line)',
-                    borderRadius: '8px',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                    overflow: 'hidden'
-                  }}
-                >
+              {showAddressDropdown && savedAddresses.length > 0 && (
+                <>
+                  <div
+                    onClick={() => setShowAddressDropdown(false)}
+                    style={{ position: 'fixed', inset: 0, zIndex: 25 }}
+                  />
                   <div
                     style={{
-                      padding: '8px 12px',
-                      background: 'var(--cream)',
-                      borderBottom: '1px solid var(--line)',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      color: 'var(--ink-soft)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 30,
+                      marginTop: '4px',
+                      background: 'var(--paper)',
+                      border: '1px solid var(--line)',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                      overflow: 'hidden'
                     }}
                   >
-                    Saved Customer Addresses
-                  </div>
-                  {savedAddresses.map((savedAddr, sIdx) => {
-                    const isSelected = address === savedAddr;
-                    return (
-                      <div
-                        key={sIdx}
-                        onClick={() => {
-                          setAddress(savedAddr);
-                          setShowAddressDropdown(false);
-                        }}
-                        style={{
-                          padding: '10px 14px',
-                          fontSize: '13px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '10px',
-                          cursor: 'pointer',
-                          background: isSelected ? 'rgba(31, 138, 130, 0.08)' : 'transparent',
-                          color: isSelected ? 'var(--teal-dark)' : 'var(--ink)',
-                          fontWeight: isSelected ? '600' : '400',
-                          borderBottom: sIdx === savedAddresses.length - 1 ? 'none' : '1px solid var(--line)'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                          <MapPin size={14} color={isSelected ? 'var(--teal)' : 'var(--ink-soft)'} style={{ flexShrink: 0 }} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <b style={{ marginRight: '6px' }}>Address {sIdx + 1}:</b>
-                            {savedAddr}
-                          </span>
+                    <div
+                      style={{
+                        padding: '8px 12px',
+                        background: 'var(--cream)',
+                        borderBottom: '1px solid var(--line)',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        color: 'var(--ink-soft)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      Saved Customer Addresses
+                    </div>
+                    {savedAddresses.map((savedAddr, sIdx) => {
+                      const isSelected = address === savedAddr;
+                      return (
+                        <div
+                          key={sIdx}
+                          onClick={() => {
+                            setAddress(savedAddr);
+                            setShowAddressDropdown(false);
+                          }}
+                          style={{
+                            padding: '10px 14px',
+                            fontSize: '13px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '10px',
+                            cursor: 'pointer',
+                            background: isSelected ? 'rgba(31, 138, 130, 0.08)' : 'transparent',
+                            color: isSelected ? 'var(--teal-dark)' : 'var(--ink)',
+                            fontWeight: isSelected ? '600' : '400',
+                            borderBottom: sIdx === savedAddresses.length - 1 ? 'none' : '1px solid var(--line)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                            <MapPin size={14} color={isSelected ? 'var(--teal)' : 'var(--ink-soft)'} style={{ flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <b style={{ marginRight: '6px' }}>Address {sIdx + 1}:</b>
+                              {savedAddr}
+                            </span>
+                          </div>
+                          {isSelected && <Check size={14} color="var(--teal)" style={{ flexShrink: 0 }} />}
                         </div>
-                        {isSelected && <Check size={14} color="var(--teal)" style={{ flexShrink: 0 }} />}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
 
-                  {/* Add New Address option at bottom of dropdown */}
-                  <div
-                    onClick={() => {
-                      setShowAddressDropdown(false);
-                      setIsAddingNewAddress(true);
-                      setNewAddressInput('');
-                    }}
-                    style={{
-                      padding: '10px 14px',
-                      fontSize: '13px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      cursor: 'pointer',
-                      color: 'var(--teal)',
-                      fontWeight: '700',
-                      background: 'var(--cream)',
-                      borderTop: '1px solid var(--line)'
-                    }}
-                  >
-                    <Plus size={14} /> + Add New Address
+                    {/* Add New Address option at bottom of dropdown */}
+                    <div
+                      onClick={() => {
+                        setShowAddressDropdown(false);
+                        setIsAddingNewAddress(true);
+                        setNewAddressInput('');
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--teal)',
+                        fontWeight: '700',
+                        background: 'var(--cream)',
+                        borderTop: '1px solid var(--line)'
+                      }}
+                    >
+                      <Plus size={14} /> Add New Address
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
 
             {errors.address && <span className="field-error">{errors.address}</span>}
 
@@ -1101,7 +1101,7 @@ export const BookingWizard = ({ onComplete }) => {
                     gap: '6px'
                   }}
                 >
-                  <Plus size={15} /> + Add New Address
+                  <Plus size={15} /> Add New Address
                 </button>
               </div>
             ) : (
@@ -1116,7 +1116,7 @@ export const BookingWizard = ({ onComplete }) => {
               >
                 <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <MapPin size={14} color="var(--teal)" />
-                  <span>Enter New Address (Will be saved to your profile)</span>
+                  <span>Enter New Address</span>
                 </div>
                 <input
                   type="text"
