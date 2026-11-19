@@ -750,11 +750,11 @@ export const BookingWizard = ({ onComplete }) => {
       {/* Step 2: Property & Job Details */}
       {step === 2 && (
         <Card>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px' }}>
             <img
               src={getServiceImage(activeService)}
               alt={activeService.name}
-              style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }}
+              style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }}
             />
             <span>{activeService.name}</span>
           </h3>
