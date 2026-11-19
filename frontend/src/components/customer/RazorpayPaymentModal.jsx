@@ -238,7 +238,7 @@ export const RazorpayPaymentModal = ({
                     Service
                   </span>
                   <div style={{ fontSize: '14.5px', fontWeight: '800', color: '#22242A', marginTop: '2px' }}>
-                    {serviceName || 'Coconut Plucker'}
+                    {serviceName || 'Paddeli'}
                   </div>
                 </div>
                 <span style={{

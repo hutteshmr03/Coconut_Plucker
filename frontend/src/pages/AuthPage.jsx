@@ -219,7 +219,7 @@ export const AuthPage = () => {
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <img
             src={logoImg}
-            alt="Coconut Plucker Logo"
+            alt="Paddeli Logo"
             style={{
               width: '68px',
               height: '68px',

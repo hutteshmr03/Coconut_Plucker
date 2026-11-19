@@ -219,7 +219,7 @@ export const Sidebar = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <img
               src={logoImg}
-              alt="Coconut Plucker Logo"
+              alt="Paddeli Logo"
               style={{
                 width: '36px',
                 height: '36px',
@@ -229,7 +229,7 @@ export const Sidebar = () => {
               }}
             />
             <div className="brand-text">
-              <div className="t1">Coconut Plucker</div>
+              <div className="t1">Paddeli</div>
             </div>
           </div>
 

@@ -43,7 +43,7 @@ def test_root_endpoint(client):
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
-    assert "Coconut Plucker API" in data["message"]
+    assert "Paddeli API" in data["message"]
 
 
 def test_database_tables_exist(db_session):

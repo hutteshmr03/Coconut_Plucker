@@ -25,7 +25,7 @@ export function loadRazorpayScript() {
 
 export async function launchRazorpayCheckout({
   amount,
-  serviceName = 'Coconut Plucker Service',
+  serviceName = 'Paddeli Service',
   customerName = '',
   customerPhone = '',
   customerEmail = '',
@@ -51,7 +51,7 @@ export async function launchRazorpayCheckout({
     key: activeKey,
     amount: numAmount,
     currency: 'INR',
-    name: 'Coconut Plucker',
+    name: 'Paddeli',
     description: serviceName || 'Skilled Height Work On Demand',
     image: '/assets/logo.png',
     prefill: {

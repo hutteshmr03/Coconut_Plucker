@@ -11,7 +11,7 @@ export const LANGUAGES = [
 export const TRANSLATIONS = {
   en: {
     // Brand
-    brand_name: 'Coconut Plucker',
+    brand_name: 'Paddeli',
     brand_tagline: 'SKILLED HEIGHT WORK, ON DEMAND',
     brand_sub: 'Skilled height work on demand across Goa',
 
@@ -168,7 +168,7 @@ export const TRANSLATIONS = {
 
   hi: {
     // Brand
-    brand_name: 'कोकोनट प्लकर (Coconut Plucker)',
+    brand_name: 'पडेली (Paddeli)',
     brand_tagline: 'कुशल पेड़ चढ़ाई कार्य, आपकी मांग पर',
     brand_sub: 'गोवा भर में कुशल व प्रमाणित नारियल व पेड़ कटाई सेवा',
 
@@ -325,7 +325,7 @@ export const TRANSLATIONS = {
 
   mr: {
     // Brand
-    brand_name: 'कोकोनट प्लकर (Coconut Plucker)',
+    brand_name: 'पडेली (Paddeli)',
     brand_tagline: 'कुशल झाडावर चढण्याचे काम, मागणीनुसार',
     brand_sub: 'गोवाभर कुशल व प्रमाणित नारळ व झाड काढणी सेवा',
 
