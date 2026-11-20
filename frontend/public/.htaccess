@@ -1,3 +1,9 @@
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/nrlnxfke/paddeli_api"
+PassengerBaseURI "/api"
+PassengerPython "/home/nrlnxfke/virtualenv/paddeli_api/3.10/bin/python"
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
