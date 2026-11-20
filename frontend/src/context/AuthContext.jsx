@@ -35,16 +35,6 @@ const ADMIN_USER = {
 };
 
 const DEFAULT_USERS = [
-  ...INITIAL_CUSTOMERS.map((c) => ({
-    ...c,
-    role: 'customer',
-    status: 'active'
-  })),
-  ...INITIAL_PROFESSIONALS.map((p) => ({
-    ...p,
-    role: 'professional',
-    status: p.status || 'approved'
-  })),
   ADMIN_USER,
   SUPER_ADMIN_USER
 ];
@@ -52,7 +42,7 @@ const DEFAULT_USERS = [
 export const AuthProvider = ({ children }) => {
   // Registered user accounts database with Super Admin singleton guarantee
   const [registeredUsers, setRegisteredUsers] = useState(() => {
-    const saved = localStorage.getItem('cp_registered_users_v5');
+    const saved = localStorage.getItem('cp_registered_users_v6');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -97,7 +87,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('cp_auth_user');
       if (!saved || saved === 'undefined' || saved === 'null') return null;
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Clean up legacy mock sessions
+      if (parsed?.id === 'cus_001' || parsed?.id === 'wrk_001' || parsed?.phone?.startsWith('98221') || parsed?.phone?.startsWith('98222')) {
+        localStorage.removeItem('cp_auth_user');
+        localStorage.removeItem('cp_auth_token');
+        return null;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -109,7 +106,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('cp_registered_users_v5', JSON.stringify(registeredUsers));
+      localStorage.setItem('cp_registered_users_v6', JSON.stringify(registeredUsers));
     } catch (e) {
       console.warn('Could not save registered users to localStorage (quota exceeded):', e);
     }

@@ -14,7 +14,7 @@ export { normalizeTaluka };
 
 const AppContext = createContext();
 
-const STORAGE_KEY = "coconut_plucker_state_v8";
+const STORAGE_KEY = "paddeli_state_v1";
 
 export const AppProvider = ({ children }) => {
   const { currentUser, role: authRole } = useAuth();
@@ -109,8 +109,8 @@ export const AppProvider = ({ children }) => {
   });
 
   const [currentRole, setCurrentRole] = useState("customer"); // 'customer' | 'professional' | 'admin'
-  const [currentCustomerId, setCurrentCustomerId] = useState(currentUser?.id || "cus_001");
-  const [currentProfessionalId, setCurrentProfessionalId] = useState(currentUser?.id || "wrk_001");
+  const [currentCustomerId, setCurrentCustomerId] = useState(currentUser?.id || null);
+  const [currentProfessionalId, setCurrentProfessionalId] = useState(currentUser?.id || null);
   const [currentView, setCurrentView] = useState("cust-book");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -216,8 +216,8 @@ export const AppProvider = ({ children }) => {
   };
 
   // Helper getters
-  const currentCustomer = customers.find((c) => c.id === currentCustomerId) || customers[0];
-  const currentProfessional = professionals.find((p) => p.id === currentProfessionalId) || professionals[0];
+  const currentCustomer = customers.find((c) => c.id === currentCustomerId) || customers[0] || null;
+  const currentProfessional = professionals.find((p) => p.id === currentProfessionalId) || professionals[0] || null;
 
   // Actions
   const addBooking = (bookingData) => {

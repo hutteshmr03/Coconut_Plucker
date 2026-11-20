@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     ENVIRONMENT: str = "development"
 
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/coconut_plucker"
+    DATABASE_URL: str = ""
 
     SECRET_KEY: str = "9f8e7d6c5b4a3210123456789abcdef0123456789abcdef0123456789abcdef0"
     ALGORITHM: str = "HS256"

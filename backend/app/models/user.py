@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, CheckConstraint, text
+from datetime import datetime, timezone
+from sqlalchemy import Column, String, DateTime, CheckConstraint, text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -16,7 +17,7 @@ class User(Base):
     full_name = Column(String(120), nullable=False)
     role = Column(String(20), nullable=False, index=True)
     status = Column(String(20), nullable=False, server_default="active", default="active", index=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"), index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relationships
     customer_profile = relationship("CustomerProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")

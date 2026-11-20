@@ -57,16 +57,7 @@ def request_otp(req: OTPRequest):
         "request_id": "req_" + str(uuid.uuid4())[:8]
     }
 
-SEED_USERS_MAP = {
-    "9822100001": {"full_name": "Rohan Dessai", "role": "customer", "taluka": "North Goa", "address": "House 42, Beach Road, Calangute"},
-    "9822100002": {"full_name": "Savio Fernandes", "role": "customer", "taluka": "South Goa", "address": "Villa 18, Colva Estate, Salcete"},
-    "9822100003": {"full_name": "Anand Gaonkar", "role": "customer", "taluka": "Kushavati", "address": "Plot 7, River Valley, Kushavati"},
-    "9822200001": {"full_name": "Prakash Naik", "role": "professional", "taluka": "North Goa", "address": "Mapusa, Goa", "exp": 10},
-    "9822200002": {"full_name": "Santosh Kerkar", "role": "professional", "taluka": "North Goa", "address": "Pernem, Goa", "exp": 8},
-    "9822200003": {"full_name": "Damodar Gaonkar", "role": "professional", "taluka": "Kushavati", "address": "Quepem, Goa", "exp": 12},
-    "9822200004": {"full_name": "Rohidas Naik", "role": "professional", "taluka": "South Goa", "address": "Margao, Goa", "exp": 7},
-    "9822200005": {"full_name": "Suresh Gaonkar", "role": "professional", "taluka": "South Goa", "address": "Canacona, Goa", "exp": 15},
-}
+SEED_USERS_MAP = {}
 
 @router.post("/otp/verify", response_model=TokenResponse)
 def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
