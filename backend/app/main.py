@@ -67,6 +67,8 @@ for r in api_routers:
 
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
