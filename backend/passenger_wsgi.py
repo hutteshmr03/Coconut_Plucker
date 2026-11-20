@@ -10,7 +10,7 @@ if app_dir not in sys.path:
 try:
     from a2wsgi import ASGIMiddleware
     from app.main import app
-    application = ASGIMiddleware(app)
+    application = ASGIMiddleware(app, wait_time=5.0)
 except Exception as e:
     tb = traceback.format_exc()
     # Fallback diagnostics handler: Return 200 OK so LiteSpeed does NOT mask it with generic 500 HTML

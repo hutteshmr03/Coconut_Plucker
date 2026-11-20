@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -8,22 +7,12 @@ from app.routers.health import router as health_router
 from app.core.database import Base, engine
 import app.models as _models
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Auto-initialize database tables on startup
-    try:
-        Base.metadata.create_all(bind=engine)
-    except Exception as e:
-        print(f"Database table initialization notice: {e}")
-    yield
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    lifespan=lifespan
+    openapi_url="/openapi.json"
 )
 
 # CORS Middleware

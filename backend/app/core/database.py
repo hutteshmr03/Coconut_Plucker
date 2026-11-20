@@ -17,15 +17,27 @@ else:
         db_url,
         pool_pre_ping=True,
         pool_size=10,
-        max_overflow=20
+        max_overflow=20,
+        connect_args={"connect_timeout": 5}
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+_tables_checked = False
+
+def init_tables_safely():
+    global _tables_checked
+    if not _tables_checked:
+        try:
+            Base.metadata.create_all(bind=engine)
+            _tables_checked = True
+        except Exception as e:
+            print(f"Table init notice: {e}")
 
 def get_db():
+    init_tables_safely()
     db = SessionLocal()
     try:
         yield db
