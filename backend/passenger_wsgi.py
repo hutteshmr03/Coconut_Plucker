@@ -2,10 +2,14 @@ import os
 import sys
 import traceback
 
-# Ensure application root directory is on the Python path
+# Ensure application root directory and virtualenv packages are on the Python path
 app_dir = os.path.dirname(os.path.abspath(__file__))
 if app_dir not in sys.path:
     sys.path.insert(0, app_dir)
+
+venv_site = "/home/nrlnxfke/virtualenv/paddeli_api/3.10/lib/python3.10/site-packages"
+if os.path.exists(venv_site) and venv_site not in sys.path:
+    sys.path.insert(0, venv_site)
 
 try:
     from a2wsgi import ASGIMiddleware

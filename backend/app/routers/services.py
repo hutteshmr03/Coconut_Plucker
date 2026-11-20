@@ -14,10 +14,12 @@ def get_active_services(db: Session = Depends(get_db)):
     if not services:
         # Seed default services in database if empty
         default_services = [
-            Service(name="Coconut Harvesting", base_rate=100.0, unit="per tree", requires_height_category=False),
-            Service(name="Palm Crown Cleaning & Health Check", base_rate=120.0, unit="per tree", requires_height_category=False),
-            Service(name="Nut Sorting & Bundling", base_rate=40.0, unit="per tree", requires_height_category=False),
-            Service(name="Canopy & Tree Trimming", base_rate=200.0, unit="per tree", requires_height_category=True),
+            Service(name="Coconut Plucking", base_rate=90.0, unit="per tree", requires_height_category=False),
+            Service(name="Supari Plucking", base_rate=70.0, unit="per tree", requires_height_category=False),
+            Service(name="Mango Plucking", base_rate=120.0, unit="per tree", requires_height_category=False),
+            Service(name="Jackfruit Plucking", base_rate=140.0, unit="per tree", requires_height_category=False),
+            Service(name="Palm Leaf Cutting & Cleaning", base_rate=80.0, unit="per tree", requires_height_category=False),
+            Service(name="Tree Trimming & Hazard Clearing", base_rate=150.0, unit="per tree", requires_height_category=True),
         ]
         db.add_all(default_services)
         db.commit()

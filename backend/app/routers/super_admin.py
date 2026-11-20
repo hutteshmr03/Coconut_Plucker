@@ -1,14 +1,32 @@
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.core.database import get_db
+from app.core.security import decode_access_token, pwd_context
 from app.models.user import User
 from app.schemas.auth import UserOut
 from app.routers.auth import format_user_out
 
-router = APIRouter(prefix="/super-admin", tags=["Super Admin Governance"])
+security = HTTPBearer(auto_error=False)
+
+def require_super_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    role = payload.get("role")
+    if role != "super_admin":
+        raise HTTPException(status_code=403, detail="Super Admin privileges required")
+    return payload
+
+router = APIRouter(prefix="/super-admin", tags=["Super Admin Governance"], dependencies=[Depends(require_super_admin)])
 
 class CreateAdminRequest(BaseModel):
     full_name: str
@@ -41,7 +59,8 @@ def create_admin(req: CreateAdminRequest, db: Session = Depends(get_db)):
         phone=phone_clean,
         full_name=req.full_name,
         role="admin",
-        status="active"
+        status="active",
+        password_hash=pwd_context.hash(req.password or "admin123")
     )
     db.add(admin)
     db.commit()

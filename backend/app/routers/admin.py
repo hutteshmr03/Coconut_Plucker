@@ -1,9 +1,11 @@
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from app.core.database import get_db
+from app.core.security import decode_access_token
 from app.models.user import User
 from app.models.professional import ProfessionalProfile
 from app.models.booking import Booking
@@ -13,7 +15,23 @@ from app.models.review import Review
 from app.schemas.auth import UserOut
 from app.routers.auth import format_user_out
 
-router = APIRouter(prefix="/admin", tags=["Admin Operations"])
+security = HTTPBearer(auto_error=False)
+
+def require_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    role = payload.get("role")
+    if role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return payload
+
+router = APIRouter(prefix="/admin", tags=["Admin Operations"], dependencies=[Depends(require_admin)])
 
 class VerifyRequest(BaseModel):
     decision: str # 'approved' | 'rejected'

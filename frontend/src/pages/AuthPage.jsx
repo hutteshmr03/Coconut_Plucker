@@ -110,29 +110,31 @@ export const AuthPage = () => {
       return;
     }
 
-    const isInitialSeed = found.must_reset_password && (passClean === 'tempPassword123!' || passClean === 'admin123');
-    const isPasswordValid = found.password ? (found.password === passClean || isInitialSeed) : (passClean === 'admin123');
-
-    if (!isPasswordValid) {
-      setError('Incorrect administrator password. Please try again.');
-      return;
-    }
-
     try {
       const uIdent = found.username || found.phone;
-      const res = await authAPI.login({ username: uIdent, password: passClean });
+      const res = await authAPI.login({ identifier: uIdent, username: uIdent, password: passClean });
       if (res?.user) {
+        setError('');
         login({
           ...res.user,
           ...found,
-          full_name: found.full_name || res.user.full_name,
+          full_name: res.user.full_name || found.full_name,
           avatar_url: found.avatar_url || res.user.avatar_url || null,
           token: res.access_token || undefined
         });
         return;
       }
-    } catch {
-      // Offline fallback
+    } catch (err) {
+      if (err.message && !err.message.includes('offline') && !err.message.includes('Failed to fetch')) {
+        setError(err.message);
+        return;
+      }
+      const isInitialSeed = passClean === 'tempPassword123!' || passClean === 'admin123';
+      const isPasswordValid = found.password ? (found.password === passClean || isInitialSeed) : isInitialSeed;
+      if (!isPasswordValid) {
+        setError('Incorrect administrator password. Please try again.');
+        return;
+      }
     }
 
     setError('');

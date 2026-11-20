@@ -39,9 +39,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 # Include Routers
-app.include_router(health_router, prefix="/api")
-app.include_router(health_router) # also at root /health
-
 from app.routers.auth import router as auth_router
 from app.routers.customers import router as customers_router
 from app.routers.professionals import router as professionals_router
@@ -51,14 +48,22 @@ from app.routers.availability import router as availability_router
 from app.routers.admin import router as admin_router
 from app.routers.super_admin import router as super_admin_router
 
-app.include_router(auth_router, prefix="/api")
-app.include_router(customers_router, prefix="/api")
-app.include_router(professionals_router, prefix="/api")
-app.include_router(services_router, prefix="/api")
-app.include_router(bookings_router, prefix="/api")
-app.include_router(availability_router, prefix="/api")
-app.include_router(admin_router, prefix="/api")
-app.include_router(super_admin_router, prefix="/api")
+api_routers = [
+    auth_router,
+    customers_router,
+    professionals_router,
+    services_router,
+    bookings_router,
+    availability_router,
+    admin_router,
+    super_admin_router,
+    health_router,
+]
+
+# Mount all routers both at root (for Passenger stripped PATH_INFO) and with /api prefix
+for r in api_routers:
+    app.include_router(r)
+    app.include_router(r, prefix="/api")
 
 
 @app.get("/")

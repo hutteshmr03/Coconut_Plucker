@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, CheckConstraint, text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, DateTime, CheckConstraint, text, func, Uuid
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -12,11 +11,12 @@ class User(Base):
         CheckConstraint("role IN ('customer', 'professional', 'admin', 'super_admin')", name="users_role_check"),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"), default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     phone = Column(String(15), unique=True, nullable=False, index=True)
     full_name = Column(String(120), nullable=False)
     role = Column(String(20), nullable=False, index=True)
     status = Column(String(20), nullable=False, server_default="active", default="active", index=True)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relationships

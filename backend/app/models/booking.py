@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Numeric, DateTime, CheckConstraint, ForeignKey, text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Numeric, DateTime, CheckConstraint, ForeignKey, text, func, Uuid
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -15,10 +14,10 @@ class Booking(Base):
         ),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"), default=uuid.uuid4)
-    customer_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    professional_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    service_id = Column(UUID(as_uuid=True), ForeignKey("services.id", ondelete="SET NULL"), nullable=True, index=True)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    customer_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    professional_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    service_id = Column(Uuid(as_uuid=True), ForeignKey("services.id", ondelete="SET NULL"), nullable=True, index=True)
     height_category = Column(String(20), nullable=True)
     scheduled_at = Column(DateTime(timezone=True), nullable=False, index=True)
     status = Column(String(20), nullable=False, server_default="requested", default="requested", index=True)

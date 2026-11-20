@@ -7,25 +7,22 @@ export { getDisplayName };
 
 const AuthContext = createContext();
 
-// Singleton Super Admin Account (Created via out-of-band ops seed step)
+// Singleton Super Admin Account (Profile reference only; credentials authenticated server-side)
 const SUPER_ADMIN_USER = {
   id: 'usr_super_admin',
   username: 'superadmin',
   email: 'superadmin@coconutplucker.com',
-  password: 'tempPassword123!', // Env-sourced initial temporary password
   full_name: 'Chief Platform Administrator',
   phone: '9999900000',
   role: 'super_admin',
   status: 'active',
-  must_reset_password: true, // Requires password change on 1st login
   created_at: '2026-01-01T00:00:00Z'
 };
 
-// Initial Seeded Platform Admin Account
+// Initial Seeded Platform Admin Account (Profile reference only; credentials authenticated server-side)
 const ADMIN_USER = {
   id: 'usr_admin',
   username: 'admin',
-  password: 'admin123',
   full_name: 'Goa Operations Admin',
   phone: '9800000001',
   role: 'admin',
