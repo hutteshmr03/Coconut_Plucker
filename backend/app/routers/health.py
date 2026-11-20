@@ -6,6 +6,11 @@ from app.core.database import get_db
 router = APIRouter(tags=["Health"])
 
 
+@router.get("/ping", status_code=status.HTTP_200_OK)
+def ping():
+    return {"status": "ok", "message": "Paddeli API is running"}
+
+
 @router.get("/health", status_code=status.HTTP_200_OK)
 def health_check(db: Session = Depends(get_db)):
     # Check database connectivity
