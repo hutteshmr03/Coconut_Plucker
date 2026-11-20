@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 
 # Ensure application root directory is on the Python path
 app_dir = os.path.dirname(os.path.abspath(__file__))
@@ -11,10 +12,21 @@ try:
     from app.main import app
     application = ASGIMiddleware(app)
 except Exception as e:
-    # Fallback debug handler to show any import error in browser instead of blank 500 error
+    tb = traceback.format_exc()
+    # Fallback diagnostics handler: Return 200 OK so LiteSpeed does NOT mask it with generic 500 HTML
     def application(environ, start_response):
-        status = '500 Internal Server Error'
-        output = f"Passenger Startup Error: {str(e)}".encode('utf-8')
-        response_headers = [('Content-type', 'text/plain'), ('Content-Length', str(len(output)))]
+        status = '200 OK'
+        diagnostics = (
+            f"=== Paddeli Backend Startup Diagnostics ===\n\n"
+            f"Python Version: {sys.version}\n"
+            f"App Directory: {app_dir}\n\n"
+            f"Traceback:\n{tb}\n"
+            f"sys.path:\n" + "\n".join(sys.path) + "\n"
+        )
+        output = diagnostics.encode('utf-8')
+        response_headers = [
+            ('Content-Type', 'text/plain; charset=utf-8'),
+            ('Content-Length', str(len(output)))
+        ]
         start_response(status, response_headers)
         return [output]
