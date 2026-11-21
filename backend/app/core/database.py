@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
@@ -33,6 +33,18 @@ def init_tables_safely():
     if not _tables_checked:
         try:
             Base.metadata.create_all(bind=engine)
+            # Safely ensure required columns exist on all databases
+            with engine.connect() as conn:
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
+                    conn.commit()
+                except Exception:
+                    pass
+                try:
+                    conn.execute(text("ALTER TABLE payments ADD COLUMN payment_method VARCHAR(30)"))
+                    conn.commit()
+                except Exception:
+                    pass
             _tables_checked = True
         except Exception as e:
             print(f"Table init notice: {e}")
