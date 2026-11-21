@@ -1,0 +1,18 @@
+{
+  "name": "Paddeli",
+  "short_name": "Paddeli",
+  "id": "com.paddeli.app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "description": "Coconut Harvesting and Farm Services",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
