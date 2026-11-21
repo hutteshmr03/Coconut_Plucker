@@ -59,7 +59,14 @@ async function request(endpoint, options = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API Error: ${response.status}`);
+      const message = errorData.detail || errorData.error?.message;
+      if (message) {
+        throw new Error(message);
+      }
+      if (response.status === 401) {
+        throw new Error('Incorrect password. Please try again.');
+      }
+      throw new Error(`API Error: ${response.status}`);
     }
 
     const data = await response.json();
