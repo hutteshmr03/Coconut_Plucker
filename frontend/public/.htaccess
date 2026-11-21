@@ -1,3 +1,5 @@
+DirectoryIndex index.html
+
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
 PassengerAppRoot "/home/nrlnxfke/paddeli_api"
 PassengerBaseURI "/api"
@@ -7,13 +9,15 @@ PassengerPython "/home/nrlnxfke/virtualenv/paddeli_api/3.10/bin/python"
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  RewriteRule ^index\.html$ - [L]
 
-  # Exclude /api from frontend SPA routing so Passenger Python backend handles it
-  RewriteCond %{REQUEST_URI} ^/api [NC]
+  # 1. Allow Passenger to handle /api requests
+  RewriteRule ^api - [L]
+
+  # 2. Serve static assets and files directly if they exist
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
+  # 3. Route all other requests to index.html for React Router
+  RewriteRule ^ index.html [L]
 </IfModule>
