@@ -38,7 +38,7 @@ async function request(endpoint, options = {}) {
   };
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 3500);
+  const timer = setTimeout(() => controller.abort(), 15000);
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
