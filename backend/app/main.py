@@ -1,6 +1,8 @@
-from fastapi import FastAPI, Request, status
+import os
+from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.routers.health import router as health_router
@@ -66,14 +68,68 @@ for r in api_routers:
     app.include_router(r, prefix="/api")
 
 
-@app.get("/")
+# Resolve frontend distribution directory for SPA serving
+FRONTEND_DIR = None
+for candidate in [
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend_dist")),
+    "/home/nrlnxfke/paddeli.com",
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "paddeli.com")),
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")),
+    os.path.abspath(os.path.join(os.getcwd(), "frontend", "dist")),
+]:
+    if os.path.isdir(candidate) and os.path.isfile(os.path.join(candidate, "index.html")):
+        FRONTEND_DIR = candidate
+        break
+
+# Mount frontend static assets if available
+if FRONTEND_DIR:
+    assets_dir = os.path.join(FRONTEND_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend_assets")
+
+
 @app.get("/api")
 @app.get("/api/")
-def root():
+def api_root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
         "version": settings.VERSION,
         "docs": "/docs",
         "health": "/health"
     }
+
+
+@app.get("/")
+def serve_root():
+    if FRONTEND_DIR:
+        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path, media_type="text/html")
+    return {
+        "message": f"Welcome to {settings.PROJECT_NAME}",
+        "version": settings.VERSION,
+        "docs": "/docs",
+        "health": "/health"
+    }
+
+
+@app.get("/{full_path:path}")
+def serve_spa_fallback(full_path: str):
+    # Do not catch API endpoints, health, or OpenAPI docs
+    clean_path = full_path.strip("/")
+    if any(clean_path == p or clean_path.startswith(p + "/") for p in ["api", "docs", "redoc", "openapi.json", "ping", "health"]):
+        raise HTTPException(status_code=404, detail="Endpoint not found")
+
+    if FRONTEND_DIR:
+        # Check if requested path is a real file (e.g., logo.png, manifest.json, sw.js)
+        file_path = os.path.join(FRONTEND_DIR, clean_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+
+        # Fallback to index.html for React Router SPA routes (e.g. /customer, /admin)
+        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        if os.path.isfile(index_path):
+            return FileResponse(index_path, media_type="text/html")
+
+    raise HTTPException(status_code=404, detail="Page not found")
 
