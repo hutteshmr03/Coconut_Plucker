@@ -175,9 +175,9 @@ def create_booking(req: BookingCreate, background_tasks: BackgroundTasks, db: Se
     )
 
 
-@router.post("/test-email")
+@router.api_route("/test-email", methods=["GET", "POST"])
 def trigger_test_email(to: Optional[str] = None):
-    """Utility endpoint to verify email delivery to contact@paddeli.com."""
+    """Utility endpoint to verify email delivery to contact@paddeli.com via browser or curl."""
     res = send_test_email(to)
     return res
 
