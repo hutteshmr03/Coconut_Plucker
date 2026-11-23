@@ -18,7 +18,11 @@ class QuoteResponse(BaseModel):
 
 class BookingCreate(BaseModel):
     customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
     service_id: str
+    service_name: Optional[str] = None
+    booking_number: Optional[str] = None
     tree_count: int = 1
     height_category: Optional[str] = None
     taluka: str
@@ -26,6 +30,7 @@ class BookingCreate(BaseModel):
     scheduled_at: str
     booking_type: str = "standard"
     payment_method: Optional[str] = "UPI"
+    hazard_notes: Optional[str] = None
 
 class BookingOut(BaseModel):
     id: str

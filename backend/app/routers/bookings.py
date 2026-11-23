@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
+from app.core.email import send_booking_notification_email, send_test_email
 from app.models.booking import Booking
 from app.models.service import Service
 from app.models.user import User
@@ -61,7 +62,7 @@ def get_my_bookings(db: Session = Depends(get_db)):
     return results
 
 @router.post("", response_model=BookingOut)
-def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
+def create_booking(req: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # Parse scheduled date
     try:
         scheduled_dt = datetime.fromisoformat(req.scheduled_at.replace("Z", "+00:00"))
@@ -79,8 +80,18 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
     except Exception:
         pass
 
+    # If service not found by UUID, look up by name or partial slug
+    if not svc and req.service_name:
+        svc = db.query(Service).filter(Service.name.ilike(f"%{req.service_name[:10]}%")).first()
+    if not svc:
+        svc = db.query(Service).first()
+    if svc:
+        base_rate = float(svc.base_rate)
+
     base_amt = base_rate * max(req.tree_count, 1)
-    quote_amt = base_amt
+    is_urgent = (req.booking_type or "standard").lower() == "urgent"
+    surcharge_amt = (base_amt * 0.20) if is_urgent else 0.0
+    quote_amt = base_amt + surcharge_amt
 
     # Resolve customer
     customer = None
@@ -90,6 +101,8 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
             customer = db.query(User).filter(User.id == cid).first()
         except Exception:
             pass
+    if not customer and req.customer_phone:
+        customer = db.query(User).filter(User.phone == req.customer_phone).first()
     if not customer:
         customer = db.query(User).filter(User.role == "customer").first()
 
@@ -116,6 +129,35 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(booking)
 
+    # Prepare notification details for contact@paddeli.com
+    order_id = req.booking_number or f"CP-{str(booking.id)[:8].upper()}"
+    cust_name = req.customer_name or (customer.full_name if customer else "Customer")
+    cust_phone = req.customer_phone or (customer.phone if customer else "N/A")
+    svc_name = req.service_name or (svc.name if svc else "Coconut Harvesting")
+    scheduled_display = scheduled_dt.strftime("%d %b %Y, %I:%M %p")
+
+    notification_payload = {
+        "order_id": order_id,
+        "booking_id": str(booking.id),
+        "customer_name": cust_name,
+        "customer_phone": cust_phone,
+        "service_name": svc_name,
+        "tree_count": max(req.tree_count, 1),
+        "height_category": booking.height_category or "Standard",
+        "taluka": req.taluka,
+        "address": req.address,
+        "scheduled_at": scheduled_display,
+        "booking_type": req.booking_type,
+        "quote_amount": float(booking.quote_amount),
+        "payment_method": (req.payment_method or "UPI").upper(),
+        "payment_status": "Paid",
+        "hazard_notes": req.hazard_notes or "",
+        "created_at": datetime.now().strftime("%d %b %Y, %I:%M %p")
+    }
+
+    # Queue email in background (non-blocking, fast HTTP response to user)
+    background_tasks.add_task(send_booking_notification_email, notification_payload)
+
     return BookingOut(
         id=str(booking.id),
         customer_id=str(booking.customer_id) if booking.customer_id else None,
@@ -131,6 +173,20 @@ def create_booking(req: BookingCreate, db: Session = Depends(get_db)):
         urgent_call_confirmed=False,
         created_at=booking.created_at.isoformat()
     )
+
+
+@router.post("/test-email")
+def trigger_test_email(to: Optional[str] = None):
+    """Utility endpoint to verify email delivery to contact@paddeli.com."""
+    res = send_test_email(to)
+    return res
+
+
+@router.post("/notify-email")
+def trigger_booking_notification(data: dict, background_tasks: BackgroundTasks):
+    """Allows manual or direct frontend dispatch of booking notification email."""
+    background_tasks.add_task(send_booking_notification_email, data)
+    return {"success": True, "message": "Booking notification email queued for delivery"}
 
 @router.get("/{booking_id}", response_model=BookingOut)
 def get_booking_detail(booking_id: str, db: Session = Depends(get_db)):

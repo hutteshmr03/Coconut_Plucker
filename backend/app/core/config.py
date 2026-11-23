@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
     FIREBASE_PROJECT_ID: str = ""
 
+    # Email / SMTP Settings for Booking Notifications
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 25
+    SMTP_USER: str = "contact@paddeli.com"
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = False
+    SMTP_USE_SSL: bool = False
+    NOTIFICATION_EMAIL: str = "contact@paddeli.com"
+    MAIL_FROM: str = "Paddeli <contact@paddeli.com>"
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
 

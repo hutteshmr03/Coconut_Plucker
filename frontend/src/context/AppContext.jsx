@@ -8,7 +8,7 @@ import {
   INITIAL_INCIDENTS
 } from '../services/mockData';
 import { normalizeTaluka } from '../utils/helpers';
-import { superAdminAPI } from '../services/api';
+import { superAdminAPI, bookingsAPI } from '../services/api';
 
 export { normalizeTaluka };
 
@@ -253,6 +253,36 @@ export const AppProvider = ({ children }) => {
         : `💳 Payment of ₹${quoteAmt.toFixed(2)} confirmed! Booking ${bookingNumber} placed successfully.`,
       isUrgent ? "warning" : "success"
     );
+
+    // Asynchronously notify backend API and dispatch booking notification email to contact@paddeli.com
+    try {
+      const custObj = customers.find((c) => c.id === resolvedCustId) || currentUser;
+      const custName = custObj?.full_name || custObj?.name || currentUser?.full_name || currentUser?.name || 'Customer';
+      const custPhone = custObj?.phone || currentUser?.phone || 'N/A';
+      const svcName = bookingData.service_name || (services.find((s) => s.id === bookingData.service_id)?.name) || 'Coconut Harvesting';
+
+      bookingsAPI.createBooking({
+        customer_id: resolvedCustId ? String(resolvedCustId) : undefined,
+        customer_name: custName,
+        customer_phone: custPhone,
+        service_id: String(bookingData.service_id || 'svc_coconut'),
+        service_name: svcName,
+        booking_number: bookingNumber,
+        tree_count: Number(bookingData.tree_count || 1),
+        height_category: bookingData.height_category || null,
+        taluka: bookingData.taluka || 'North Goa',
+        address: bookingData.address || 'Goa',
+        scheduled_at: bookingData.scheduled_at || new Date().toISOString(),
+        booking_type: bookingData.booking_type || 'standard',
+        payment_method: bookingData.payment_method || 'UPI',
+        hazard_notes: bookingData.hazard_notes || ''
+      }).catch((err) => {
+        console.warn('Backend booking sync warning:', err);
+      });
+    } catch (e) {
+      console.warn('Backend booking dispatch error:', e);
+    }
+
     return newBooking;
   };
 
