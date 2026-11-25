@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Numeric, Boolean, ForeignKey, text, Uuid
+from sqlalchemy import Column, String, Text, Numeric, Boolean, ForeignKey, text, Uuid
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -12,6 +12,10 @@ class Service(Base):
     base_rate = Column(Numeric(8, 2), nullable=False)
     unit = Column(String(20), nullable=False)
     requires_height_category = Column(Boolean, nullable=False, default=False)
+    description = Column(Text, nullable=True)
+    icon = Column(String(32), nullable=True, default="🌴")
+    status = Column(String(20), nullable=True, default="active")
+    image_url = Column(Text, nullable=True)
 
     # Relationships
     professional_skills = relationship("ProfessionalSkill", back_populates="service", cascade="all, delete-orphan")

@@ -34,17 +34,39 @@ def init_tables_safely():
         try:
             Base.metadata.create_all(bind=engine)
             # Safely ensure required columns exist on all databases
+            alter_statements = [
+                "ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)",
+                "ALTER TABLE payments ADD COLUMN payment_method VARCHAR(30)",
+                "ALTER TABLE services ADD COLUMN description TEXT",
+                "ALTER TABLE services ADD COLUMN icon VARCHAR(32)",
+                "ALTER TABLE services ADD COLUMN status VARCHAR(20) DEFAULT 'active'",
+                "ALTER TABLE services ADD COLUMN image_url MEDIUMTEXT",
+                "ALTER TABLE bookings ADD COLUMN booking_number VARCHAR(40)",
+                "ALTER TABLE bookings ADD COLUMN service_name VARCHAR(160)",
+                "ALTER TABLE bookings ADD COLUMN tree_count INT DEFAULT 1",
+                "ALTER TABLE bookings ADD COLUMN taluka VARCHAR(80)",
+                "ALTER TABLE bookings ADD COLUMN address TEXT",
+                "ALTER TABLE bookings ADD COLUMN booking_type VARCHAR(20) DEFAULT 'standard'",
+                "ALTER TABLE bookings ADD COLUMN call_confirmed TINYINT(1) DEFAULT 1",
+                "ALTER TABLE bookings ADD COLUMN hazard_notes TEXT",
+                "ALTER TABLE bookings ADD COLUMN tree_photo MEDIUMTEXT",
+                "ALTER TABLE incidents MODIFY COLUMN booking_id CHAR(36) NULL",
+                "ALTER TABLE incidents ADD COLUMN reported_by_name VARCHAR(120)",
+                "ALTER TABLE incidents ADD COLUMN incident_type VARCHAR(60) DEFAULT 'Near-miss'",
+                "ALTER TABLE incidents ADD COLUMN severity VARCHAR(20) DEFAULT 'low'",
+                "ALTER TABLE incidents ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+            ]
             with engine.connect() as conn:
-                try:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)"))
-                    conn.commit()
-                except Exception:
-                    pass
-                try:
-                    conn.execute(text("ALTER TABLE payments ADD COLUMN payment_method VARCHAR(30)"))
-                    conn.commit()
-                except Exception:
-                    pass
+                for stmt in alter_statements:
+                    if db_url.startswith("sqlite") and ("MODIFY COLUMN" in stmt or "MEDIUMTEXT" in stmt or "TINYINT" in stmt):
+                        stmt = stmt.replace("MEDIUMTEXT", "TEXT").replace("TINYINT(1)", "BOOLEAN")
+                        if "MODIFY COLUMN" in stmt:
+                            continue
+                    try:
+                        conn.execute(text(stmt))
+                        conn.commit()
+                    except Exception:
+                        pass
             _tables_checked = True
         except Exception as e:
             print(f"Table init notice: {e}")

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -23,6 +23,15 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
   const [selectedSkills, setSelectedSkills] = useState(['svc_coconut', 'svc_areca', 'svc_palm']);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && Array.isArray(services) && services.length > 0) {
+      setSelectedSkills((prev) => {
+        const validIds = prev.filter((id) => services.some((s) => s.id === id));
+        return validIds.length > 0 ? validIds : services.slice(0, 3).map((s) => s.id);
+      });
+    }
+  }, [isOpen, services]);
 
   const toggleSkill = (serviceId) => {
     setSelectedSkills((prev) =>

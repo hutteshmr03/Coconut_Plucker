@@ -8,7 +8,14 @@ import {
   INITIAL_INCIDENTS
 } from '../services/mockData';
 import { normalizeTaluka } from '../utils/helpers';
-import { superAdminAPI, bookingsAPI } from '../services/api';
+import {
+  superAdminAPI,
+  bookingsAPI,
+  servicesAPI,
+  adminAPI,
+  customerAPI,
+  professionalAPI
+} from '../services/api';
 
 export { normalizeTaluka };
 
@@ -16,8 +23,25 @@ const AppContext = createContext();
 
 const STORAGE_KEY = "paddeli_state_v1";
 
+const sanitizeServicesList = (list) =>
+  list
+    .filter((s) => s.id !== 'svc_orchard' && s.id !== 'svc_waste')
+    .map((s) => {
+      let cleanIcon = s.icon;
+      if (!cleanIcon || cleanIcon.startsWith('data:') || cleanIcon.length > 10) {
+        const defaultSvc = INITIAL_SERVICES.find((init) => init.id === s.id);
+        cleanIcon = defaultSvc?.icon || '🌴';
+      }
+      return {
+        ...s,
+        icon: cleanIcon,
+        image: s.image || (s.icon && s.icon.startsWith('data:image') ? s.icon : null) || s.image_url,
+        image_url: s.image_url || (s.icon && s.icon.startsWith('data:image') ? s.icon : null) || s.image
+      };
+    });
+
 export const AppProvider = ({ children }) => {
-  const { currentUser, role: authRole } = useAuth();
+  const { currentUser, role: authRole, token } = useAuth();
 
   // Load saved state or use initial seed with strictly normalized talukas and verified service flags
   const [services, setServices] = useState(() => {
@@ -197,10 +221,111 @@ export const AppProvider = ({ children }) => {
     }
   }, [schedulingConfig]);
 
+  // Hydrate live state from MySQL backend (nrlnxfke_paddeli) on load and role/login changes
+  useEffect(() => {
+    let cancelled = false;
+    const isRealJwt = Boolean(token && !String(token).startsWith('token_'));
+
+    const loadFromBackend = async () => {
+      // 1. Public/Admin service catalog & regional scheduling
+      try {
+        const svcCall = (authRole === 'admin' || authRole === 'super_admin')
+          ? servicesAPI.getAllServicesAdmin()
+          : servicesAPI.getActiveServices();
+        const remoteServices = await svcCall;
+        if (!cancelled && Array.isArray(remoteServices) && remoteServices.length > 0) {
+          setServices(sanitizeServicesList(remoteServices));
+        }
+      } catch (e) {
+        console.warn('[Backend] Services fetch fallback:', e.message);
+      }
+
+      try {
+        const cfg = await adminAPI.getSchedulingConfig();
+        if (!cancelled && cfg && (cfg.north_days || cfg.northDays)) {
+          setSchedulingConfig({
+            northDays: cfg.north_days || cfg.northDays || DEFAULT_SCHEDULING.northDays,
+            southDays: cfg.south_days || cfg.southDays || DEFAULT_SCHEDULING.southDays,
+            kushavatiDays: cfg.kushavati_days || cfg.kushavatiDays || DEFAULT_SCHEDULING.kushavatiDays,
+            maxDailyBookings: Number(cfg.max_daily_slots || cfg.maxDailyBookings || 15)
+          });
+        }
+      } catch (e) {
+        console.warn('[Backend] Scheduling config fetch fallback:', e.message);
+      }
+
+      if (!currentUser) return;
+
+      // 2. Role-specific live data from MySQL
+      if ((authRole === 'admin' || authRole === 'super_admin') && isRealJwt) {
+        const [bkRes, custRes, proRes, incRes] = await Promise.allSettled([
+          adminAPI.getAllBookings(),
+          adminAPI.getCustomers(),
+          adminAPI.getProfessionals(),
+          adminAPI.getIncidents()
+        ]);
+        if (cancelled) return;
+        if (bkRes.status === 'fulfilled' && Array.isArray(bkRes.value)) {
+          setBookings(bkRes.value.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) })));
+        }
+        if (custRes.status === 'fulfilled' && Array.isArray(custRes.value)) {
+          setCustomers(custRes.value.map((c) => ({ ...c, taluka: normalizeTaluka(c?.taluka) })));
+        }
+        if (proRes.status === 'fulfilled' && Array.isArray(proRes.value)) {
+          setProfessionals(proRes.value.map((p) => ({ ...p, taluka: normalizeTaluka(p?.taluka) })));
+        }
+        if (incRes.status === 'fulfilled' && Array.isArray(incRes.value)) {
+          setIncidents(incRes.value);
+        }
+      } else if (authRole === 'customer' && isRealJwt) {
+        try {
+          const myBk = await bookingsAPI.getMyBookings();
+          if (!cancelled && Array.isArray(myBk)) {
+            setBookings(myBk.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) })));
+          }
+        } catch (e) {
+          console.warn('[Backend] Customer bookings fetch fallback:', e.message);
+        }
+      } else if (authRole === 'professional' && isRealJwt) {
+        try {
+          const proBk = await professionalAPI.getMyBookings();
+          if (!cancelled && Array.isArray(proBk)) {
+            setBookings(proBk.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) })));
+            // Populate customer names/phones for AssignedJobCard display
+            const derivedCustomers = proBk
+              .filter((b) => b.customer_id)
+              .map((b) => ({
+                id: b.customer_id,
+                full_name: b.customer_name || 'Customer',
+                phone: b.customer_phone || '',
+                taluka: normalizeTaluka(b.taluka)
+              }));
+            if (derivedCustomers.length > 0) {
+              setCustomers((prev) => {
+                const map = new Map(prev.map((c) => [c.id, c]));
+                derivedCustomers.forEach((dc) => map.set(dc.id, { ...(map.get(dc.id) || {}), ...dc }));
+                return Array.from(map.values());
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('[Backend] Professional bookings fetch fallback:', e.message);
+        }
+      }
+    };
+
+    loadFromBackend();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.id, authRole, token]);
+
   const updateSchedulingConfig = (newConfig) => {
     setSchedulingConfig((prev) => {
       const merged = { ...prev, ...newConfig };
-      superAdminAPI.updateSchedulingConfig(merged).catch(() => {});
+      adminAPI.updateSchedulingConfig(merged).catch((err) => {
+        console.warn('[Backend] Scheduling update fallback:', err.message);
+      });
       return merged;
     });
     showToast("Regional scheduling configuration updated and applied to customer booking!", "success");
@@ -275,7 +400,14 @@ export const AppProvider = ({ children }) => {
         scheduled_at: bookingData.scheduled_at || new Date().toISOString(),
         booking_type: bookingData.booking_type || 'standard',
         payment_method: bookingData.payment_method || 'UPI',
-        hazard_notes: bookingData.hazard_notes || ''
+        hazard_notes: bookingData.hazard_notes || '',
+        tree_photo: bookingData.tree_photo || null
+      }).then((created) => {
+        if (created?.id) {
+          setBookings((prev) =>
+            prev.map((b) => (b.id === newId ? { ...b, ...created, taluka: normalizeTaluka(created.taluka) } : b))
+          );
+        }
       }).catch((err) => {
         console.warn('Backend booking sync warning:', err);
       });
@@ -294,6 +426,7 @@ export const AppProvider = ({ children }) => {
           : b
       )
     );
+    adminAPI.confirmBookingCall(bookingId).catch((err) => console.warn('[Backend] Confirm call sync:', err.message));
     const displayName = custObj ? getDisplayName(custObj) : 'Customer';
     const phoneInfo = custObj?.phone ? ` (${custObj.phone})` : '';
     showToast(`📞 Connecting to ${displayName}${phoneInfo}... Call confirmation recorded.`, "success");
@@ -307,6 +440,7 @@ export const AppProvider = ({ children }) => {
           : b
       )
     );
+    adminAPI.assignBooking(bookingId, professionalId).catch((err) => console.warn('[Backend] Assign sync:', err.message));
     showToast("Professional assigned to booking", "success");
   };
 
@@ -316,6 +450,7 @@ export const AppProvider = ({ children }) => {
         b.id === bookingId ? { ...b, status: "in_progress" } : b
       )
     );
+    professionalAPI.startBooking(bookingId).catch((err) => console.warn('[Backend] Start job sync:', err.message));
     showToast("Job marked in progress. Stay safe!", "success");
   };
 
@@ -333,6 +468,7 @@ export const AppProvider = ({ children }) => {
         };
       })
     );
+    professionalAPI.completeBooking(bookingId).catch((err) => console.warn('[Backend] Complete job sync:', err.message));
     showToast("Job marked complete. Full payment received upfront.", "success");
   };
 
@@ -378,12 +514,23 @@ export const AppProvider = ({ children }) => {
   };
 
   const addService = (serviceData) => {
+    const tempId = "svc_" + Date.now().toString(36);
     const newService = {
-      id: "svc_" + Date.now().toString(36),
+      id: tempId,
       status: "active",
       ...serviceData
     };
     setServices((prev) => [...prev, newService]);
+    servicesAPI
+      .createService(serviceData)
+      .then((created) => {
+        if (created?.id) {
+          setServices((prev) =>
+            sanitizeServicesList(prev.map((s) => (s.id === tempId ? { ...s, ...created } : s)))
+          );
+        }
+      })
+      .catch((err) => console.warn('[Backend] Create service sync:', err.message));
     showToast(`Service "${serviceData.name}" added to catalog!`, "success");
   };
 
@@ -391,34 +538,49 @@ export const AppProvider = ({ children }) => {
     setServices((prev) =>
       prev.map((s) => (s.id === serviceId ? { ...s, ...updatedData } : s))
     );
+    servicesAPI
+      .updateService(serviceId, updatedData)
+      .catch((err) => console.warn('[Backend] Update service sync:', err.message));
     showToast("Service updated successfully", "success");
   };
 
   const toggleServiceStatus = (serviceId) => {
+    const target = services.find((s) => s.id === serviceId);
+    const nextStatus = target?.status === "active" ? "inactive" : "active";
     setServices((prev) =>
       prev.map((s) =>
         s.id === serviceId
-          ? { ...s, status: s.status === "active" ? "inactive" : "active" }
+          ? { ...s, status: nextStatus }
           : s
       )
     );
+    servicesAPI
+      .updateServiceStatus(serviceId, nextStatus)
+      .catch((err) => console.warn('[Backend] Service status sync:', err.message));
     showToast("Service status updated", "info");
   };
 
   const deleteService = (serviceId) => {
     const target = services.find((s) => s.id === serviceId);
     setServices((prev) => prev.filter((s) => s.id !== serviceId));
+    servicesAPI
+      .deleteService(serviceId)
+      .catch((err) => console.warn('[Backend] Delete service sync:', err.message));
     showToast(`Service "${target?.name || 'Item'}" deleted from catalog`, "warning");
   };
 
   const verifyProfessional = (proId, decision) => {
+    const nextStatus = decision === "approve" ? "approved" : "rejected";
     setProfessionals((prev) =>
       prev.map((p) =>
         p.id === proId
-          ? { ...p, status: decision === "approve" ? "approved" : "rejected" }
+          ? { ...p, status: nextStatus }
           : p
       )
     );
+    adminAPI
+      .verifyProfessional(proId, nextStatus)
+      .catch((err) => console.warn('[Backend] Verify pro sync:', err.message));
     showToast(
       `Professional ${decision === "approve" ? "Approved" : "Rejected"}`,
       decision === "approve" ? "success" : "warning"
@@ -440,18 +602,37 @@ export const AppProvider = ({ children }) => {
       created_at: new Date().toISOString()
     };
     setProfessionals((prev) => [newPro, ...prev]);
+    adminAPI
+      .createProfessional(proData)
+      .then((created) => {
+        if (created?.id) {
+          setProfessionals((prev) =>
+            prev.map((p) => (p.id === newId ? { ...p, ...created, taluka: normalizeTaluka(created.taluka) } : p))
+          );
+        }
+      })
+      .catch((err) => console.warn('[Backend] Create professional sync:', err.message));
     showToast(`Professional Climber "${proData.full_name}" onboarded successfully!`, "success");
     return newPro;
   };
 
   const addIncident = (incidentData) => {
+    const tempId = "inc_" + Date.now().toString(36);
     const newIncident = {
-      id: "inc_" + Date.now().toString(36),
+      id: tempId,
       status: "open",
       created_at: new Date().toISOString(),
       ...incidentData
     };
     setIncidents((prev) => [newIncident, ...prev]);
+    adminAPI
+      .createIncident(incidentData)
+      .then((created) => {
+        if (created?.id) {
+          setIncidents((prev) => prev.map((i) => (i.id === tempId ? { ...i, ...created } : i)));
+        }
+      })
+      .catch((err) => console.warn('[Backend] Create incident sync:', err.message));
     showToast("Safety incident report submitted", "warning");
   };
 
@@ -461,6 +642,9 @@ export const AppProvider = ({ children }) => {
         i.id === incidentId ? { ...i, status: "resolved" } : i
       )
     );
+    adminAPI
+      .updateIncident(incidentId, "resolved")
+      .catch((err) => console.warn('[Backend] Resolve incident sync:', err.message));
     showToast("Incident marked as resolved", "success");
   };
 
@@ -468,6 +652,14 @@ export const AppProvider = ({ children }) => {
     setCustomers((prev) =>
       prev.map((c) => (c.id === currentCustomerId ? { ...c, ...profileData } : c))
     );
+    customerAPI
+      .updateProfile({
+        full_name: profileData.full_name,
+        phone: profileData.phone,
+        taluka: profileData.taluka,
+        address: profileData.address
+      })
+      .catch((err) => console.warn('[Backend] Update customer profile sync:', err.message));
     showToast("Profile updated successfully", "success");
   };
 
@@ -475,6 +667,15 @@ export const AppProvider = ({ children }) => {
     setProfessionals((prev) =>
       prev.map((p) => (p.id === currentProfessionalId ? { ...p, ...profileData } : p))
     );
+    professionalAPI
+      .updateProfile({
+        full_name: profileData.full_name,
+        taluka: profileData.taluka,
+        experience_years: profileData.experience_years,
+        safety_cert: profileData.safety_cert,
+        skills: profileData.skills
+      })
+      .catch((err) => console.warn('[Backend] Update pro profile sync:', err.message));
     showToast("Professional profile updated", "success");
   };
 

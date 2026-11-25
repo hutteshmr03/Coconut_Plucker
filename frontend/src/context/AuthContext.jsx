@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_CUSTOMERS, INITIAL_PROFESSIONALS } from '../services/mockData';
-import { authAPI } from '../services/api';
+import { authAPI, superAdminAPI } from '../services/api';
 import { getDisplayName } from '../utils/helpers';
 
 export { getDisplayName };
@@ -133,9 +133,48 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Sync Super Admin's adminAccounts list from live MySQL backend
+  useEffect(() => {
+    if (currentUser?.role === 'super_admin' && token && !String(token).startsWith('token_')) {
+      superAdminAPI
+        .getAdmins()
+        .then((remoteAdmins) => {
+          if (Array.isArray(remoteAdmins)) {
+            setRegisteredUsers((prev) => {
+              const nonAdmins = prev.filter((u) => u.role !== 'admin');
+              return [...nonAdmins, ...remoteAdmins];
+            });
+          }
+        })
+        .catch((err) => console.warn('[Backend] Admin list sync skipped:', err.message));
+    }
+  }, [currentUser?.role, currentUser?.id, token]);
+
   const login = (user, authToken = 'token_' + Date.now()) => {
+    const finalToken = authToken || ('token_' + Date.now());
+    try {
+      localStorage.setItem('cp_auth_user', JSON.stringify(user));
+      localStorage.setItem('cp_auth_token', finalToken);
+    } catch (e) {
+      console.warn('Could not persist login session:', e);
+    }
     setCurrentUser(user);
-    setToken(authToken);
+    setToken(finalToken);
+    if (user?.id) {
+      setRegisteredUsers((prev) => {
+        const exists = prev.some(
+          (u) => u.id === user.id || (u.phone && user.phone && u.phone.slice(-10) === user.phone.slice(-10))
+        );
+        if (exists) {
+          return prev.map((u) =>
+            u.id === user.id || (u.phone && user.phone && u.phone.slice(-10) === user.phone.slice(-10))
+              ? { ...u, ...user }
+              : u
+          );
+        }
+        return [...prev, user];
+      });
+    }
   };
 
   const registerUser = async (newUserData) => {
@@ -151,6 +190,7 @@ export const AuthProvider = ({ children }) => {
       created_at: new Date().toISOString(),
       ...newUserData
     };
+    let authToken = null;
 
     try {
       const backendRes = await authAPI.register(newUserData);
@@ -161,12 +201,15 @@ export const AuthProvider = ({ children }) => {
           ...backendRes.user
         };
       }
+      if (backendRes?.access_token) {
+        authToken = backendRes.access_token;
+      }
     } catch (err) {
       console.warn('[Backend] Register fallback:', err.message);
     }
 
     setRegisteredUsers((prev) => [...prev, user]);
-    login(user);
+    login(user, authToken || undefined);
     return user;
   };
 
@@ -182,6 +225,15 @@ export const AuthProvider = ({ children }) => {
       }
       return updatedUserObj;
     });
+
+    if ((currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && (updates.full_name || updates.phone)) {
+      authAPI
+        .updateProfile({
+          full_name: updates.full_name,
+          phone: updates.phone
+        })
+        .catch((err) => console.warn('[Backend] Admin profile sync warning:', err.message));
+    }
 
     setRegisteredUsers((prev) => {
       const targetPhone = currentUser?.phone ? currentUser.phone.replace(/\D/g, '') : '';
@@ -247,6 +299,25 @@ export const AuthProvider = ({ children }) => {
       }
       return updated;
     });
+
+    // Persist new Admin to live MySQL backend
+    superAdminAPI
+      .createAdmin({
+        full_name: newAdmin.full_name,
+        phone: newAdmin.phone,
+        username: newAdmin.username,
+        taluka: newAdmin.taluka,
+        password: newAdmin.password
+      })
+      .then((created) => {
+        if (created?.id) {
+          setRegisteredUsers((prev) =>
+            prev.map((u) => (u.id === newAdmin.id ? { ...u, ...created } : u))
+          );
+        }
+      })
+      .catch((err) => console.warn('[Backend] Create admin sync warning:', err.message));
+
     return newAdmin;
   };
 
@@ -298,14 +369,23 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Unauthorized: Only Super Admin can manage Admin statuses.');
     }
 
+    const target = registeredUsers.find((u) => u.id === adminId && u.role === 'admin');
+    const nextStatus = target?.status === 'active' ? 'deactivated' : 'active';
+
     setRegisteredUsers((prev) =>
       prev.map((u) => {
         if (u.id === adminId && u.role === 'admin') {
-          return { ...u, status: u.status === 'active' ? 'deactivated' : 'active' };
+          return { ...u, status: nextStatus };
         }
         return u;
       })
     );
+
+    if (adminId && !String(adminId).startsWith('usr_')) {
+      superAdminAPI
+        .updateAdminStatus(adminId, nextStatus)
+        .catch((err) => console.warn('[Backend] Admin status sync warning:', err.message));
+    }
   };
 
   const deleteAdminAccount = (adminId) => {
@@ -314,6 +394,12 @@ export const AuthProvider = ({ children }) => {
     }
 
     setRegisteredUsers((prev) => prev.filter((u) => u.id !== adminId || u.role !== 'admin'));
+
+    if (adminId && !String(adminId).startsWith('usr_')) {
+      superAdminAPI
+        .deleteAdmin(adminId)
+        .catch((err) => console.warn('[Backend] Delete admin sync warning:', err.message));
+    }
   };
 
   // Admin & Super Admin: Profile Password Reset
@@ -325,21 +411,28 @@ export const AuthProvider = ({ children }) => {
     const curClean = (currentPassword || '').trim();
     const newClean = (newPassword || '').trim();
 
-    const isMatch =
-      currentUser?.password === curClean ||
-      (currentUser?.role === 'super_admin' && currentUser?.must_reset_password && ['tempPassword123!', 'admin123', 'Super@Admin2026!'].includes(curClean)) ||
-      (currentUser?.role === 'admin' && !currentUser?.password_updated_at && (curClean === 'admin123' || curClean === '123'));
-
-    if (!isMatch) {
-      throw new Error('Current password does not match.');
-    }
-
     if (!newClean || newClean.length < 6) {
       throw new Error('New password must be at least 6 characters long.');
     }
 
     if (newClean === curClean) {
       throw new Error('New password must be different from current password.');
+    }
+
+    const isMatch =
+      currentUser?.password === curClean ||
+      (currentUser?.role === 'super_admin' && (!currentUser?.password || currentUser?.must_reset_password) && ['tempPassword123!', 'Super@Admin2026!'].includes(curClean)) ||
+      (currentUser?.role === 'admin' && !currentUser?.password && !currentUser?.password_updated_at && curClean === 'admin123');
+
+    // If local state didn't cache plaintext password (e.g., logged in via live server JWT), let server verify & update
+    if (!isMatch && (!token || String(token).startsWith('token_'))) {
+      throw new Error('Current password does not match.');
+    }
+
+    if (token && !String(token).startsWith('token_')) {
+      authAPI
+        .changePassword(curClean, newClean)
+        .catch((err) => console.warn('[Backend] Password sync warning:', err.message));
     }
 
     const updates = {

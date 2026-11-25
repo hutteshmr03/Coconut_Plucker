@@ -61,8 +61,8 @@ export const AuthPage = () => {
       return;
     }
 
-    // Match by 10-digit phone, username, or email
-    const found = registeredUsers.find((u) => {
+    // Check local cache first for known Admin / Super Admin accounts
+    const localMatch = registeredUsers.find((u) => {
       const userDigits = u.phone ? u.phone.replace(/\D/g, '').slice(-10) : '';
       const matchPhone = pClean && pClean.length >= 10 && userDigits === pClean;
       const matchUsername = u.username && u.username.toLowerCase() === uClean;
@@ -70,27 +70,63 @@ export const AuthPage = () => {
       return matchPhone || matchUsername || matchEmail;
     });
 
-    if (!found) {
-      if (digitsOnly.length < 10 && !uClean) {
-        setError('Please enter a valid 10-digit mobile phone number');
-        return;
-      }
-      setError(`Mobile number +91 ${pClean || rawInput} is not registered yet. Please click "Sign Up" above to create an account.`);
+    if (localMatch && (localMatch.role === 'admin' || localMatch.role === 'super_admin')) {
+      setError('');
+      setPendingLoginUser(localMatch);
+      setAdminPassword('');
+      setLoginStep('password');
       return;
     }
 
-    setError('');
-    setPendingLoginUser(found);
-
-    // Automatic Role Detection: If Admin or Super Admin -> Show password box
-    if (found.role === 'admin' || found.role === 'super_admin') {
-      setAdminPassword('');
-      setLoginStep('password');
-    } else {
-      // Customer or Professional -> Direct login, no OTP required
-      setError('');
-      login(found);
+    // Query live MySQL backend so customers/professionals created on any device can log in anywhere
+    try {
+      const res = await authAPI.login({ identifier: rawInput, phone: pClean, username: rawInput });
+      if (res?.user) {
+        if (res.user.role === 'admin' || res.user.role === 'super_admin') {
+          setError('');
+          setPendingLoginUser(res.user);
+          setAdminPassword('');
+          setLoginStep('password');
+          return;
+        }
+        setError('');
+        login(res.user, res.access_token);
+        return;
+      }
+    } catch (err) {
+      const msg = (err?.message || '').toLowerCase();
+      if (msg.includes('password is required')) {
+        setError('');
+        setPendingLoginUser(
+          localMatch || {
+            phone: pClean || rawInput,
+            username: rawInput,
+            role: uClean === 'superadmin' || uClean === 'super_admin' || pClean === '9999900000' ? 'super_admin' : 'admin',
+            full_name: uClean === 'superadmin' ? 'Chief Platform Administrator' : 'Administrator'
+          }
+        );
+        setAdminPassword('');
+        setLoginStep('password');
+        return;
+      }
+      if (msg.includes('deactivated')) {
+        setError(err.message);
+        return;
+      }
     }
+
+    // Local fallback (offline or demo-only users)
+    if (localMatch) {
+      setError('');
+      login(localMatch);
+      return;
+    }
+
+    if (digitsOnly.length < 10 && !uClean) {
+      setError('Please enter a valid 10-digit mobile phone number');
+      return;
+    }
+    setError(`Mobile number +91 ${pClean || rawInput} is not registered yet. Please click "Sign Up" above to create an account.`);
   };
 
   // ===================== 3. LOGIN: STEP 2B (ADMIN PASSWORD SUBMISSION) =====================
@@ -115,13 +151,16 @@ export const AuthPage = () => {
       const res = await authAPI.login({ identifier: uIdent, username: uIdent, password: passClean });
       if (res?.user) {
         setError('');
-        login({
-          ...res.user,
-          ...found,
-          full_name: res.user.full_name || found.full_name,
-          avatar_url: found.avatar_url || res.user.avatar_url || null,
-          token: res.access_token || undefined
-        });
+        login(
+          {
+            ...found,
+            ...res.user,
+            id: res.user.id || found.id,
+            full_name: res.user.full_name || found.full_name,
+            avatar_url: res.user.avatar_url || found.avatar_url || null
+          },
+          res.access_token
+        );
         return;
       }
     } catch (err) {

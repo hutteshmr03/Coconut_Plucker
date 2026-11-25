@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.models.user import User
@@ -9,7 +9,7 @@ from app.models.booking import Booking
 from app.models.professional import ProfessionalProfile
 from app.models.service import ProfessionalSkill
 from app.schemas.auth import UserOut, UserUpdate
-from app.routers.auth import format_user_out
+from app.routers.auth import format_user_out, get_optional_user
 
 router = APIRouter(prefix="/professionals", tags=["Professionals"])
 
@@ -17,15 +17,22 @@ class SkillsUpdate(BaseModel):
     service_ids: List[str]
 
 @router.get("/me", response_model=UserOut)
-def get_professional_me(db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.role == "professional").first()
+def get_professional_me(
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    user = current_user if (current_user and current_user.role == "professional") else db.query(User).filter(User.role == "professional").first()
     if not user:
         raise HTTPException(status_code=404, detail="Professional not found")
     return format_user_out(user, db)
 
 @router.put("/me", response_model=UserOut)
-def update_professional_me(req: UserUpdate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.role == "professional").first()
+def update_professional_me(
+    req: UserUpdate,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    user = current_user if (current_user and current_user.role == "professional") else db.query(User).filter(User.role == "professional").first()
     if not user:
         raise HTTPException(status_code=404, detail="Professional not found")
 
@@ -33,27 +40,45 @@ def update_professional_me(req: UserUpdate, db: Session = Depends(get_db)):
         user.full_name = req.full_name
     if req.phone is not None:
         user.phone = req.phone
-    if req.email is not None:
-        user.email = req.email
-    if req.taluka is not None:
-        user.taluka = req.taluka
-    if req.address is not None:
-        user.address = req.address
     
     prof = db.query(ProfessionalProfile).filter(ProfessionalProfile.user_id == user.id).first()
-    if prof:
+    if not prof:
+        prof = ProfessionalProfile(
+            user_id=user.id,
+            taluka=req.taluka or "North Goa",
+            experience_years=req.experience_years or 1,
+            safety_cert=req.safety_cert or "Certified Climber",
+            rating_avg=5.0
+        )
+        db.add(prof)
+    else:
+        if req.taluka is not None:
+            prof.taluka = req.taluka
         if req.experience_years is not None:
             prof.experience_years = req.experience_years
         if req.safety_cert is not None:
             prof.safety_cert = req.safety_cert
+
+    if req.skills is not None:
+        db.query(ProfessionalSkill).filter(ProfessionalSkill.professional_id == user.id).delete()
+        for sid_str in req.skills:
+            try:
+                sid = uuid.UUID(sid_str)
+                db.add(ProfessionalSkill(professional_id=user.id, service_id=sid))
+            except Exception:
+                pass
 
     db.commit()
     db.refresh(user)
     return format_user_out(user, db)
 
 @router.put("/me/skills")
-def update_professional_skills(req: SkillsUpdate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.role == "professional").first()
+def update_professional_skills(
+    req: SkillsUpdate,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    user = current_user if (current_user and current_user.role == "professional") else db.query(User).filter(User.role == "professional").first()
     if not user:
         raise HTTPException(status_code=404, detail="Professional not found")
 
@@ -70,18 +95,38 @@ def update_professional_skills(req: SkillsUpdate, db: Session = Depends(get_db))
     return {"success": True, "message": "Skills updated successfully"}
 
 @router.get("/me/bookings")
-def get_professional_bookings(db: Session = Depends(get_db)):
-    bookings = db.query(Booking).all()
+def get_professional_bookings(
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Booking).options(joinedload(Booking.service), joinedload(Booking.customer), joinedload(Booking.payment))
+    if current_user and current_user.role == "professional":
+        query = query.filter(Booking.professional_id == current_user.id)
+    bookings = query.all()
     results = []
     for b in bookings:
         results.append({
             "id": str(b.id),
+            "booking_number": b.booking_number or f"CP-{str(b.id)[:8].upper()}",
+            "customer_id": str(b.customer_id) if b.customer_id else None,
             "customer_name": b.customer.full_name if b.customer else "Customer",
-            "service_name": b.service.name if b.service else "Harvesting",
-            "taluka": "North Goa",
+            "customer_phone": b.customer.phone if b.customer else None,
+            "professional_id": str(b.professional_id) if b.professional_id else None,
+            "service_id": str(b.service_id) if b.service_id else None,
+            "service_name": b.service_name or (b.service.name if b.service else "Harvesting"),
+            "tree_count": b.tree_count or 1,
+            "height_category": b.height_category,
+            "taluka": b.taluka or "North Goa",
+            "address": b.address or "Goa",
             "scheduled_at": b.scheduled_at.isoformat() if b.scheduled_at else None,
             "status": b.status,
-            "quote_amount": float(b.quote_amount) if b.quote_amount else 0.0
+            "booking_type": b.booking_type or "standard",
+            "call_confirmed": b.call_confirmed if b.call_confirmed is not None else True,
+            "quote_amount": float(b.quote_amount) if b.quote_amount else 0.0,
+            "payment_method": b.payment.payment_method if b.payment else "UPI",
+            "payment_status": "paid" if (b.payment and b.payment.status == "success") else "paid",
+            "tree_photo": b.tree_photo,
+            "created_at": b.created_at.isoformat() if b.created_at else None
         })
     return results
 

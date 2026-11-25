@@ -17,12 +17,17 @@ async function request(endpoint, options = {}) {
   const cacheKey = `${endpoint}_${localStorage.getItem('cp_auth_token') || ''}`;
 
   // Return cached response instantly if still fresh
-  if (isGet && apiCache.has(cacheKey)) {
+  if (isGet && !options.noCache && apiCache.has(cacheKey)) {
     const entry = apiCache.get(cacheKey);
     if (Date.now() - entry.timestamp < CACHE_TTL_MS) {
       return entry.data;
     }
     apiCache.delete(cacheKey);
+  }
+
+  // Clear GET cache on mutations so reads immediately reflect updated DB state
+  if (!isGet) {
+    apiCache.clear();
   }
 
   // Fast-fail if backend is known to be unavailable (e.g. running on static SPA host)
@@ -90,6 +95,8 @@ export const authAPI = {
   register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => request('/auth/me'),
+  updateProfile: (data) => request('/auth/me', { method: 'PUT', body: JSON.stringify(data) }),
+  changePassword: (currentPassword, newPassword) => request('/auth/password', { method: 'POST', body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }),
   logout: () => request('/auth/logout', { method: 'POST' })
 };
 
@@ -101,12 +108,13 @@ export const customerAPI = {
 
 // API-007, API-008, API-025 to API-028: Services
 export const servicesAPI = {
-  getActiveServices: () => request('/services'),
+  getActiveServices: () => request('/services', { noCache: true }),
   getServiceDetails: (id) => request(`/services/${id}`),
   createService: (data) => request('/services', { method: 'POST', body: JSON.stringify(data) }),
-  getAllServicesAdmin: () => request('/services/admin'),
+  getAllServicesAdmin: () => request('/services/admin', { noCache: true }),
   updateService: (id, data) => request(`/services/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  updateServiceStatus: (id, status) => request(`/services/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
+  updateServiceStatus: (id, status) => request(`/services/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  deleteService: (id) => request(`/services/${id}`, { method: 'DELETE' })
 };
 
 // API-009 to API-013: Bookings & Quotes
@@ -287,17 +295,21 @@ export const professionalAPI = {
 // API-021 to API-035: Admin
 export const adminAPI = {
   getDashboard: () => request('/admin/dashboard'),
-  getCustomers: () => request('/admin/customers'),
-  getProfessionals: () => request('/admin/professionals'),
+  getCustomers: () => request('/admin/customers', { noCache: true }),
+  getProfessionals: () => request('/admin/professionals', { noCache: true }),
+  createProfessional: (data) => request('/admin/professionals', { method: 'POST', body: JSON.stringify(data) }),
   verifyProfessional: (id, decision, reason) => request(`/admin/professionals/${id}/verify`, { method: 'POST', body: JSON.stringify({ decision, reason }) }),
-  getAllBookings: () => request('/admin/bookings'),
+  getAllBookings: () => request('/admin/bookings', { noCache: true }),
   confirmBookingCall: (id) => request(`/admin/bookings/${id}/confirm-call`, { method: 'POST' }),
   assignBooking: (id, professionalId) => request(`/admin/bookings/${id}/assign`, { method: 'POST', body: JSON.stringify({ professional_id: professionalId }) }),
   getPayments: () => request('/admin/payments'),
   getReviews: () => request('/admin/reviews'),
-  getIncidents: () => request('/admin/incidents'),
+  getIncidents: () => request('/admin/incidents', { noCache: true }),
+  createIncident: (data) => request('/admin/incidents', { method: 'POST', body: JSON.stringify(data) }),
   updateIncident: (id, status) => request(`/admin/incidents/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  getReports: () => request('/admin/reports')
+  getReports: () => request('/admin/reports'),
+  getSchedulingConfig: () => request('/availability/config', { noCache: true }),
+  updateSchedulingConfig: (data) => request('/availability/config', { method: 'PUT', body: JSON.stringify(data) })
 };
 
 // Super Admin Endpoints

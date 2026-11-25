@@ -97,16 +97,25 @@ def delete_admin(admin_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"success": True, "message": "Admin deleted successfully"}
 
-_active_superadmin_password = "tempPassword123!"
-
 @router.post("/change-password")
-def change_password(req: PasswordChangeRequest):
-    global _active_superadmin_password
+def change_password(req: PasswordChangeRequest, db: Session = Depends(get_db)):
     if len(req.new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
-    if req.current_password != _active_superadmin_password and req.current_password not in ["tempPassword123!", "Super@Admin2026!"]:
+    sa = db.query(User).filter(User.role == "super_admin").first()
+    if not sa:
+        raise HTTPException(status_code=404, detail="Super Admin account not found.")
+
+    is_valid = False
+    if sa.password_hash:
+        is_valid = pwd_context.verify(req.current_password, sa.password_hash)
+    elif req.current_password in ["tempPassword123!", "Super@Admin2026!"]:
+        is_valid = True
+
+    if not is_valid:
         raise HTTPException(status_code=400, detail="Current password does not match.")
-    _active_superadmin_password = req.new_password.strip()
+
+    sa.password_hash = pwd_context.hash(req.new_password.strip())
+    db.commit()
     return {"success": True, "message": "Super Admin master password changed successfully."}
 
 @router.get("/audit-logs")
@@ -117,22 +126,18 @@ def get_audit_logs():
     ]
 
 @router.post("/login")
-def super_admin_login(data: dict):
-    global _active_superadmin_password
+def super_admin_login(data: dict, db: Session = Depends(get_db)):
     username = data.get("username", "").strip().lower()
     password = data.get("password", "").strip()
-    if username in ["superadmin", "9999900000"] and password == _active_superadmin_password:
-        return {
-            "access_token": "token_super_admin_jwt_mock",
-            "token_type": "bearer",
-            "user": {
-                "id": "usr_super_admin",
-                "phone": "9999900000",
-                "full_name": "Chief Platform Administrator",
-                "role": "super_admin",
-                "status": "active"
+    sa = db.query(User).filter(User.role == "super_admin").first()
+    if sa and username in ["superadmin", "9999900000"]:
+        ok = pwd_context.verify(password, sa.password_hash) if sa.password_hash else (password in ["tempPassword123!", "Super@Admin2026!"])
+        if ok:
+            return {
+                "access_token": "token_super_admin_jwt_mock",
+                "token_type": "bearer",
+                "user": format_user_out(sa, db)
             }
-        }
     raise HTTPException(status_code=401, detail="Invalid Super Admin credentials.")
 from app.core.scheduling_state import get_active_scheduling_config, update_active_scheduling_config
 

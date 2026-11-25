@@ -31,19 +31,27 @@ class BookingCreate(BaseModel):
     booking_type: str = "standard"
     payment_method: Optional[str] = "UPI"
     hazard_notes: Optional[str] = None
+    tree_photo: Optional[str] = None
 
 class BookingOut(BaseModel):
     id: str
+    booking_number: Optional[str] = None
     customer_id: Optional[str] = None
     professional_id: Optional[str] = None
     service_id: Optional[str] = None
     service_name: Optional[str] = None
+    tree_count: int = 1
     height_category: Optional[str] = None
     taluka: Optional[str] = None
     address: Optional[str] = None
     scheduled_at: str
     status: str
     booking_type: str = "standard"
+    call_confirmed: bool = True
     quote_amount: Optional[float] = None
+    payment_method: Optional[str] = "UPI"
+    payment_status: Optional[str] = "paid"
+    hazard_notes: Optional[str] = None
+    tree_photo: Optional[str] = None
     urgent_call_confirmed: bool = False
     created_at: str

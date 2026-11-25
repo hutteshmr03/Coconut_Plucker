@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Numeric, DateTime, CheckConstraint, ForeignKey, text, func, Uuid
+from sqlalchemy import Column, String, Text, Integer, Boolean, Numeric, DateTime, CheckConstraint, ForeignKey, text, func, Uuid
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -15,10 +15,19 @@ class Booking(Base):
     )
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    booking_number = Column(String(40), nullable=True, index=True)
     customer_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     professional_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     service_id = Column(Uuid(as_uuid=True), ForeignKey("services.id", ondelete="SET NULL"), nullable=True, index=True)
+    service_name = Column(String(160), nullable=True)
+    tree_count = Column(Integer, nullable=True, default=1)
     height_category = Column(String(20), nullable=True)
+    taluka = Column(String(80), nullable=True)
+    address = Column(Text, nullable=True)
+    booking_type = Column(String(20), nullable=True, default="standard")
+    call_confirmed = Column(Boolean, nullable=True, default=True)
+    hazard_notes = Column(Text, nullable=True)
+    tree_photo = Column(Text, nullable=True)
     scheduled_at = Column(DateTime(timezone=True), nullable=False, index=True)
     status = Column(String(20), nullable=False, server_default="requested", default="requested", index=True)
     quote_amount = Column(Numeric(8, 2), nullable=True)

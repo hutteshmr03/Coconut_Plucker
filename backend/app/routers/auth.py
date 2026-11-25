@@ -1,9 +1,12 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import create_access_token, pwd_context
+from app.core.security import create_access_token, decode_access_token, pwd_context
 from app.models.user import User
 from app.models.customer import CustomerProfile
 from app.models.professional import ProfessionalProfile
@@ -11,6 +14,23 @@ from app.models.service import Service, ProfessionalSkill
 from app.schemas.auth import OTPRequest, OTPVerify, UserRegister, LoginRequest, TokenResponse, UserOut
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+auth_bearer = HTTPBearer(auto_error=False)
+
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(auth_bearer),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    if not credentials:
+        return None
+    payload = decode_access_token(credentials.credentials)
+    if not payload or not payload.get("sub"):
+        return None
+    try:
+        uid = uuid.UUID(str(payload["sub"]))
+        return db.query(User).filter(User.id == uid).first()
+    except Exception:
+        return None
 
 def format_user_out(user: User, db: Session) -> UserOut:
     taluka = None
@@ -212,6 +232,8 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
 
     # Secure server-side password check for admin and super admin
     if user.role in ("admin", "super_admin"):
+        if user.status == "deactivated":
+            raise HTTPException(status_code=403, detail="This administrator account has been deactivated.")
         if not req.password:
             raise HTTPException(status_code=400, detail="Password is required for administrator login")
         is_valid = False
@@ -220,8 +242,8 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
                 is_valid = pwd_context.verify(req.password, user.password_hash)
             except Exception:
                 is_valid = False
-        if not is_valid:
-            # Strict credential separation for initial onboarding
+        else:
+            # Initial onboarding fallback only when no password_hash is stored yet
             if user.role == "super_admin" and req.password in ("tempPassword123!", "Super@Admin2026!"):
                 is_valid = True
                 user.password_hash = pwd_context.hash(req.password)
@@ -241,12 +263,71 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     )
 
 @router.get("/me", response_model=UserOut)
-def get_current_user_profile(db: Session = Depends(get_db)):
-    # Return first user or default admin for demo if unauthenticated
-    user = db.query(User).first()
+def get_current_user_profile(
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    user = current_user or db.query(User).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return format_user_out(user, db)
+
+
+class ProfileSelfUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class PasswordSelfChange(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.put("/me", response_model=UserOut)
+def update_current_user_profile(
+    req: ProfileSelfUpdate,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if req.full_name is not None and req.full_name.strip():
+        current_user.full_name = req.full_name.strip()
+    if req.phone is not None:
+        raw_digits = "".join(filter(str.isdigit, req.phone))
+        phone_clean = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
+        if phone_clean and phone_clean != current_user.phone:
+            exists = db.query(User).filter(User.phone == phone_clean, User.id != current_user.id).first()
+            if exists:
+                raise HTTPException(status_code=400, detail="Phone number already in use.")
+            current_user.phone = phone_clean
+    db.commit()
+    db.refresh(current_user)
+    return format_user_out(current_user, db)
+
+
+@router.post("/password")
+def change_own_password(
+    req: PasswordSelfChange,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    if not current_user or current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Administrator authentication required")
+    if len(req.new_password.strip()) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    is_valid = False
+    if current_user.password_hash:
+        is_valid = pwd_context.verify(req.current_password, current_user.password_hash)
+    elif current_user.role == "super_admin" and req.current_password in ("tempPassword123!", "Super@Admin2026!"):
+        is_valid = True
+    elif current_user.role == "admin" and req.current_password == "admin123":
+        is_valid = True
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Current password does not match.")
+    current_user.password_hash = pwd_context.hash(req.new_password.strip())
+    db.commit()
+    return {"success": True, "message": "Password updated successfully."}
 
 @router.post("/logout")
 def logout_user():

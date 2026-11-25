@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Optional, List
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from app.routers.admin import require_admin
 
 router = APIRouter(prefix="/availability", tags=["Availability"])
 
@@ -24,7 +25,7 @@ class AvailabilityResponse(BaseModel):
     next_available_date: Optional[str] = None
     message: str
 
-from app.core.scheduling_state import get_active_scheduling_config, DAY_NAME_TO_JS_WEEKDAY
+from app.core.scheduling_state import get_active_scheduling_config, update_active_scheduling_config, DAY_NAME_TO_JS_WEEKDAY
 
 @router.get("", response_model=AvailabilityResponse)
 def get_availability(
@@ -113,3 +114,18 @@ def get_availability(
         next_available_date=next_avail.date if next_avail else None,
         message=msg
     )
+
+
+@router.get("/config")
+def get_public_scheduling_config():
+    return get_active_scheduling_config()
+
+
+@router.put("/config", dependencies=[Depends(require_admin)])
+def update_public_scheduling_config(data: dict):
+    updated = update_active_scheduling_config(data)
+    return {
+        "success": True,
+        "config": updated,
+        "message": "Regional scheduling configuration updated successfully"
+    }
