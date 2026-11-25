@@ -79,14 +79,16 @@ export const AuthProvider = ({ children }) => {
     return DEFAULT_USERS;
   });
 
-  // Current session
+  // Current session (prefer tab-isolated sessionStorage so multi-tab roles don't overwrite each other)
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('cp_auth_user');
+      const saved = sessionStorage.getItem('cp_auth_user') || localStorage.getItem('cp_auth_user');
       if (!saved || saved === 'undefined' || saved === 'null') return null;
       const parsed = JSON.parse(saved);
       // Clean up legacy mock sessions
       if (parsed?.id === 'cus_001' || parsed?.id === 'wrk_001' || parsed?.phone?.startsWith('98221') || parsed?.phone?.startsWith('98222')) {
+        sessionStorage.removeItem('cp_auth_user');
+        sessionStorage.removeItem('cp_auth_token');
         localStorage.removeItem('cp_auth_user');
         localStorage.removeItem('cp_auth_token');
         return null;
@@ -98,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [token, setToken] = useState(() => {
-    return localStorage.getItem('cp_auth_token') || null;
+    return sessionStorage.getItem('cp_auth_token') || localStorage.getItem('cp_auth_token') || null;
   });
 
   useEffect(() => {
@@ -112,24 +114,29 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     try {
       if (currentUser) {
-        localStorage.setItem('cp_auth_user', JSON.stringify(currentUser));
+        const serialized = JSON.stringify(currentUser);
+        sessionStorage.setItem('cp_auth_user', serialized);
+        localStorage.setItem('cp_auth_user', serialized);
       } else {
+        sessionStorage.removeItem('cp_auth_user');
         localStorage.removeItem('cp_auth_user');
       }
     } catch (e) {
-      console.warn('Could not save current user to localStorage:', e);
+      console.warn('Could not save current user to storage:', e);
     }
   }, [currentUser]);
 
   useEffect(() => {
     try {
       if (token) {
+        sessionStorage.setItem('cp_auth_token', token);
         localStorage.setItem('cp_auth_token', token);
       } else {
+        sessionStorage.removeItem('cp_auth_token');
         localStorage.removeItem('cp_auth_token');
       }
     } catch (e) {
-      console.warn('Could not save auth token to localStorage:', e);
+      console.warn('Could not save auth token to storage:', e);
     }
   }, [token]);
 
@@ -153,7 +160,10 @@ export const AuthProvider = ({ children }) => {
   const login = (user, authToken = 'token_' + Date.now()) => {
     const finalToken = authToken || ('token_' + Date.now());
     try {
-      localStorage.setItem('cp_auth_user', JSON.stringify(user));
+      const serialized = JSON.stringify(user);
+      sessionStorage.setItem('cp_auth_user', serialized);
+      sessionStorage.setItem('cp_auth_token', finalToken);
+      localStorage.setItem('cp_auth_user', serialized);
       localStorage.setItem('cp_auth_token', finalToken);
     } catch (e) {
       console.warn('Could not persist login session:', e);
@@ -219,7 +229,9 @@ export const AuthProvider = ({ children }) => {
       if (!prev) return null;
       updatedUserObj = { ...prev, ...updates };
       try {
-        localStorage.setItem('cp_auth_user', JSON.stringify(updatedUserObj));
+        const serialized = JSON.stringify(updatedUserObj);
+        sessionStorage.setItem('cp_auth_user', serialized);
+        localStorage.setItem('cp_auth_user', serialized);
       } catch (e) {
         console.warn('Could not save cp_auth_user:', e);
       }
@@ -450,6 +462,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setCurrentUser(null);
     setToken(null);
+    sessionStorage.removeItem('cp_auth_user');
+    sessionStorage.removeItem('cp_auth_token');
     localStorage.removeItem('cp_auth_user');
     localStorage.removeItem('cp_auth_token');
   };

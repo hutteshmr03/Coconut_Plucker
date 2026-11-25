@@ -14,7 +14,8 @@ let isBackendReachable = null;
 
 async function request(endpoint, options = {}) {
   const isGet = !options.method || options.method.toUpperCase() === 'GET';
-  const cacheKey = `${endpoint}_${localStorage.getItem('cp_auth_token') || ''}`;
+  const activeToken = sessionStorage.getItem('cp_auth_token') || localStorage.getItem('cp_auth_token') || '';
+  const cacheKey = `${endpoint}_${activeToken}`;
 
   // Return cached response instantly if still fresh
   if (isGet && !options.noCache && apiCache.has(cacheKey)) {
@@ -25,9 +26,10 @@ async function request(endpoint, options = {}) {
     apiCache.delete(cacheKey);
   }
 
-  // Clear GET cache on mutations so reads immediately reflect updated DB state
+  // Clear GET and availability caches on mutations so reads immediately reflect updated DB state
   if (!isGet) {
     apiCache.clear();
+    availabilityCache.clear();
   }
 
   // Fast-fail if backend is known to be unavailable (e.g. running on static SPA host)
@@ -35,7 +37,7 @@ async function request(endpoint, options = {}) {
     throw new Error('API server offline (using high-speed local data)');
   }
 
-  const token = localStorage.getItem('cp_auth_token');
+  const token = sessionStorage.getItem('cp_auth_token') || localStorage.getItem('cp_auth_token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

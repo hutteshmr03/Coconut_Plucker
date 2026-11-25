@@ -318,17 +318,24 @@ export const AppProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [currentUser?.id, authRole, token]);
+  }, [currentUser?.id, authRole, token, currentView]);
 
   const updateSchedulingConfig = (newConfig) => {
-    setSchedulingConfig((prev) => {
-      const merged = { ...prev, ...newConfig };
-      adminAPI.updateSchedulingConfig(merged).catch((err) => {
+    const merged = { ...schedulingConfig, ...newConfig };
+    setSchedulingConfig(merged);
+    adminAPI
+      .updateSchedulingConfig(merged)
+      .then(() => {
+        showToast("Regional scheduling configuration updated and applied to customer booking!", "success");
+      })
+      .catch((err) => {
         console.warn('[Backend] Scheduling update fallback:', err.message);
+        if (err.message && (err.message.includes('Authentication') || err.message.includes('expired') || err.message.includes('privileges'))) {
+          showToast("Session expired — please Sign Out and Log In again to save scheduling to server.", "error");
+        } else {
+          showToast("Regional scheduling saved locally (server unreachable).", "warning");
+        }
       });
-      return merged;
-    });
-    showToast("Regional scheduling configuration updated and applied to customer booking!", "success");
   };
 
   // Toast Notification helper
