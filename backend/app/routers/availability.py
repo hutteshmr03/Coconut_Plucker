@@ -2,6 +2,9 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from app.core.database import get_db
+from app.core.audit import record_audit_log
 from app.routers.admin import require_admin
 
 router = APIRouter(prefix="/availability", tags=["Availability"])
@@ -122,8 +125,15 @@ def get_public_scheduling_config():
 
 
 @router.put("/config", dependencies=[Depends(require_admin)])
-def update_public_scheduling_config(data: dict):
+def update_public_scheduling_config(data: dict, db: Session = Depends(get_db)):
     updated = update_active_scheduling_config(data)
+    record_audit_log(
+        db,
+        actor="Administrator",
+        action="Updated Regional Scheduling",
+        target="Goa Taluka Schedule",
+        details=f"North: {', '.join(updated.get('north_days', []))}; South: {', '.join(updated.get('south_days', []))}; Kushavati: {', '.join(updated.get('kushavati_days', []))}; Max: {updated.get('max_daily_slots', 15)}."
+    )
     return {
         "success": True,
         "config": updated,

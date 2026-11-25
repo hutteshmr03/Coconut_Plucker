@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Clock } from 'lucide-react';
+import { superAdminAPI } from '../services/api';
 
 const INITIAL_AUDIT_LOGS = [
   {
@@ -46,24 +47,40 @@ const INITIAL_AUDIT_LOGS = [
 
 const getActionBadgeColor = (action = '') => {
   const a = action.toLowerCase();
-  if (a.includes('verified') || a.includes('approved') || a.includes('confirmed')) return 'green';
-  if (a.includes('provisioned') || a.includes('admin')) return 'purple';
-  if (a.includes('rate') || a.includes('price') || a.includes('service')) return 'gold';
-  if (a.includes('delete') || a.includes('deactivate')) return 'red';
+  if (a.includes('verified') || a.includes('approved') || a.includes('confirmed') || a.includes('placed')) return 'green';
+  if (a.includes('provisioned') || a.includes('admin') || a.includes('logged') || a.includes('registered')) return 'purple';
+  if (a.includes('rate') || a.includes('price') || a.includes('service') || a.includes('scheduling') || a.includes('password')) return 'gold';
+  if (a.includes('delete') || a.includes('deactivate') || a.includes('rejected')) return 'red';
   return 'blue';
 };
 
 export const SuperAdminAudit = () => {
   const [search, setSearch] = useState('');
+  const [auditLogs, setAuditLogs] = useState(INITIAL_AUDIT_LOGS);
 
-  const filteredLogs = INITIAL_AUDIT_LOGS.filter((log) => {
+  useEffect(() => {
+    let cancelled = false;
+    superAdminAPI
+      .getAuditLogs()
+      .then((logs) => {
+        if (!cancelled && Array.isArray(logs) && logs.length > 0) {
+          setAuditLogs(logs);
+        }
+      })
+      .catch((err) => console.warn('[Backend] Audit log fetch fallback:', err.message));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredLogs = auditLogs.filter((log) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
-      log.actor.toLowerCase().includes(q) ||
-      log.action.toLowerCase().includes(q) ||
-      log.target.toLowerCase().includes(q) ||
-      log.details.toLowerCase().includes(q)
+      (log.actor || '').toLowerCase().includes(q) ||
+      (log.action || '').toLowerCase().includes(q) ||
+      (log.target || '').toLowerCase().includes(q) ||
+      (log.details || '').toLowerCase().includes(q)
     );
   });
 

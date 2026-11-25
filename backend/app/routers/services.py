@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.audit import record_audit_log
 from app.models.service import Service
 from app.schemas.service import ServiceCreate, ServiceUpdate, ServiceOut
 
@@ -81,6 +82,13 @@ def create_service(req: ServiceCreate, db: Session = Depends(get_db)):
     db.add(svc)
     db.commit()
     db.refresh(svc)
+    record_audit_log(
+        db,
+        actor="Platform Administrator (admin)",
+        action="Updated Service Base Rate",
+        target=f"{svc.name}",
+        details=f"Rate set to ₹{float(svc.base_rate):.2f} / {svc.unit}. Height required: {bool(svc.requires_height_category)}."
+    )
     return _format_service(svc)
 
 
@@ -114,6 +122,13 @@ def update_service(service_id: str, req: ServiceUpdate, db: Session = Depends(ge
 
     db.commit()
     db.refresh(svc)
+    record_audit_log(
+        db,
+        actor="Platform Administrator (admin)",
+        action="Updated Service Base Rate",
+        target=f"{svc.name}",
+        details=f"Rate set to ₹{float(svc.base_rate):.2f} / {svc.unit}. Height required: {bool(svc.requires_height_category)}."
+    )
     return _format_service(svc)
 
 

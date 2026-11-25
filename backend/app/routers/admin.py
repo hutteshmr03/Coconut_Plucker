@@ -5,6 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from app.core.database import get_db
+from app.core.audit import record_audit_log
 from app.core.security import decode_access_token
 from app.models.user import User
 from app.models.professional import ProfessionalProfile
@@ -95,6 +96,13 @@ def verify_professional(professional_id: str, req: VerifyRequest, db: Session = 
     user.status = "approved" if req.decision == "approved" else "rejected"
     db.commit()
     db.refresh(user)
+    record_audit_log(
+        db,
+        actor="Platform Administrator",
+        action="Verified Professional Profile" if user.status == "approved" else "Rejected Professional Profile",
+        target=f"{user.full_name} ({user.phone})",
+        details=f"Status updated to '{user.status}'."
+    )
 
     return {"success": True, "status": user.status, "message": f"Professional status updated to {user.status}"}
 
@@ -188,6 +196,13 @@ def confirm_urgent_call(booking_id: str, db: Session = Depends(get_db)):
 
     booking.call_confirmed = True
     db.commit()
+    record_audit_log(
+        db,
+        actor="Platform Administrator",
+        action="Confirmed Urgent Call",
+        target=f"Booking #{booking.booking_number or str(booking.id)[:8].upper()}",
+        details="Urgent phone confirmation call verified."
+    )
     return {"success": True, "message": "Urgent phone confirmation verified"}
 
 @router.post("/bookings/{booking_id}/assign")
@@ -207,6 +222,13 @@ def assign_booking_professional(booking_id: str, req: AssignRequest, db: Session
     booking.professional_id = prof.id if prof else None
     booking.status = "assigned"
     db.commit()
+    record_audit_log(
+        db,
+        actor="Platform Administrator",
+        action="Assigned Climber to Booking",
+        target=f"Booking #{booking.booking_number or str(booking.id)[:8].upper()}",
+        details=f"Assigned to {prof.full_name if prof else 'Professional'} ({prof.phone if prof else ''})."
+    )
     return {"success": True, "message": "Professional assigned successfully"}
 
 @router.get("/payments")

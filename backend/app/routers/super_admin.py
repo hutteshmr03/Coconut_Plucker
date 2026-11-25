@@ -5,8 +5,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.core.database import get_db
+from app.core.audit import record_audit_log
 from app.core.security import decode_access_token, pwd_context
 from app.models.user import User
+from app.models.audit_log import AuditLog
 from app.schemas.auth import UserOut
 from app.routers.auth import format_user_out
 
@@ -65,6 +67,13 @@ def create_admin(req: CreateAdminRequest, db: Session = Depends(get_db)):
     db.add(admin)
     db.commit()
     db.refresh(admin)
+    record_audit_log(
+        db,
+        actor="Chief Platform Administrator (superadmin)",
+        action="Provisioned New Admin Account",
+        target=f"{admin.full_name} ({admin.phone})",
+        details=f"Role: Admin. Regional Scope: {req.taluka or 'All Talukas'}."
+    )
     return format_user_out(admin, db)
 
 @router.patch("/admins/{admin_id}/status")
@@ -80,6 +89,13 @@ def update_admin_status(admin_id: str, req: StatusUpdateRequest, db: Session = D
 
     admin.status = req.status
     db.commit()
+    record_audit_log(
+        db,
+        actor="Chief Platform Administrator (superadmin)",
+        action="Updated Admin Status",
+        target=f"{admin.full_name} ({admin.phone})",
+        details=f"Administrator account status changed to '{req.status}'."
+    )
     return {"success": True, "message": f"Admin status updated to {req.status}"}
 
 @router.delete("/admins/{admin_id}")
@@ -93,8 +109,16 @@ def delete_admin(admin_id: str, db: Session = Depends(get_db)):
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")
 
+    target_label = f"{admin.full_name} ({admin.phone})"
     db.delete(admin)
     db.commit()
+    record_audit_log(
+        db,
+        actor="Chief Platform Administrator (superadmin)",
+        action="Deleted Admin Account",
+        target=target_label,
+        details="Administrator account permanently removed."
+    )
     return {"success": True, "message": "Admin deleted successfully"}
 
 @router.post("/change-password")
@@ -119,10 +143,18 @@ def change_password(req: PasswordChangeRequest, db: Session = Depends(get_db)):
     return {"success": True, "message": "Super Admin master password changed successfully."}
 
 @router.get("/audit-logs")
-def get_audit_logs():
+def get_audit_logs(db: Session = Depends(get_db)):
+    logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(200).all()
     return [
-        {"id": "aud_1", "action": "SYSTEM_SEED", "actor": "Ops/Root", "target": "usr_super_admin", "timestamp": "2026-01-01T00:00:00Z"},
-        {"id": "aud_2", "action": "ADMIN_PROVISION", "actor": "superadmin", "target": "Platform Admin", "timestamp": "2026-09-25T10:00:00Z"}
+        {
+            "id": str(l.id),
+            "actor": l.actor,
+            "action": l.action,
+            "target": l.target,
+            "timestamp": l.created_at.isoformat() if l.created_at else None,
+            "details": l.details or ""
+        }
+        for l in logs
     ]
 
 @router.post("/login")

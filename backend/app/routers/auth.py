@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.audit import record_audit_log
 from app.core.security import create_access_token, decode_access_token, pwd_context
 from app.models.user import User
 from app.models.customer import CustomerProfile
@@ -119,6 +120,14 @@ def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
+    record_audit_log(
+        db,
+        actor=f"{user.full_name} ({user.role})",
+        action="Logged In",
+        target=f"{user.full_name} ({user.phone})",
+        details=f"Authenticated session started for role '{user.role}'."
+    )
+
     token = create_access_token(subject=str(user.id), role=user.role)
     return TokenResponse(
         access_token=token,
@@ -179,6 +188,14 @@ def register_user(req: UserRegister, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(new_user)
+
+    record_audit_log(
+        db,
+        actor=f"{new_user.full_name} ({new_user.role})",
+        action="Registered New Account",
+        target=f"+91 {new_user.phone}",
+        details=f"Taluka: {req.taluka or 'North Goa'}. Account status: {user_status}."
+    )
 
     token = create_access_token(subject=str(new_user.id), role=new_user.role)
     return TokenResponse(
@@ -255,6 +272,14 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
         if not is_valid:
             raise HTTPException(status_code=401, detail="Incorrect password. Please try again.")
 
+    record_audit_log(
+        db,
+        actor=f"{user.full_name} ({user.role})",
+        action="Logged In",
+        target=f"{user.full_name} ({user.phone})",
+        details=f"Authenticated session started for role '{user.role}'."
+    )
+
     token = create_access_token(subject=str(user.id), role=user.role)
     return TokenResponse(
         access_token=token,
@@ -327,6 +352,13 @@ def change_own_password(
         raise HTTPException(status_code=400, detail="Current password does not match.")
     current_user.password_hash = pwd_context.hash(req.new_password.strip())
     db.commit()
+    record_audit_log(
+        db,
+        actor=f"{current_user.full_name} ({current_user.role})",
+        action="Updated Password",
+        target=f"{current_user.full_name} ({current_user.phone})",
+        details="Administrator credentials updated in MySQL."
+    )
     return {"success": True, "message": "Password updated successfully."}
 
 @router.post("/logout")

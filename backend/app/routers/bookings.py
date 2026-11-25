@@ -4,6 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
+from app.core.audit import record_audit_log
 from app.core.email import send_booking_notification_email, send_test_email
 from app.models.booking import Booking
 from app.models.service import Service
@@ -194,6 +195,14 @@ def create_booking(
 
     # Queue email in background (non-blocking, fast HTTP response to user)
     background_tasks.add_task(send_booking_notification_email, notification_payload)
+
+    record_audit_log(
+        db,
+        actor=f"{cust_name} ({cust_phone})",
+        action="Placed Customer Booking",
+        target=f"Booking #{order_id}",
+        details=f"{svc_name} · {max(req.tree_count, 1)} trees · {req.taluka} · ₹{float(booking.quote_amount):.2f}"
+    )
 
     return _format_booking(booking)
 
