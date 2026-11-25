@@ -152,7 +152,7 @@ export const availabilityAPI = {
     let sched = customScheduling;
     if (!sched) {
       try {
-        const saved = localStorage.getItem('coconut_plucker_state_v6_scheduling');
+        const saved = localStorage.getItem('paddeli_state_v1_scheduling');
         if (saved) sched = JSON.parse(saved);
       } catch {}
     }

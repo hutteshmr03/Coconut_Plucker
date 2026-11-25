@@ -44,6 +44,10 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
       setError('Please enter a valid 10-digit mobile phone number');
       return;
     }
+    if (!taluka) {
+      setError('Please select a Taluka');
+      return;
+    }
     if (selectedSkills.length === 0) {
       setError('Please select at least one skill / tree service capability');
       return;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getDisplayName, getCleanServiceIcon } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
@@ -14,6 +14,12 @@ export const AssignWorkerModal = ({
 }) => {
   const [selectedProId, setSelectedProId] = useState('');
 
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedProId('');
+    }
+  }, [isOpen, booking?.id]);
+
   if (!booking) return null;
 
   const activeService = services.find((s) => s.id === booking.service_id);
@@ -27,8 +33,8 @@ export const AssignWorkerModal = ({
       const bTaluka = b.taluka === booking.taluka ? 2 : 0;
 
       // Prioritize skill match
-      const aSkill = a.skills.includes(booking.service_id) ? 1 : 0;
-      const bSkill = b.skills.includes(booking.service_id) ? 1 : 0;
+      const aSkill = a.skills?.includes(booking.service_id) ? 1 : 0;
+      const bSkill = b.skills?.includes(booking.service_id) ? 1 : 0;
 
       return (bTaluka + bSkill) - (aTaluka + aSkill);
     });
@@ -92,7 +98,7 @@ export const AssignWorkerModal = ({
         {eligiblePros.map((pro) => {
           const isSelected = selectedProId === pro.id;
           const isTalukaMatch = pro.taluka === booking.taluka;
-          const isSkillMatch = pro.skills.includes(booking.service_id);
+          const isSkillMatch = pro.skills?.includes(booking.service_id);
 
           return (
             <div

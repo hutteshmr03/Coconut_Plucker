@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -11,10 +11,21 @@ export const IncidentLogModal = ({ isOpen, onClose, onLog, professionals, bookin
   const [type, setType] = useState('Near-miss');
   const [severity, setSeverity] = useState('low');
   const [description, setDescription] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setProId((prev) => prev || professionals[0]?.id || '');
+      setError('');
+    }
+  }, [isOpen, professionals]);
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!description.trim()) return;
+    if (e && e.preventDefault) e.preventDefault();
+    if (!description.trim()) {
+      setError('Please enter an incident description before submitting.');
+      return;
+    }
 
     const pro = professionals.find((p) => p.id === proId);
 
@@ -27,6 +38,10 @@ export const IncidentLogModal = ({ isOpen, onClose, onLog, professionals, bookin
       description: description.trim()
     });
 
+    setDescription('');
+    setType('Near-miss');
+    setSeverity('low');
+    setError('');
     onClose();
   };
 
@@ -47,6 +62,7 @@ export const IncidentLogModal = ({ isOpen, onClose, onLog, professionals, bookin
       }
     >
       <form onSubmit={handleSubmit}>
+        {error && <div className="field-error" style={{ marginBottom: '14px' }}>{error}</div>}
         <div className="field-row">
           <Select
             label="Involved Professional"

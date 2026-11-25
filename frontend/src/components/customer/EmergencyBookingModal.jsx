@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { Modal } from '../common/Modal';
@@ -27,6 +27,15 @@ export const EmergencyBookingModal = ({ isOpen, onClose, onSuccess }) => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDispatched, setIsDispatched] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTaluka(currentUser?.taluka || 'North Goa');
+      setAddress(currentUser?.address || '');
+      setHazardDescription('');
+      setError('');
+    }
+  }, [isOpen, currentUser?.taluka, currentUser?.address]);
 
   const selectedService = (services || []).find((s) => s.id === selectedServiceId) || services?.[0];
 

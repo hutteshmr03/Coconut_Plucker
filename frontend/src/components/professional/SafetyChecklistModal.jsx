@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { ShieldCheck, AlertTriangle, Camera } from 'lucide-react';
@@ -13,6 +13,12 @@ const SAFETY_ITEMS = [
 
 export const SafetyChecklistModal = ({ isOpen, onClose, onConfirm, booking }) => {
   const [checked, setChecked] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setChecked({});
+    }
+  }, [isOpen, booking?.id]);
 
   if (!booking) return null;
 
@@ -114,13 +120,17 @@ export const SafetyChecklistModal = ({ isOpen, onClose, onConfirm, booking }) =>
               border: `1px solid ${checked[idx] ? 'rgba(47, 122, 77, 0.3)' : 'var(--line)'}`,
               cursor: 'pointer'
             }}
-            onClick={() => handleToggle(idx)}
+            onClick={(e) => {
+              if (e.target.tagName !== 'INPUT' && !e.target.closest('label')) {
+                handleToggle(idx);
+              }
+            }}
           >
             <input
               type="checkbox"
               id={`chk_${idx}`}
               checked={!!checked[idx]}
-              onChange={() => {}}
+              onChange={() => handleToggle(idx)}
             />
             <label htmlFor={`chk_${idx}`} style={{ cursor: 'pointer' }}>
               {item}

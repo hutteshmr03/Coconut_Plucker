@@ -272,13 +272,17 @@ export const ProfessionalProfile = () => {
                       border: `1px solid ${isChecked ? 'rgba(31, 138, 130, 0.3)' : 'var(--line)'}`,
                       cursor: 'pointer'
                     }}
-                    onClick={() => handleToggleSkill(svc.id)}
+                    onClick={(e) => {
+                      if (e.target.tagName !== 'INPUT' && !e.target.closest('label')) {
+                        handleToggleSkill(svc.id);
+                      }
+                    }}
                   >
                     <input
                       type="checkbox"
                       id={`skill_${svc.id}`}
                       checked={isChecked}
-                      onChange={() => {}}
+                      onChange={() => handleToggleSkill(svc.id)}
                     />
                     <label htmlFor={`skill_${svc.id}`} style={{ cursor: 'pointer', fontWeight: isChecked ? '600' : '400', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>{getCleanServiceIcon(svc)}</span>

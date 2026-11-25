@@ -198,9 +198,9 @@ export const AuthProvider = ({ children }) => {
       });
 
       try {
-        localStorage.setItem('cp_registered_users_v5', JSON.stringify(updatedList));
+        localStorage.setItem('cp_registered_users_v6', JSON.stringify(updatedList));
       } catch (e) {
-        console.warn('Could not save cp_registered_users_v5:', e);
+        console.warn('Could not save cp_registered_users_v6:', e);
       }
       return updatedList;
     });
@@ -241,7 +241,7 @@ export const AuthProvider = ({ children }) => {
       const updated = [...prev, newAdmin];
       // Write synchronously so the account is available for login immediately
       try {
-        localStorage.setItem('cp_registered_users_v5', JSON.stringify(updated));
+        localStorage.setItem('cp_registered_users_v6', JSON.stringify(updated));
       } catch (e) {
         console.warn('Could not persist new admin to localStorage:', e);
       }
@@ -284,7 +284,7 @@ export const AuthProvider = ({ children }) => {
     setRegisteredUsers((prev) => {
       const updated = [...prev, newProUser];
       try {
-        localStorage.setItem('cp_registered_users_v5', JSON.stringify(updated));
+        localStorage.setItem('cp_registered_users_v6', JSON.stringify(updated));
       } catch (e) {
         console.warn('Could not persist new professional to localStorage:', e);
       }
