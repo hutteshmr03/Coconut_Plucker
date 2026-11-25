@@ -12,6 +12,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
   const [baseRate, setBaseRate] = useState('');
   const [unit, setUnit] = useState('per tree');
   const [imageUrl, setImageUrl] = useState('');
+  const [hasBuiltInPhoto, setHasBuiltInPhoto] = useState(false);
   const [desc, setDesc] = useState('');
   const [requiresHeightCategory, setRequiresHeightCategory] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +22,9 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       setName(service.name || '');
       setBaseRate(service.base_rate || '');
       setUnit(service.unit || 'per tree');
-      setImageUrl(service.image_url || service.image || '');
+      const existingCustom = service.image_url || service.image || '';
+      setImageUrl(existingCustom);
+      setHasBuiltInPhoto(!existingCustom && Boolean(getServiceImage(service)));
       setDesc(service.desc || '');
       setRequiresHeightCategory(!!service.requires_height_category);
     } else {
@@ -29,6 +32,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       setBaseRate('');
       setUnit('per tree');
       setImageUrl('');
+      setHasBuiltInPhoto(false);
       setDesc('');
       setRequiresHeightCategory(false);
     }
@@ -49,7 +53,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!name.trim()) {
       setError('Service name is required');
       return;
@@ -58,7 +62,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       setError('Valid base rate is required');
       return;
     }
-    if (!imageUrl && !service?.image_url && !service?.image) {
+    if (!imageUrl && !hasBuiltInPhoto) {
       setError('Service Photo / Image is mandatory. Please upload an image.');
       return;
     }
@@ -67,8 +71,8 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
       name: name.trim(),
       base_rate: Number(baseRate),
       unit: unit.trim(),
-      image_url: imageUrl || (service?.image_url || null),
-      image: imageUrl || (service?.image || null),
+      image_url: imageUrl || null,
+      image: imageUrl || null,
       icon: (service?.icon && !service.icon.startsWith('data:') && service.icon.length <= 10) ? service.icon : '🌴',
       desc: desc.trim(),
       requires_height_category: requiresHeightCategory
@@ -78,7 +82,7 @@ export const ServiceFormModal = ({ isOpen, onClose, onSave, service }) => {
     onClose();
   };
 
-  const hasPhoto = Boolean(imageUrl || service?.image_url || service?.image);
+  const hasPhoto = Boolean(imageUrl || hasBuiltInPhoto);
 
   return (
     <Modal
