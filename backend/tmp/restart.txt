@@ -1,1 +1,1 @@
-# Force passenger reload after live audit_logs wiring
+# Force passenger reload after admin login fix

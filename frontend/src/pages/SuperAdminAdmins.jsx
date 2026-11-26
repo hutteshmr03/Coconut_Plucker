@@ -52,16 +52,18 @@ export const SuperAdminAdmins = () => {
     );
   });
 
-  const handleCreateSubmit = (e) => {
-    e.preventDefault();
+  const handleCreateSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     setErrorMessage('');
     try {
       if (!name.trim()) throw new Error('Please enter admin full name.');
-      if (!phone || phone.replace(/\D/g, '').length < 10) throw new Error('Please enter a valid 10-digit mobile number.');
+      const rawDigits = (phone || '').replace(/\D/g, '');
+      const cleanPhone = (rawDigits.length === 12 && rawDigits.startsWith('91')) ? rawDigits.slice(-10) : rawDigits;
+      if (!cleanPhone || cleanPhone.length !== 10) throw new Error('Please enter a valid 10-digit mobile number.');
 
-      createAdminAccount({
+      await createAdminAccount({
         full_name: name.trim(),
-        phone: phone.replace(/\D/g, ''),
+        phone: cleanPhone,
         taluka,
         password: password.trim() || 'admin123'
       });

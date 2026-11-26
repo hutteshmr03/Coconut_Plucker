@@ -271,12 +271,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Super Admin: Admin Account Management
-  const createAdminAccount = (adminData) => {
+  const createAdminAccount = async (adminData) => {
     if (currentUser?.role !== 'super_admin') {
       throw new Error('Unauthorized: Only Super Admin can provision Admin accounts.');
     }
 
-    const phoneClean = (adminData.phone || '').replace(/\D/g, '');
+    const rawDigits = (adminData.phone || '').replace(/\D/g, '');
+    const phoneClean = (rawDigits.length === 12 && rawDigits.startsWith('91')) ? rawDigits.slice(-10) : rawDigits;
     const usernameClean = (adminData.username || adminData.email || '').trim().toLowerCase();
 
     // Check duplicate
@@ -289,9 +290,9 @@ export const AuthProvider = ({ children }) => {
       throw new Error(`An account with this phone number or User ID (${exists.phone || exists.username}) already exists.`);
     }
 
-    const newAdmin = {
+    let createdAdmin = {
       id: 'usr_adm_' + Date.now().toString(36),
-      username: usernameClean || `admin_${phoneClean.slice(-4)}`,
+      username: usernameClean || phoneClean,
       full_name: adminData.full_name.trim(),
       phone: phoneClean,
       role: 'admin',
@@ -301,9 +302,22 @@ export const AuthProvider = ({ children }) => {
       created_at: new Date().toISOString()
     };
 
+    // Persist new Admin to live MySQL backend before returning so admin can log in immediately
+    if (token && !String(token).startsWith('token_')) {
+      const created = await superAdminAPI.createAdmin({
+        full_name: createdAdmin.full_name,
+        phone: createdAdmin.phone,
+        username: createdAdmin.username,
+        taluka: createdAdmin.taluka,
+        password: createdAdmin.password
+      });
+      if (created?.id) {
+        createdAdmin = { ...createdAdmin, ...created };
+      }
+    }
+
     setRegisteredUsers((prev) => {
-      const updated = [...prev, newAdmin];
-      // Write synchronously so the account is available for login immediately
+      const updated = [...prev, createdAdmin];
       try {
         localStorage.setItem('cp_registered_users_v6', JSON.stringify(updated));
       } catch (e) {
@@ -312,25 +326,7 @@ export const AuthProvider = ({ children }) => {
       return updated;
     });
 
-    // Persist new Admin to live MySQL backend
-    superAdminAPI
-      .createAdmin({
-        full_name: newAdmin.full_name,
-        phone: newAdmin.phone,
-        username: newAdmin.username,
-        taluka: newAdmin.taluka,
-        password: newAdmin.password
-      })
-      .then((created) => {
-        if (created?.id) {
-          setRegisteredUsers((prev) =>
-            prev.map((u) => (u.id === newAdmin.id ? { ...u, ...created } : u))
-          );
-        }
-      })
-      .catch((err) => console.warn('[Backend] Create admin sync warning:', err.message));
-
-    return newAdmin;
+    return createdAdmin;
   };
 
   // Admin & Super Admin: Onboard / Provision Professional Climber Account

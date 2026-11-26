@@ -211,8 +211,11 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
     ident_phone = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
 
     user = None
-    if ident_phone:
-        user = db.query(User).filter(User.phone == ident_phone).first()
+    if raw_digits:
+        candidates = [raw_digits]
+        if ident_phone and ident_phone not in candidates:
+            candidates.append(ident_phone)
+        user = db.query(User).filter(User.phone.in_(candidates)).first()
 
     if not user:
         # Match Super Admin or Admin by role/username if requested

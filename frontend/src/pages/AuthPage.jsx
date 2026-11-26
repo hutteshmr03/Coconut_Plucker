@@ -147,8 +147,11 @@ export const AuthPage = () => {
     }
 
     try {
-      const uIdent = found.username || found.phone;
-      const res = await authAPI.login({ identifier: uIdent, username: uIdent, password: passClean });
+      const uIdent =
+        found.role === 'super_admin'
+          ? (found.username || found.phone)
+          : (found.phone || found.username);
+      const res = await authAPI.login({ identifier: uIdent, username: uIdent, phone: found.phone, password: passClean });
       if (res?.user) {
         setError('');
         login(
