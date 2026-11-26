@@ -86,8 +86,8 @@ export const AdminDashboard = () => {
 
       <div className="dash-grid">
         {/* Needs Assignment Queue */}
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="adm-dash-col">
+          <div className="adm-section-head">
             <h3>Bookings Awaiting Assignment</h3>
             <Button variant="ghost" size="sm" onClick={() => setCurrentView('adm-bookings')}>
               View All Bookings ({totalBookings}) →
@@ -96,7 +96,7 @@ export const AdminDashboard = () => {
 
           <Card>
             {pendingRequests.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="adm-booking-list">
                 {pendingRequests.map((b) => {
                   const svc = services.find((s) => s.id === b.service_id);
                   const cust = customers.find((c) => c.id === b.customer_id);
@@ -104,11 +104,7 @@ export const AdminDashboard = () => {
                   const isCallPending = b.booking_type === 'urgent' && !b.call_confirmed;
 
                   return (
-                    <div
-                      key={b.id}
-                      className="list-item"
-                      style={{ padding: '12px 0', flexWrap: 'nowrap', gap: '10px', alignItems: 'center' }}
-                    >
+                    <div key={b.id} className="adm-booking-row">
                       <div className="li-main" style={{ minWidth: 0, flex: 1 }}>
                         <div className="li-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span>{getCleanServiceIcon(svc)} {svc?.name} · {b.booking_number}</span>
@@ -128,7 +124,7 @@ export const AdminDashboard = () => {
                             </span>
                           )}
                         </div>
-                        <div className="li-sub" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        <div className="li-sub adm-booking-meta">
                           <span>Customer: <b>{getDisplayName(cust)}</b></span>
                           {cust?.phone && (
                             <a
@@ -140,9 +136,8 @@ export const AdminDashboard = () => {
                               <span>{cust.phone}</span>
                             </a>
                           )}
-                        </div>
-                        <div className="li-sub" style={{ marginTop: '2px' }}>
-                          · Taluka: <b>{b.taluka}</b> · {b.tree_count} trees
+                          <span>· Taluka: <b>{b.taluka}</b></span>
+                          <span>· {b.tree_count} trees</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0, alignSelf: 'center' }}>
@@ -189,14 +184,14 @@ export const AdminDashboard = () => {
           </Card>
 
           {/* Service Demand Breakdown */}
-          <Card style={{ marginTop: '20px' }}>
+          <Card className="adm-demand-card">
             <h3>Service Volume & Demand Distribution</h3>
-            <div style={{ marginTop: '16px' }}>
+            <div>
               {demandByService.map(({ service, count }) => {
                 const pct = Math.round((count / maxDemand) * 100);
                 return (
                   <div key={service.id} className="bar-row">
-                    <div className="lbl" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="lbl" style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                       <span>{getCleanServiceIcon(service)}</span>
                       <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {service.name.split(' ')[0]}
@@ -214,14 +209,14 @@ export const AdminDashboard = () => {
         </div>
 
         {/* Sidebar Widgets */}
-        <div style={{ minWidth: 0 }}>
+        <div className="adm-dash-col">
           {/* Top Rated Workforce */}
           <Card style={{ marginBottom: '20px' }}>
             <h3>Top Verified Climbers</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+            <div className="adm-pro-list">
               {topPros.map((pro) => (
-                <div key={pro.id} className="list-item">
-                  <div className="worker-avatar" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+                <div key={pro.id} className="adm-pro-row">
+                  <div className="worker-avatar" style={{ width: '34px', height: '34px', fontSize: '12px' }}>
                     {getDisplayName(pro).split(' ').map((n) => n[0]).join('')}
                   </div>
                   <div className="li-main">
@@ -230,8 +225,8 @@ export const AdminDashboard = () => {
                       Taluka: {pro.taluka} · {pro.experience_years} yrs exp
                     </div>
                   </div>
-                  <div>
-                    <span className="badge green" style={{ fontSize: '11px', padding: '2px 8px' }}>Verified</span>
+                  <div style={{ flexShrink: 0 }}>
+                    <span className="badge green" style={{ fontSize: '11px', padding: '3px 9px' }}>Verified</span>
                   </div>
                 </div>
               ))}
@@ -239,45 +234,40 @@ export const AdminDashboard = () => {
           </Card>
 
           {/* Quick Action Navigation */}
-          <Card>
+          <Card className="adm-quick-card">
             <h3>Quick Operations Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+            <div className="adm-quick-actions">
               <Button
                 variant="ghost"
-                className="btn-block"
-                style={{ justifyContent: 'flex-start' }}
+                className="btn-block adm-quick-btn"
                 onClick={() => setCurrentView('adm-services')}
               >
                 🛠️ Manage Service Catalog
               </Button>
               <Button
                 variant="ghost"
-                className="btn-block"
-                style={{ justifyContent: 'flex-start' }}
+                className="btn-block adm-quick-btn"
                 onClick={() => setCurrentView('sadm-scheduling')}
               >
                 🗓️ Taluka Days Scheduling
               </Button>
               <Button
                 variant="ghost"
-                className="btn-block"
-                style={{ justifyContent: 'flex-start' }}
+                className="btn-block adm-quick-btn"
                 onClick={() => setCurrentView('adm-workforce')}
               >
                 👥 Verify Professional Profiles ({pendingVerifications.length})
               </Button>
               <Button
                 variant="ghost"
-                className="btn-block"
-                style={{ justifyContent: 'flex-start' }}
+                className="btn-block adm-quick-btn"
                 onClick={() => setCurrentView('adm-safety')}
               >
                 ⚠️ Safety & Incident Log ({openIncidents.length})
               </Button>
               <Button
                 variant="ghost"
-                className="btn-block"
-                style={{ justifyContent: 'flex-start' }}
+                className="btn-block adm-quick-btn"
                 onClick={() => setCurrentView(role === 'super_admin' ? 'sadm-profile' : 'adm-profile')}
               >
                 🔑 Security & Credentials
