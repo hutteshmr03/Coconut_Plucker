@@ -160,7 +160,7 @@ export const AdminBookings = () => {
 
                     <td>
                       <div style={{ fontWeight: '600' }}>
-                        {getCleanServiceIcon(svc)} {svc?.name}
+                        {getCleanServiceIcon(svc || b)} {svc?.name || b.service_name}
                       </div>
                       <div className="cell-muted" style={{ fontSize: '11.5px' }}>
                         {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s

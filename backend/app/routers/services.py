@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -9,6 +9,25 @@ from app.schemas.service import ServiceCreate, ServiceUpdate, ServiceOut
 
 router = APIRouter(prefix="/services", tags=["Services"])
 
+def _clean_service_icon(name: str, icon: Optional[str]) -> str:
+    if icon and "?" not in icon and "\ufffd" not in icon and not icon.startswith("data:") and len(icon) <= 10:
+        return icon
+    n = (name or "").lower()
+    if "coconut" in n:
+        return "🥥"
+    if "supari" in n or "areca" in n:
+        return "🌰"
+    if "mango" in n:
+        return "🥭"
+    if "jackfruit" in n:
+        return "🍈"
+    if "palm" in n:
+        return "🌿"
+    if "trim" in n or "branch" in n:
+        return "✂️"
+    return "🌴"
+
+
 def _format_service(s: Service) -> ServiceOut:
     return ServiceOut(
         id=str(s.id),
@@ -16,7 +35,7 @@ def _format_service(s: Service) -> ServiceOut:
         base_rate=float(s.base_rate),
         unit=s.unit,
         desc=s.description or "Standard height and arboricultural maintenance service",
-        icon=s.icon or "🌴",
+        icon=_clean_service_icon(s.name, s.icon),
         requires_height_category=bool(s.requires_height_category),
         image_url=s.image_url,
         image=s.image_url,

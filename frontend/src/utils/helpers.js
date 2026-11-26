@@ -256,12 +256,27 @@ export const getServiceImage = (svc) => {
 
 export const getCleanServiceIcon = (svc, defaultIcon = '🌴') => {
   if (!svc) return defaultIcon;
-  const icon = typeof svc === 'string' ? svc : svc.icon;
-  if (!icon || typeof icon !== 'string') return defaultIcon;
-  if (icon.startsWith('data:') || icon.startsWith('http') || icon.startsWith('/') || icon.length > 10) {
-    return defaultIcon;
-  }
-  return icon;
+  const rawIcon = typeof svc === 'string' ? svc : svc.icon;
+  const isCorrupt =
+    !rawIcon ||
+    typeof rawIcon !== 'string' ||
+    rawIcon.includes('?') ||
+    rawIcon.includes('\uFFFD') ||
+    rawIcon.startsWith('data:') ||
+    rawIcon.startsWith('http') ||
+    rawIcon.startsWith('/') ||
+    rawIcon.length > 10;
+  if (!isCorrupt) return rawIcon;
+
+  const id = typeof svc === 'object' ? (svc.id || svc.service_id || '') : '';
+  const name = (typeof svc === 'object' ? (svc.name || svc.service_name || svc.serviceName || '') : svc).toLowerCase();
+  if (id === 'svc_coconut' || name.includes('coconut')) return '🥥';
+  if (id === 'svc_areca' || name.includes('areca') || name.includes('supari')) return '🌰';
+  if (id === 'svc_mango' || name.includes('mango')) return '🥭';
+  if (id === 'svc_jackfruit' || name.includes('jackfruit')) return '🍈';
+  if (id === 'svc_palm' || name.includes('palm')) return '🌿';
+  if (id === 'svc_trim' || name.includes('trim') || name.includes('branch')) return '✂️';
+  return defaultIcon;
 };
 
 /**

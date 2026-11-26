@@ -41,6 +41,8 @@ def init_tables_safely():
                 "ALTER TABLE services ADD COLUMN icon VARCHAR(32)",
                 "ALTER TABLE services ADD COLUMN status VARCHAR(20) DEFAULT 'active'",
                 "ALTER TABLE services ADD COLUMN image_url MEDIUMTEXT",
+                "ALTER TABLE services MODIFY COLUMN icon VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+                "UPDATE services SET icon = NULL WHERE icon LIKE '%?%'",
                 "ALTER TABLE bookings ADD COLUMN booking_number VARCHAR(40)",
                 "ALTER TABLE bookings ADD COLUMN service_name VARCHAR(160)",
                 "ALTER TABLE bookings ADD COLUMN tree_count INT DEFAULT 1",
