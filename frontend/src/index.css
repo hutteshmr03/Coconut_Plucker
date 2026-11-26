@@ -2705,6 +2705,28 @@ tbody tr:hover {
   display: block;
 }
 
+.desktop-booking-table table {
+  min-width: 0;
+  width: 100%;
+  table-layout: auto;
+}
+
+.desktop-booking-table thead th,
+.desktop-booking-table tbody td {
+  padding: 12px 10px;
+  vertical-align: middle;
+}
+
+.desktop-booking-table thead th:first-child,
+.desktop-booking-table tbody td:first-child {
+  padding-left: 14px;
+}
+
+.desktop-booking-table thead th:last-child,
+.desktop-booking-table tbody td:last-child {
+  padding-right: 14px;
+}
+
 .mobile-booking-cards {
   display: none;
   flex-direction: column;

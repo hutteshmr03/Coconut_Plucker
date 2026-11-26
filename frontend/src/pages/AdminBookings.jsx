@@ -7,6 +7,19 @@ import { Modal } from '../components/common/Modal';
 import { AssignWorkerModal } from '../components/admin/AssignWorkerModal';
 import { Search, UserPlus, PhoneCall, Phone, Check, Zap, Camera, Eye } from 'lucide-react';
 
+const formatBookingShortDate = (rawDate) => {
+  if (!rawDate) return '—';
+  const d = new Date(rawDate);
+  if (Number.isNaN(d.getTime())) return String(rawDate);
+  const weekday = d.toLocaleDateString('en-IN', { weekday: 'short' }).toUpperCase();
+  const dmy = new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(d);
+  return `${weekday}, ${dmy}`;
+};
+
 export const AdminBookings = () => {
   const {
     bookings,
@@ -91,13 +104,13 @@ export const AdminBookings = () => {
         <table>
           <thead>
             <tr>
-              <th style={{ minWidth: '120px' }}>Booking & Date</th>
-              <th style={{ minWidth: '150px' }}>Customer & Location</th>
-              <th style={{ minWidth: '160px' }}>Service & Qty</th>
-              <th style={{ minWidth: '160px' }}>Assigned Climber</th>
-              <th style={{ minWidth: '110px' }}>Amount</th>
-              <th style={{ minWidth: '110px' }}>Status</th>
-              <th style={{ textAlign: 'right', minWidth: '110px' }}>Actions</th>
+              <th>Booking & Date</th>
+              <th>Customer & Location</th>
+              <th>Service & Qty</th>
+              <th>Assigned Climber</th>
+              <th style={{ textAlign: 'right' }}>Amount</th>
+              <th style={{ textAlign: 'center' }}>Status</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -109,7 +122,7 @@ export const AdminBookings = () => {
 
                 return (
                   <tr key={b.id}>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <div className="cell-strong" style={{ color: 'var(--teal)', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span>{b.booking_number}</span>
                         {b.booking_type === 'urgent' && (
@@ -131,19 +144,14 @@ export const AdminBookings = () => {
                           </span>
                         )}
                       </div>
-                      <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '2px' }}>
-                        {new Date(b.scheduled_at).toLocaleDateString('en-IN', {
-                          weekday: 'short',
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
+                      <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '3px', fontVariantNumeric: 'tabular-nums' }}>
+                        {formatBookingShortDate(b.scheduled_at)}
                       </div>
                     </td>
 
                     <td>
-                      <div className="cell-strong">{getDisplayName(cust)}</div>
-                      <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <div className="cell-strong" style={{ whiteSpace: 'nowrap' }}>{getDisplayName(cust)}</div>
+                      <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
                         {cust?.phone ? (
                           <a
                             href={`tel:${String(cust.phone).replace(/[^0-9+]/g, '')}`}
@@ -159,10 +167,10 @@ export const AdminBookings = () => {
                     </td>
 
                     <td>
-                      <div style={{ fontWeight: '600' }}>
+                      <div style={{ fontWeight: '600', whiteSpace: 'nowrap' }}>
                         {getCleanServiceIcon(svc || b)} {svc?.name || b.service_name}
                       </div>
-                      <div className="cell-muted" style={{ fontSize: '11.5px' }}>
+                      <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '2px', whiteSpace: 'nowrap' }}>
                         {b.tree_count} {svc?.unit?.replace('per ', '') || 'tree'}s
                         {b.height_category ? ` · Height: ${b.height_category}` : ''}
                       </div>
@@ -191,7 +199,7 @@ export const AdminBookings = () => {
                       )}
                     </td>
 
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       {pro ? (
                         <div>
                           <div className="cell-strong" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -204,7 +212,7 @@ export const AdminBookings = () => {
                             )}
                             <span>{getDisplayName(pro)}</span>
                           </div>
-                          <div className="cell-muted" style={{ fontSize: '11.5px' }}>
+                          <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '2px' }}>
                             {pro.taluka}
                           </div>
                         </div>
@@ -225,7 +233,7 @@ export const AdminBookings = () => {
                       )}
                     </td>
 
-                    <td>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
                       <div style={{ fontWeight: '700', fontSize: '13.5px' }}>
                         ₹{Number(b.actual_amount || b.quote_amount).toFixed(2)}
                       </div>
@@ -239,7 +247,7 @@ export const AdminBookings = () => {
                       </div>
                     </td>
 
-                    <td>
+                    <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {b.booking_type === 'urgent' && !b.call_confirmed && b.status === 'requested' ? (
                         <span className="badge gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <PhoneCall size={11} /> Call Pending
@@ -249,7 +257,7 @@ export const AdminBookings = () => {
                       )}
                     </td>
 
-                    <td style={{ textAlign: 'right' }}>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {b.status === 'requested' ? (
                         b.booking_type === 'urgent' && !b.call_confirmed ? (
                           <Button
@@ -337,13 +345,8 @@ export const AdminBookings = () => {
                         </span>
                       )}
                     </div>
-                    <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '2px' }}>
-                      📅 {new Date(b.scheduled_at).toLocaleDateString('en-IN', {
-                        weekday: 'short',
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
+                    <div className="cell-muted" style={{ fontSize: '11.5px', marginTop: '2px', fontVariantNumeric: 'tabular-nums' }}>
+                      📅 {formatBookingShortDate(b.scheduled_at)}
                     </div>
                   </div>
 
