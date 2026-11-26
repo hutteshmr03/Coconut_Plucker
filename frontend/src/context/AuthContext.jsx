@@ -12,7 +12,7 @@ const SUPER_ADMIN_USER = {
   id: 'usr_super_admin',
   username: 'superadmin',
   email: 'superadmin@coconutplucker.com',
-  full_name: 'Chief Platform Administrator',
+  full_name: 'Chief Platform Admin',
   phone: '9999900000',
   role: 'super_admin',
   status: 'active',
@@ -54,6 +54,10 @@ export const AuthProvider = ({ children }) => {
           cleanList.push({
             ...SUPER_ADMIN_USER,
             ...superAdmins[0],
+            full_name:
+              superAdmins[0].full_name === 'Chief Platform Administrator'
+                ? 'Chief Platform Admin'
+                : (superAdmins[0].full_name || 'Chief Platform Admin'),
             role: 'super_admin'
           });
         }
@@ -92,6 +96,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('cp_auth_user');
         localStorage.removeItem('cp_auth_token');
         return null;
+      }
+      if (parsed?.role === 'super_admin' && parsed?.full_name === 'Chief Platform Administrator') {
+        parsed.full_name = 'Chief Platform Admin';
       }
       return parsed;
     } catch {

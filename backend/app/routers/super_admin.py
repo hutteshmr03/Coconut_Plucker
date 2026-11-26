@@ -1,4 +1,5 @@
 import uuid
+from datetime import timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -69,7 +70,7 @@ def create_admin(req: CreateAdminRequest, db: Session = Depends(get_db)):
     db.refresh(admin)
     record_audit_log(
         db,
-        actor="Chief Platform Administrator (superadmin)",
+        actor="Chief Platform Admin",
         action="Provisioned New Admin Account",
         target=f"{admin.full_name} ({admin.phone})",
         details=f"Role: Admin. Regional Scope: {req.taluka or 'All Talukas'}."
@@ -91,7 +92,7 @@ def update_admin_status(admin_id: str, req: StatusUpdateRequest, db: Session = D
     db.commit()
     record_audit_log(
         db,
-        actor="Chief Platform Administrator (superadmin)",
+        actor="Chief Platform Admin",
         action="Updated Admin Status",
         target=f"{admin.full_name} ({admin.phone})",
         details=f"Administrator account status changed to '{req.status}'."
@@ -114,7 +115,7 @@ def delete_admin(admin_id: str, db: Session = Depends(get_db)):
     db.commit()
     record_audit_log(
         db,
-        actor="Chief Platform Administrator (superadmin)",
+        actor="Chief Platform Admin",
         action="Deleted Admin Account",
         target=target_label,
         details="Administrator account permanently removed."
@@ -145,17 +146,20 @@ def change_password(req: PasswordChangeRequest, db: Session = Depends(get_db)):
 @router.get("/audit-logs")
 def get_audit_logs(db: Session = Depends(get_db)):
     logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(200).all()
-    return [
-        {
+    results = []
+    for l in logs:
+        ts = l.created_at
+        if ts and ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        results.append({
             "id": str(l.id),
             "actor": l.actor,
             "action": l.action,
             "target": l.target,
-            "timestamp": l.created_at.isoformat() if l.created_at else None,
+            "timestamp": ts.isoformat() if ts else None,
             "details": l.details or ""
-        }
-        for l in logs
-    ]
+        })
+    return results
 
 @router.post("/login")
 def super_admin_login(data: dict, db: Session = Depends(get_db)):

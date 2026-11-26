@@ -85,6 +85,9 @@ export const getDisplayName = (user, lang = null) => {
   }
 
   let name = user.full_name || user.name || user.username || '';
+  if (user.role === 'super_admin' && typeof name === 'string' && name.trim() === 'Chief Platform Administrator') {
+    name = 'Chief Platform Admin';
+  }
   if (typeof name === 'string' && name.includes('@')) {
     const prefix = name.split('@')[0];
     name = prefix

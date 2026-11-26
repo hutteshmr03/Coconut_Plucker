@@ -102,7 +102,7 @@ export const AuthPage = () => {
             phone: pClean || rawInput,
             username: rawInput,
             role: uClean === 'superadmin' || uClean === 'super_admin' || pClean === '9999900000' ? 'super_admin' : 'admin',
-            full_name: uClean === 'superadmin' ? 'Chief Platform Administrator' : 'Administrator'
+            full_name: uClean === 'superadmin' ? 'Chief Platform Admin' : 'Administrator'
           }
         );
         setAdminPassword('');

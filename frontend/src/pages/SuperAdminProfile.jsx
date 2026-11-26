@@ -25,7 +25,11 @@ export const SuperAdminProfile = () => {
   const fileInputRef = useRef(null);
 
   // Profile fields
-  const [fullName, setFullName] = useState(currentUser?.full_name || 'Chief Platform Administrator');
+  const [fullName, setFullName] = useState(
+    currentUser?.full_name === 'Chief Platform Administrator'
+      ? 'Chief Platform Admin'
+      : (currentUser?.full_name || 'Chief Platform Admin')
+  );
   const [phone, setPhone] = useState(currentUser?.phone || '9999900000');
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar_url || '');
 
@@ -324,7 +328,7 @@ export const SuperAdminProfile = () => {
 
           <Input
             label="Super Admin Full Name"
-            placeholder="e.g. Chief Platform Administrator"
+            placeholder="e.g. Chief Platform Admin"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required

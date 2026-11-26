@@ -58,7 +58,7 @@ def format_user_out(user: User, db: Session) -> UserOut:
     return UserOut(
         id=str(user.id),
         phone=user.phone,
-        full_name=user.full_name,
+        full_name="Chief Platform Admin" if (user.role == "super_admin" and user.full_name == "Chief Platform Administrator") else user.full_name,
         role=user.role,
         status=user.status,
         username=user.phone,
@@ -231,7 +231,7 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
                 # Seed super admin in DB
                 user = User(
                     phone="9999900000",
-                    full_name="Chief Platform Administrator",
+                    full_name="Chief Platform Admin",
                     role="super_admin",
                     status="active",
                     password_hash=pwd_context.hash("tempPassword123!")
