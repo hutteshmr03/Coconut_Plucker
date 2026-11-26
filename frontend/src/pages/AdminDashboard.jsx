@@ -40,7 +40,7 @@ export const AdminDashboard = () => {
   const openIncidents = incidents.filter((i) => i.status === 'open');
 
   const totalRevenue = bookings
-    .filter((b) => b.status === 'completed')
+    .filter((b) => b.status !== 'cancelled' && b.status !== 'rejected')
     .reduce((sum, b) => sum + Number(b.actual_amount || b.quote_amount || 0), 0);
 
   // Demand breakdown by service
@@ -66,9 +66,9 @@ export const AdminDashboard = () => {
         </div>
 
         <div className="stat-card" style={{ '--accent': 'var(--gold)' }}>
-          <div className="stat-label">Total Realized Revenue</div>
+          <div className="stat-label">Total Revenue</div>
           <div className="stat-value">₹{totalRevenue.toLocaleString('en-IN')}</div>
-          <div className="stat-foot up">from completed tree services</div>
+          <div className="stat-foot up">from booked tree services</div>
         </div>
 
         <div className="stat-card" style={{ '--accent': 'var(--leaf)' }}>
