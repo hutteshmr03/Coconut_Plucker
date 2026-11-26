@@ -6,12 +6,13 @@ import { Card } from '../components/common/Card';
 export const AdminReports = () => {
   const { bookings, services } = useApp();
 
+  const getBookingAmount = (b) => Number(b.actual_amount || b.quote_amount || 0);
   const completed = bookings.filter((b) => b.status === 'completed');
-  const totalRev = completed.reduce(
-    (sum, b) => sum + Number(b.actual_amount || b.quote_amount || 0),
-    0
+  const unutilizedBookings = bookings.filter(
+    (b) => b.status !== 'completed' && b.status !== 'cancelled' && b.status !== 'rejected'
   );
-  const avgJobValue = completed.length > 0 ? Math.round(totalRev / completed.length) : 0;
+  const utilizedRevenue = completed.reduce((sum, b) => sum + getBookingAmount(b), 0);
+  const unutilizedRevenue = unutilizedBookings.reduce((sum, b) => sum + getBookingAmount(b), 0);
 
   // Monthly trends simulation
   const months = ['May 26', 'Jun 26', 'Jul 26', 'Aug 26', 'Sep 26'];
@@ -102,12 +103,12 @@ export const AdminReports = () => {
           </div>
           <div>
             <div className="kpi-line">
-              <span>Total Revenue Realized</span>
-              <b>₹{totalRev.toLocaleString('en-IN')}</b>
+              <span>Total Revenue Utilized</span>
+              <b>₹{utilizedRevenue.toLocaleString('en-IN')}</b>
             </div>
             <div className="kpi-line">
-              <span>Average Job Ticket Value</span>
-              <b>₹{avgJobValue.toLocaleString('en-IN')}</b>
+              <span>Total Revenue Unutilized</span>
+              <b>₹{unutilizedRevenue.toLocaleString('en-IN')}</b>
             </div>
             <div className="kpi-line">
               <span>Customer Satisfaction Index</span>
