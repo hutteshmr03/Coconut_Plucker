@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getDisplayName, getServiceImage } from '../../utils/helpers';
 import { StatusBadge } from '../common/StatusBadge';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { Play, CheckCircle, MapPin, Phone, Camera, Eye, Check } from 'lucide-react';
+
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+const parseUtcMs = (raw) => {
+  if (!raw) return NaN;
+  let str = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(str) && !/(Z|[+-]\d{2}:?\d{2})$/i.test(str)) {
+    str = str.replace(' ', 'T') + 'Z';
+  }
+  return new Date(str).getTime();
+};
 
 export const AssignedJobCard = ({
   booking,
@@ -13,9 +24,27 @@ export const AssignedJobCard = ({
   onCompleteJob
 }) => {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const isAssigned = booking.status === 'assigned';
   const isInProgress = booking.status === 'in_progress';
   const isCompleted = booking.status === 'completed';
+
+  const completedMs = parseUtcMs(booking.completed_at);
+  const isCustomerDataExpired =
+    isCompleted &&
+    (Boolean(booking.customer_data_expired) ||
+      (!Number.isNaN(completedMs) && nowMs - completedMs >= TWENTY_FOUR_HOURS_MS));
+
+  useEffect(() => {
+    if (!isCompleted || Number.isNaN(completedMs) || isCustomerDataExpired) return;
+    const remainingMs = completedMs + TWENTY_FOUR_HOURS_MS - Date.now();
+    if (remainingMs <= 0) {
+      setNowMs(Date.now());
+      return;
+    }
+    const timer = setTimeout(() => setNowMs(Date.now()), Math.min(remainingMs + 50, 2147483647));
+    return () => clearTimeout(timer);
+  }, [isCompleted, completedMs, isCustomerDataExpired]);
 
   const totalAmt = Number(booking.actual_amount || booking.quote_amount || 0);
 
@@ -131,46 +160,48 @@ export const AssignedJobCard = ({
         <span>{booking.address}, {booking.taluka}</span>
       </div>
 
-      {/* Job Details Key-Value Box */}
-      <div className="bk-job-grid">
-        <div className="bk-job-col">
-          <div className="bk-job-row">
-            <span>Customer</span>
-            <b title={getDisplayName(customer)}>{getDisplayName(customer)}</b>
+      {/* Job Details Key-Value Box (hidden 24 hours after Job Completed click) */}
+      {!isCustomerDataExpired && (
+        <div className="bk-job-grid">
+          <div className="bk-job-col">
+            <div className="bk-job-row">
+              <span>Customer</span>
+              <b title={getDisplayName(customer)}>{getDisplayName(customer)}</b>
+            </div>
+            <div className="bk-job-row">
+              <span>Contact</span>
+              {customer?.phone ? (
+                <a href={`tel:${customer.phone}`} className="phone-link-pill" style={{ justifySelf: 'end' }}>
+                  <Phone size={11} /> {customer.phone}
+                </a>
+              ) : (
+                <b>—</b>
+              )}
+            </div>
+            <div className="bk-job-row">
+              <span>Quantity</span>
+              <b>{booking.tree_count} {service?.unit?.replace('per ', '') || 'tree'}s</b>
+            </div>
           </div>
-          <div className="bk-job-row">
-            <span>Contact</span>
-            {customer?.phone ? (
-              <a href={`tel:${customer.phone}`} className="phone-link-pill" style={{ justifySelf: 'end' }}>
-                <Phone size={11} /> {customer.phone}
-              </a>
-            ) : (
-              <b>—</b>
-            )}
-          </div>
-          <div className="bk-job-row">
-            <span>Quantity</span>
-            <b>{booking.tree_count} {service?.unit?.replace('per ', '') || 'tree'}s</b>
-          </div>
-        </div>
 
-        <div className="bk-job-col">
-          <div className="bk-job-row">
-            <span>Scheduled</span>
-            <b title={scheduledDate}>{scheduledDate}</b>
-          </div>
-          <div className="bk-job-row">
-            <span>{booking.height_category ? 'Height' : 'Taluka'}</span>
-            <b title={booking.height_category ? `${booking.height_category} Altitude` : booking.taluka}>
-              {booking.height_category ? `${booking.height_category} Alt` : booking.taluka}
-            </b>
-          </div>
-          <div className="bk-job-row">
-            <span>Payment</span>
-            <b style={{ textTransform: 'capitalize' }}>{booking.payment_status || 'Pending'}</b>
+          <div className="bk-job-col">
+            <div className="bk-job-row">
+              <span>Scheduled</span>
+              <b title={scheduledDate}>{scheduledDate}</b>
+            </div>
+            <div className="bk-job-row">
+              <span>{booking.height_category ? 'Height' : 'Taluka'}</span>
+              <b title={booking.height_category ? `${booking.height_category} Altitude` : booking.taluka}>
+                {booking.height_category ? `${booking.height_category} Alt` : booking.taluka}
+              </b>
+            </div>
+            <div className="bk-job-row">
+              <span>Payment</span>
+              <b style={{ textTransform: 'capitalize' }}>{booking.payment_status || 'Pending'}</b>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Feature: Customer Attached Tree Photo */}
       {booking.tree_photo && (

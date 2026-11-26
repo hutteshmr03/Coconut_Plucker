@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -94,6 +95,24 @@ def update_professional_skills(
     db.commit()
     return {"success": True, "message": "Skills updated successfully"}
 
+def _to_utc_dt(dt: Optional[datetime]) -> Optional[datetime]:
+    if not dt:
+        return None
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
+
+
+def _to_utc_iso(dt: Optional[datetime]) -> Optional[str]:
+    utc_dt = _to_utc_dt(dt)
+    return utc_dt.isoformat() if utc_dt else None
+
+
+def _is_customer_data_expired(booking: Booking) -> bool:
+    if booking.status != "completed" or not booking.completed_at:
+        return False
+    completed_utc = _to_utc_dt(booking.completed_at)
+    return (datetime.now(timezone.utc) - completed_utc) >= timedelta(hours=24)
+
+
 @router.get("/me/bookings")
 def get_professional_bookings(
     current_user: Optional[User] = Depends(get_optional_user),
@@ -105,12 +124,14 @@ def get_professional_bookings(
     bookings = query.all()
     results = []
     for b in bookings:
+        expired = _is_customer_data_expired(b)
         results.append({
             "id": str(b.id),
             "booking_number": b.booking_number or f"CP-{str(b.id)[:8].upper()}",
             "customer_id": str(b.customer_id) if b.customer_id else None,
-            "customer_name": b.customer.full_name if b.customer else "Customer",
-            "customer_phone": b.customer.phone if b.customer else None,
+            "customer_name": None if expired else (b.customer.full_name if b.customer else "Customer"),
+            "customer_phone": None if expired else (b.customer.phone if b.customer else None),
+            "customer_data_expired": expired,
             "professional_id": str(b.professional_id) if b.professional_id else None,
             "service_id": str(b.service_id) if b.service_id else None,
             "service_name": b.service_name or (b.service.name if b.service else "Harvesting"),
@@ -118,7 +139,7 @@ def get_professional_bookings(
             "height_category": b.height_category,
             "taluka": b.taluka or "North Goa",
             "address": b.address or "Goa",
-            "scheduled_at": b.scheduled_at.isoformat() if b.scheduled_at else None,
+            "scheduled_at": _to_utc_iso(b.scheduled_at),
             "status": b.status,
             "booking_type": b.booking_type or "standard",
             "call_confirmed": b.call_confirmed if b.call_confirmed is not None else True,
@@ -126,7 +147,8 @@ def get_professional_bookings(
             "payment_method": b.payment.payment_method if b.payment else "UPI",
             "payment_status": "paid" if (b.payment and b.payment.status == "success") else "paid",
             "tree_photo": b.tree_photo,
-            "created_at": b.created_at.isoformat() if b.created_at else None
+            "completed_at": _to_utc_iso(b.completed_at),
+            "created_at": _to_utc_iso(b.created_at)
         })
     return results
 
@@ -154,9 +176,17 @@ def complete_booking(booking_id: str, db: Session = Depends(get_db)):
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
+    now_utc = datetime.now(timezone.utc)
     booking.status = "completed"
+    if not booking.completed_at:
+        booking.completed_at = now_utc
     db.commit()
-    return {"success": True, "status": "completed", "message": "Job marked as completed"}
+    return {
+        "success": True,
+        "status": "completed",
+        "completed_at": _to_utc_iso(booking.completed_at),
+        "message": "Job marked as completed"
+    }
 
 @router.get("/me/bookings/{booking_id}")
 def get_professional_booking_detail(booking_id: str, db: Session = Depends(get_db)):
@@ -168,12 +198,15 @@ def get_professional_booking_detail(booking_id: str, db: Session = Depends(get_d
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
+    expired = _is_customer_data_expired(booking)
     return {
         "id": str(booking.id),
-        "customer_name": booking.customer.full_name if booking.customer else "Customer",
+        "customer_name": None if expired else (booking.customer.full_name if booking.customer else "Customer"),
+        "customer_data_expired": expired,
         "service_name": booking.service.name if booking.service else "Harvesting",
-        "taluka": "North Goa",
-        "scheduled_at": booking.scheduled_at.isoformat() if booking.scheduled_at else None,
+        "taluka": booking.taluka or "North Goa",
+        "scheduled_at": _to_utc_iso(booking.scheduled_at),
+        "completed_at": _to_utc_iso(booking.completed_at),
         "status": booking.status,
         "quote_amount": float(booking.quote_amount) if booking.quote_amount else 0.0
     }

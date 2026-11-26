@@ -31,6 +31,7 @@ class Booking(Base):
     scheduled_at = Column(DateTime(timezone=True), nullable=False, index=True)
     status = Column(String(20), nullable=False, server_default="requested", default="requested", index=True)
     quote_amount = Column(Numeric(8, 2), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relationships

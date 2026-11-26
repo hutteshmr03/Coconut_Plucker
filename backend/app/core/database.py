@@ -52,6 +52,8 @@ def init_tables_safely():
                 "ALTER TABLE bookings ADD COLUMN call_confirmed TINYINT(1) DEFAULT 1",
                 "ALTER TABLE bookings ADD COLUMN hazard_notes TEXT",
                 "ALTER TABLE bookings ADD COLUMN tree_photo MEDIUMTEXT",
+                "ALTER TABLE bookings ADD COLUMN completed_at DATETIME NULL",
+                "UPDATE bookings SET completed_at = UTC_TIMESTAMP() WHERE status = 'completed' AND completed_at IS NULL",
                 "ALTER TABLE incidents MODIFY COLUMN booking_id CHAR(36) NULL",
                 "ALTER TABLE incidents ADD COLUMN reported_by_name VARCHAR(120)",
                 "ALTER TABLE incidents ADD COLUMN incident_type VARCHAR(60) DEFAULT 'Near-miss'",
@@ -64,8 +66,8 @@ def init_tables_safely():
             ]
             with engine.connect() as conn:
                 for stmt in alter_statements:
-                    if db_url.startswith("sqlite") and ("MODIFY COLUMN" in stmt or "MEDIUMTEXT" in stmt or "TINYINT" in stmt):
-                        stmt = stmt.replace("MEDIUMTEXT", "TEXT").replace("TINYINT(1)", "BOOLEAN")
+                    if db_url.startswith("sqlite") and ("MODIFY COLUMN" in stmt or "MEDIUMTEXT" in stmt or "TINYINT" in stmt or "UTC_TIMESTAMP()" in stmt):
+                        stmt = stmt.replace("MEDIUMTEXT", "TEXT").replace("TINYINT(1)", "BOOLEAN").replace("UTC_TIMESTAMP()", "CURRENT_TIMESTAMP")
                         if "MODIFY COLUMN" in stmt:
                             continue
                     try:

@@ -291,9 +291,9 @@ export const AppProvider = ({ children }) => {
           const proBk = await professionalAPI.getMyBookings();
           if (!cancelled && Array.isArray(proBk)) {
             setBookings(proBk.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) })));
-            // Populate customer names/phones for AssignedJobCard display
+            // Populate customer names/phones for AssignedJobCard display (skip expired 24h+ completed jobs)
             const derivedCustomers = proBk
-              .filter((b) => b.customer_id)
+              .filter((b) => b.customer_id && !b.customer_data_expired)
               .map((b) => ({
                 id: b.customer_id,
                 full_name: b.customer_name || 'Customer',
@@ -462,6 +462,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const completeJob = (bookingId, actualAmount) => {
+    const completedAtIso = new Date().toISOString();
     setBookings((prev) =>
       prev.map((b) => {
         if (b.id !== bookingId) return b;
@@ -469,13 +470,23 @@ export const AppProvider = ({ children }) => {
         return {
           ...b,
           status: "completed",
+          completed_at: completedAtIso,
           actual_amount: finalAmt,
           paid_amount: finalAmt,
           payment_status: "paid"
         };
       })
     );
-    professionalAPI.completeBooking(bookingId).catch((err) => console.warn('[Backend] Complete job sync:', err.message));
+    professionalAPI
+      .completeBooking(bookingId)
+      .then((res) => {
+        if (res?.completed_at) {
+          setBookings((prev) =>
+            prev.map((b) => (b.id === bookingId ? { ...b, completed_at: res.completed_at } : b))
+          );
+        }
+      })
+      .catch((err) => console.warn('[Backend] Complete job sync:', err.message));
     showToast("Job marked complete. Full payment received upfront.", "success");
   };
 
