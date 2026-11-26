@@ -383,9 +383,11 @@ export const SuperAdminAdmins = () => {
             <Input
               label="Mobile Phone (for Login)"
               type="tel"
+              inputMode="numeric"
+              maxLength={10}
               placeholder="e.g. 984253XXX4"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
               required
               hint="Admin signs in using phone or User ID"
             />
