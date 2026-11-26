@@ -62,6 +62,46 @@ export const VerificationModal = ({ isOpen, onClose, professional, services, onD
         <b>{professional.safety_cert || 'Self-Declared Experienced Climber'}</b>
       </div>
       <div className="kpi-line">
+        <span>Insurance Cover</span>
+        <b>{professional.insurance_cover ? 'Yes' : 'No'}</b>
+      </div>
+      {professional.insurance_cover && professional.insurance_cover_img && (
+        <div style={{ marginTop: '10px', marginBottom: '6px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '11.5px',
+              fontWeight: '700',
+              color: 'var(--ink-soft)',
+              marginBottom: '6px',
+              textTransform: 'uppercase'
+            }}
+          >
+            Insurance Cover Document
+          </label>
+          <a
+            href={professional.insurance_cover_img}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-block' }}
+            title="Open Insurance Cover image"
+          >
+            <img
+              src={professional.insurance_cover_img}
+              alt="Insurance Cover"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '160px',
+                borderRadius: '8px',
+                border: '1px solid var(--line)',
+                objectFit: 'contain',
+                background: 'var(--cream)'
+              }}
+            />
+          </a>
+        </div>
+      )}
+      <div className="kpi-line">
         <span>Current Status</span>
         <b style={{ textTransform: 'capitalize' }}>{professional.status}</b>
       </div>

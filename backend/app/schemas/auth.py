@@ -22,6 +22,8 @@ class UserRegister(BaseModel):
     address: Optional[str] = None
     experience_years: Optional[int] = 0
     safety_cert: Optional[str] = None
+    insurance_cover: Optional[bool] = False
+    insurance_cover_img: Optional[str] = None
     skills: Optional[List[str]] = None
 
 class LoginRequest(BaseModel):
@@ -39,6 +41,8 @@ class UserUpdate(BaseModel):
     address: Optional[str] = None
     experience_years: Optional[int] = None
     safety_cert: Optional[str] = None
+    insurance_cover: Optional[bool] = None
+    insurance_cover_img: Optional[str] = None
     skills: Optional[List[str]] = None
 
 class UserOut(BaseModel):
@@ -54,6 +58,8 @@ class UserOut(BaseModel):
     address: Optional[str] = None
     experience_years: Optional[int] = None
     safety_cert: Optional[str] = None
+    insurance_cover: Optional[bool] = None
+    insurance_cover_img: Optional[str] = None
     rating_avg: Optional[float] = None
     skills: Optional[List[str]] = None
     created_at: Optional[str] = None

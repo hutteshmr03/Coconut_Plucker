@@ -3,7 +3,8 @@ import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
-import { ShieldCheck, UserPlus, CheckSquare, Square } from 'lucide-react';
+import { compressImageFile } from '../../utils/helpers';
+import { UserPlus, CheckSquare, Square, Upload } from 'lucide-react';
 
 const TALUKAS = [
   { value: '', label: '-- Select one --' },
@@ -18,7 +19,10 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
   const [phone, setPhone] = useState('');
   const [taluka, setTaluka] = useState('');
   const [experienceYears, setExperienceYears] = useState('5');
-  const [safetyCert, setSafetyCert] = useState('Certified Master Climber (Govt. CPCRI Certified)');
+  const [safetyCert, setSafetyCert] = useState('');
+  const [insuranceCover, setInsuranceCover] = useState('no');
+  const [insuranceCoverImg, setInsuranceCoverImg] = useState('');
+  const [insuranceImgName, setInsuranceImgName] = useState('');
   const [status, setStatus] = useState('approved');
   const [selectedSkills, setSelectedSkills] = useState(['svc_coconut', 'svc_areca', 'svc_palm']);
   const [error, setError] = useState('');
@@ -41,6 +45,23 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
     );
   };
 
+  const handleInsuranceFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (JPG, PNG, etc.) for Insurance Cover');
+      return;
+    }
+    try {
+      const compressed = await compressImageFile(file, 900, 900, 0.78);
+      setInsuranceCoverImg(compressed);
+      setInsuranceImgName(file.name);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Failed to read Insurance Cover image');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const pClean = phone.replace(/\D/g, '');
@@ -55,6 +76,10 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
     }
     if (!taluka) {
       setError('Please select a Taluka');
+      return;
+    }
+    if (insuranceCover === 'yes' && !insuranceCoverImg) {
+      setError('Please upload the Insurance Cover image');
       return;
     }
     if (selectedSkills.length === 0) {
@@ -72,7 +97,9 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
         phone: pClean,
         taluka,
         experience_years: Number(experienceYears) || 1,
-        safety_cert: safetyCert.trim() || 'Verified Professional Climber',
+        safety_cert: safetyCert.trim() || '',
+        insurance_cover: insuranceCover === 'yes',
+        insurance_cover_img: insuranceCover === 'yes' ? insuranceCoverImg : null,
         status,
         skills: selectedSkills,
         rating_avg: 5.0
@@ -84,7 +111,10 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
       setPhone('');
       setTaluka('');
       setExperienceYears('5');
-      setSafetyCert('Certified Master Climber (Govt. CPCRI Certified)');
+      setSafetyCert('');
+      setInsuranceCover('no');
+      setInsuranceCoverImg('');
+      setInsuranceImgName('');
       setStatus('approved');
       setSelectedSkills(['svc_coconut', 'svc_areca', 'svc_palm']);
       onClose();
@@ -172,12 +202,185 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
         </div>
 
         <Input
-          label="Safety Certification & Training Details"
+          label="Safety Certification & Training Details (Optional)"
           placeholder="e.g. Govt. CPCRI Certified Master Climber / Palm Safety Harness Trained"
           value={safetyCert}
           onChange={(e) => setSafetyCert(e.target.value)}
-          required
         />
+
+        <div className="field">
+          <label>
+            Insurance Cover <span style={{ color: 'var(--danger)' }}>*</span>
+          </label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setInsuranceCover('yes');
+                setError('');
+              }}
+              style={{
+                flex: 1,
+                padding: '9px 14px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '13.5px',
+                border: `1.5px solid ${insuranceCover === 'yes' ? 'var(--teal)' : 'var(--line)'}`,
+                background: insuranceCover === 'yes' ? 'rgba(31, 138, 130, 0.12)' : 'var(--cream)',
+                color: insuranceCover === 'yes' ? 'var(--teal)' : 'var(--ink-soft)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInsuranceCover('no');
+                setInsuranceCoverImg('');
+                setInsuranceImgName('');
+                setError('');
+              }}
+              style={{
+                flex: 1,
+                padding: '9px 14px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '13.5px',
+                border: `1.5px solid ${insuranceCover === 'no' ? 'var(--teal)' : 'var(--line)'}`,
+                background: insuranceCover === 'no' ? 'rgba(31, 138, 130, 0.12)' : 'var(--cream)',
+                color: insuranceCover === 'no' ? 'var(--teal)' : 'var(--ink-soft)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              No
+            </button>
+          </div>
+        </div>
+
+        {insuranceCover === 'yes' && (
+          <div className="field">
+            <label>
+              Insurance Cover Image <span style={{ color: 'var(--danger)' }}>*</span>
+            </label>
+            <div
+              style={{
+                background: 'var(--cream)',
+                border: '1.5px dashed var(--teal)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap'
+              }}
+            >
+              {insuranceCoverImg ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                    <img
+                      src={insuranceCoverImg}
+                      alt="Insurance Cover Preview"
+                      style={{
+                        width: '54px',
+                        height: '54px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid var(--line)',
+                        flexShrink: 0
+                      }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: 'var(--ink)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '220px'
+                        }}
+                      >
+                        {insuranceImgName || 'Insurance document uploaded'}
+                      </div>
+                      <div style={{ fontSize: '11.5px', color: 'var(--success)', fontWeight: 600 }}>
+                        Uploaded successfully
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <label
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--line)',
+                        background: 'var(--paper)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        cursor: 'pointer',
+                        margin: 0
+                      }}
+                    >
+                      Change
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleInsuranceFileChange}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInsuranceCoverImg('');
+                        setInsuranceImgName('');
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--line)',
+                        background: 'var(--paper)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: 'var(--danger)'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <label
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    color: 'var(--teal)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    margin: 0,
+                    padding: '6px 0'
+                  }}
+                >
+                  <Upload size={16} />
+                  <span>Click to upload Insurance Cover image (JPG, PNG)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleInsuranceFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+        )}
 
         <Select
           label="Initial Account Verification Status"

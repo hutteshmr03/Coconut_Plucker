@@ -116,6 +116,11 @@ def create_professional_admin(data: dict, db: Session = Depends(get_db)):
     if exists:
         raise HTTPException(status_code=400, detail=f"An account with phone number +91 {phone_clean} already exists.")
 
+    has_insurance = bool(data.get("insurance_cover"))
+    insurance_img = (data.get("insurance_cover_img") or None) if has_insurance else None
+    if has_insurance and not insurance_img:
+        raise HTTPException(status_code=400, detail="Insurance Cover image is required when Insurance Cover is Yes.")
+
     user = User(
         phone=phone_clean,
         full_name=(data.get("full_name") or "Professional Climber").strip(),
@@ -129,7 +134,9 @@ def create_professional_admin(data: dict, db: Session = Depends(get_db)):
         user_id=user.id,
         taluka=data.get("taluka") or "North Goa",
         experience_years=int(data.get("experience_years") or 1),
-        safety_cert=data.get("safety_cert") or "Verified Professional Climber",
+        safety_cert=(data.get("safety_cert") or "").strip() or None,
+        insurance_cover=has_insurance,
+        insurance_cover_img=insurance_img,
         rating_avg=float(data.get("rating_avg") or 5.0)
     )
     db.add(prof)

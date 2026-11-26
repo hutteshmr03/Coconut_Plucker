@@ -38,6 +38,8 @@ def format_user_out(user: User, db: Session) -> UserOut:
     address = None
     exp_years = None
     safety_cert = None
+    insurance_cover = None
+    insurance_cover_img = None
     rating_avg = None
     skills = []
 
@@ -48,6 +50,8 @@ def format_user_out(user: User, db: Session) -> UserOut:
         taluka = user.professional_profile.taluka
         exp_years = user.professional_profile.experience_years
         safety_cert = user.professional_profile.safety_cert
+        insurance_cover = bool(user.professional_profile.insurance_cover)
+        insurance_cover_img = user.professional_profile.insurance_cover_img
         rating_avg = float(user.professional_profile.rating_avg or 0.0)
         skills = [str(s.service_id) for s in user.professional_profile.skills]
 
@@ -63,6 +67,8 @@ def format_user_out(user: User, db: Session) -> UserOut:
         address=address,
         experience_years=exp_years,
         safety_cert=safety_cert,
+        insurance_cover=insurance_cover,
+        insurance_cover_img=insurance_cover_img,
         rating_avg=rating_avg,
         skills=skills,
         created_at=user.created_at.isoformat() if user.created_at else None

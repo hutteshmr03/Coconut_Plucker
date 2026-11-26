@@ -57,6 +57,8 @@ def init_tables_safely():
                 "ALTER TABLE incidents ADD COLUMN incident_type VARCHAR(60) DEFAULT 'Near-miss'",
                 "ALTER TABLE incidents ADD COLUMN severity VARCHAR(20) DEFAULT 'low'",
                 "ALTER TABLE incidents ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+                "ALTER TABLE professional_profiles ADD COLUMN insurance_cover TINYINT(1) DEFAULT 0",
+                "ALTER TABLE professional_profiles ADD COLUMN insurance_cover_img MEDIUMTEXT",
             ]
             with engine.connect() as conn:
                 for stmt in alter_statements:
