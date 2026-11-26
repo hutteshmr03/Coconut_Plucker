@@ -18,6 +18,7 @@ PassengerPython "/home/nrlnxfke/virtualenv/paddeli_api/3.10/bin/python"
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 3. Route all other requests to index.html for React Router
+  # 3. Never rewrite missing /assets/* files to index.html; route other SPA paths to index.html
+  RewriteCond %{REQUEST_URI} !^/assets/
   RewriteRule ^ index.html [L]
 </IfModule>

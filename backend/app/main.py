@@ -68,11 +68,11 @@ for r in api_routers:
     app.include_router(r, prefix="/api")
 
 
-# Resolve frontend distribution directory for SPA serving
+# Resolve frontend distribution directory for SPA serving (live webroot first so frontend-only deploys take effect immediately)
 FRONTEND_DIR = None
 for candidate in [
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend_dist")),
     "/home/nrlnxfke/paddeli.com",
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend_dist")),
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "paddeli.com")),
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")),
     os.path.abspath(os.path.join(os.getcwd(), "frontend", "dist")),
@@ -99,12 +99,19 @@ def api_root():
     }
 
 
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
+
 @app.get("/")
 def serve_root():
     if FRONTEND_DIR:
         index_path = os.path.join(FRONTEND_DIR, "index.html")
         if os.path.isfile(index_path):
-            return FileResponse(index_path, media_type="text/html")
+            return FileResponse(index_path, media_type="text/html", headers=NO_CACHE_HEADERS)
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
         "version": settings.VERSION,
@@ -126,10 +133,14 @@ def serve_spa_fallback(full_path: str):
         if os.path.isfile(file_path):
             return FileResponse(file_path)
 
+        # Never serve index.html for missing static assets
+        if clean_path.startswith("assets/") or clean_path.endswith((".js", ".css", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp", ".woff2")):
+            raise HTTPException(status_code=404, detail="Asset not found")
+
         # Fallback to index.html for React Router SPA routes (e.g. /customer, /admin)
         index_path = os.path.join(FRONTEND_DIR, "index.html")
         if os.path.isfile(index_path):
-            return FileResponse(index_path, media_type="text/html")
+            return FileResponse(index_path, media_type="text/html", headers=NO_CACHE_HEADERS)
 
     raise HTTPException(status_code=404, detail="Page not found")
 
