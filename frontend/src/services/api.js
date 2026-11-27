@@ -14,7 +14,7 @@ let isBackendReachable = null;
 
 async function request(endpoint, options = {}) {
   const isGet = !options.method || options.method.toUpperCase() === 'GET';
-  const activeToken = sessionStorage.getItem('cp_auth_token') || localStorage.getItem('cp_auth_token') || '';
+  const activeToken = sessionStorage.getItem('cp_auth_token') || '';
   const cacheKey = `${endpoint}_${activeToken}`;
 
   // Return cached response instantly if still fresh
@@ -32,12 +32,7 @@ async function request(endpoint, options = {}) {
     availabilityCache.clear();
   }
 
-  // Fast-fail if backend is known to be unavailable (e.g. running on static SPA host)
-  if (isBackendReachable === false && !import.meta.env.VITE_API_BASE_URL) {
-    throw new Error('API server offline (using high-speed local data)');
-  }
-
-  const token = sessionStorage.getItem('cp_auth_token') || localStorage.getItem('cp_auth_token');
+  const token = sessionStorage.getItem('cp_auth_token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -122,33 +117,23 @@ export const servicesAPI = {
 // API-009 to API-013: Bookings & Quotes
 export const bookingsAPI = {
   createBooking: (data) => request('/bookings', { method: 'POST', body: JSON.stringify(data) }),
-  calculateQuote: async (serviceId, baseRate, treeCount, bookingType = 'standard') => {
-    const key = `${serviceId}_${baseRate}_${treeCount}_${bookingType}`;
+  createRazorpayOrder: (data) => request('/bookings/razorpay/order', { method: 'POST', body: JSON.stringify(data) }),
+  calculateQuote: async (serviceId, _baseRate, treeCount, bookingType = 'standard', services = null) => {
+    const key = `${serviceId}_${treeCount}_${bookingType}_${JSON.stringify(services || [])}`;
     if (quoteCache.has(key)) {
       return quoteCache.get(key);
     }
-    try {
-      const res = await request('/bookings/quote', {
-        method: 'POST',
-        body: JSON.stringify({ service_id: serviceId, tree_count: treeCount, booking_type: bookingType })
-      });
-      if (res) quoteCache.set(key, res);
-      return res;
-    } catch {
-      // Rates are GST-inclusive
-      const base = Number(baseRate || 0) * Number(treeCount || 1);
-      const res = {
-        base_amount: base,
-        surcharge_rate: 0,
-        surcharge_label: null,
-        surcharge_amount: 0,
-        gst_rate: 0,
-        gst_amount: 0,
-        quote_amount: base
-      };
-      quoteCache.set(key, res);
-      return res;
-    }
+    const res = await request('/bookings/quote', {
+      method: 'POST',
+      body: JSON.stringify({
+        service_id: serviceId,
+        tree_count: treeCount,
+        booking_type: bookingType,
+        ...(Array.isArray(services) && services.length > 0 ? { services } : {})
+      })
+    });
+    if (res) quoteCache.set(key, res);
+    return res;
   },
   getMyBookings: () => request('/bookings'),
   getBookingDetails: (id) => request(`/bookings/${id}`),
@@ -159,14 +144,7 @@ export const bookingsAPI = {
 // Section B.3: Server-driven Taluka Availability
 export const availabilityAPI = {
   getAvailability: async (taluka, serviceId, bookingType = 'standard', customScheduling = null) => {
-    let sched = customScheduling;
-    if (!sched) {
-      try {
-        const saved = localStorage.getItem('paddeli_state_v1_scheduling');
-        if (saved) sched = JSON.parse(saved);
-      } catch {}
-    }
-
+    const sched = customScheduling;
     const schedKey = JSON.stringify(sched || {});
     const key = `${taluka}_${serviceId}_${bookingType}_${schedKey}`;
     if (availabilityCache.has(key)) {
@@ -183,16 +161,9 @@ export const availabilityAPI = {
     if (sched?.southDays?.length) queryParams.set('south_days', sched.southDays.join(','));
     if (sched?.kushavatiDays?.length) queryParams.set('kushavati_days', sched.kushavatiDays.join(','));
 
-    try {
-      const res = await request(`/availability?${queryParams.toString()}`);
-      if (res) availabilityCache.set(key, res);
-      return res;
-    } catch {
-      // Fallback server calculation simulation until live FastAPI route is invoked
-      const res = getSimulatedServerAvailability(taluka, serviceId, bookingType, sched);
-      availabilityCache.set(key, res);
-      return res;
-    }
+    const res = await request(`/availability?${queryParams.toString()}`);
+    if (res) availabilityCache.set(key, res);
+    return res;
   }
 };
 

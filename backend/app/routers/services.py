@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.audit import record_audit_log
 from app.models.service import Service
+from app.routers.auth import require_admin_user
 from app.schemas.service import ServiceCreate, ServiceUpdate, ServiceOut
 
 router = APIRouter(prefix="/services", tags=["Services"])
@@ -66,7 +67,7 @@ def get_active_services(db: Session = Depends(get_db)):
     return [_format_service(s) for s in services if (s.status or "active") == "active"]
 
 
-@router.get("/admin", response_model=List[ServiceOut])
+@router.get("/admin", response_model=List[ServiceOut], dependencies=[Depends(require_admin_user)])
 def get_admin_services(db: Session = Depends(get_db)):
     services = _seed_defaults_if_empty(db)
     return [_format_service(s) for s in services]
@@ -78,7 +79,7 @@ def get_service_detail(service_id: str, db: Session = Depends(get_db)):
         sid = uuid.UUID(service_id)
         svc = db.query(Service).filter(Service.id == sid).first()
     except Exception:
-        svc = db.query(Service).first()
+        svc = None
 
     if not svc:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -86,7 +87,7 @@ def get_service_detail(service_id: str, db: Session = Depends(get_db)):
     return _format_service(svc)
 
 
-@router.post("", response_model=ServiceOut)
+@router.post("", response_model=ServiceOut, dependencies=[Depends(require_admin_user)])
 def create_service(req: ServiceCreate, db: Session = Depends(get_db)):
     svc = Service(
         name=req.name,
@@ -111,7 +112,7 @@ def create_service(req: ServiceCreate, db: Session = Depends(get_db)):
     return _format_service(svc)
 
 
-@router.put("/{service_id}", response_model=ServiceOut)
+@router.put("/{service_id}", response_model=ServiceOut, dependencies=[Depends(require_admin_user)])
 def update_service(service_id: str, req: ServiceUpdate, db: Session = Depends(get_db)):
     try:
         sid = uuid.UUID(service_id)
@@ -151,7 +152,7 @@ def update_service(service_id: str, req: ServiceUpdate, db: Session = Depends(ge
     return _format_service(svc)
 
 
-@router.patch("/{service_id}/status")
+@router.patch("/{service_id}/status", dependencies=[Depends(require_admin_user)])
 def update_service_status(service_id: str, data: dict, db: Session = Depends(get_db)):
     try:
         sid = uuid.UUID(service_id)
@@ -168,7 +169,7 @@ def update_service_status(service_id: str, data: dict, db: Session = Depends(get
     return {"success": True, "service_id": service_id, "status": new_status}
 
 
-@router.delete("/{service_id}")
+@router.delete("/{service_id}", dependencies=[Depends(require_admin_user)])
 def delete_service(service_id: str, db: Session = Depends(get_db)):
     try:
         sid = uuid.UUID(service_id)

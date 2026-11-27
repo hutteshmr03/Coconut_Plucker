@@ -61,8 +61,9 @@ export const AuthPage = () => {
       return;
     }
 
-    // Check local cache first for known Admin / Super Admin accounts
+    // Local check ONLY for seeded platform administrator accounts (credentials still verified server-side)
     const localMatch = registeredUsers.find((u) => {
+      if (u.role !== 'admin' && u.role !== 'super_admin') return false;
       const userDigits = u.phone ? u.phone.replace(/\D/g, '').slice(-10) : '';
       const matchPhone = pClean && pClean.length >= 10 && userDigits === pClean;
       const matchUsername = u.username && u.username.toLowerCase() === uClean;
@@ -70,7 +71,7 @@ export const AuthPage = () => {
       return matchPhone || matchUsername || matchEmail;
     });
 
-    if (localMatch && (localMatch.role === 'admin' || localMatch.role === 'super_admin')) {
+    if (localMatch) {
       setError('');
       setPendingLoginUser(localMatch);
       setAdminPassword('');
@@ -97,29 +98,20 @@ export const AuthPage = () => {
       const msg = (err?.message || '').toLowerCase();
       if (msg.includes('password is required')) {
         setError('');
-        setPendingLoginUser(
-          localMatch || {
-            phone: pClean || rawInput,
-            username: rawInput,
-            role: uClean === 'superadmin' || uClean === 'super_admin' || pClean === '9999900000' ? 'super_admin' : 'admin',
-            full_name: uClean === 'superadmin' ? 'Chief Platform Admin' : 'Administrator'
-          }
-        );
+        setPendingLoginUser({
+          phone: pClean || rawInput,
+          username: rawInput,
+          role: uClean === 'superadmin' || uClean === 'super_admin' || pClean === '9999900000' ? 'super_admin' : 'admin',
+          full_name: uClean === 'superadmin' ? 'Chief Platform Admin' : 'Administrator'
+        });
         setAdminPassword('');
         setLoginStep('password');
         return;
       }
-      if (msg.includes('deactivated')) {
-        setError(err.message);
+      if (msg.includes('deactivated') || msg.includes('failed to fetch')) {
+        setError(msg.includes('failed to fetch') ? 'Unable to reach server. Please try again.' : err.message);
         return;
       }
-    }
-
-    // Local fallback (offline or demo-only users)
-    if (localMatch) {
-      setError('');
-      login(localMatch);
-      return;
     }
 
     if (digitsOnly.length < 10 && !uClean) {
@@ -166,21 +158,10 @@ export const AuthPage = () => {
         );
         return;
       }
+      setError('Authentication failed. Please try again.');
     } catch (err) {
-      if (err.message && !err.message.includes('offline') && !err.message.includes('Failed to fetch')) {
-        setError(err.message);
-        return;
-      }
-      const isInitialSeed = passClean === 'tempPassword123!' || passClean === 'admin123';
-      const isPasswordValid = found.password ? (found.password === passClean || isInitialSeed) : isInitialSeed;
-      if (!isPasswordValid) {
-        setError('Incorrect administrator password. Please try again.');
-        return;
-      }
+      setError(err?.message || 'Incorrect administrator password or server unreachable. Please try again.');
     }
-
-    setError('');
-    login(found);
   };
 
   // ===================== 4. SIGN UP: STEP 1 (DETAILS) =====================

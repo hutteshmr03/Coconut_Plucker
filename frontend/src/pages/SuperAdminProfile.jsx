@@ -108,7 +108,7 @@ export const SuperAdminProfile = () => {
     }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordError('');
     setPasswordSuccess('');
@@ -136,7 +136,7 @@ export const SuperAdminProfile = () => {
     setIsSavingPassword(true);
     try {
       const fn = changeAccountPassword || changeSuperAdminPassword;
-      fn(currentPassword, newPassword);
+      await fn(currentPassword, newPassword);
       setPasswordSuccess('Super Admin password successfully updated! Please use your new password for all future logins.');
       setCurrentPassword('');
       setNewPassword('');

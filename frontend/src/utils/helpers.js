@@ -167,13 +167,7 @@ export const getTalukaDayConfig = (talukaName, bookingType = 'standard', customS
     };
   }
 
-  let sched = customScheduling;
-  if (!sched) {
-    try {
-      const saved = localStorage.getItem('paddeli_state_v1_scheduling');
-      if (saved) sched = JSON.parse(saved);
-    } catch {}
-  }
+  const sched = customScheduling;
 
   const clean = (talukaName || '').toLowerCase();
   let days = [];

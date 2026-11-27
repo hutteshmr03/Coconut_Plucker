@@ -92,9 +92,7 @@ export const RazorpayPaymentModal = ({
     if (e) e.preventDefault();
     setError('');
 
-    const activeKey =
-      import.meta.env.VITE_RAZORPAY_KEY_ID ||
-      localStorage.getItem('cp_razorpay_key_id');
+    const activeKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
     if (activeKey) {
       try {

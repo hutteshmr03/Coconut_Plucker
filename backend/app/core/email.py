@@ -1,3 +1,4 @@
+import html
 import smtplib
 import logging
 from datetime import datetime
@@ -12,22 +13,24 @@ logger = logging.getLogger("paddeli.email")
 
 def format_booking_email_html(b: Dict[str, Any]) -> str:
     """Generate a clean, modern, responsive HTML email for booking notifications."""
-    order_id = b.get("order_id") or b.get("booking_id", "N/A")
-    customer_name = b.get("customer_name") or "Valued Customer"
-    customer_phone = b.get("customer_phone") or "N/A"
-    service_name = b.get("service_name") or "Coconut Harvesting"
-    tree_count = b.get("tree_count", 1)
-    height_category = b.get("height_category") or "Standard"
-    taluka = b.get("taluka") or "North Goa"
-    address = b.get("address") or "Goa"
-    scheduled_at = b.get("scheduled_at") or "As Scheduled"
+    order_id = html.escape(str(b.get("order_id") or b.get("booking_id", "N/A")))
+    customer_name = html.escape(str(b.get("customer_name") or "Valued Customer"))
+    customer_phone_raw = str(b.get("customer_phone") or "N/A")
+    customer_phone = html.escape(customer_phone_raw)
+    customer_phone_href = html.escape("".join(c for c in customer_phone_raw if c.isdigit() or c == "+"))
+    service_name = html.escape(str(b.get("service_name") or "Coconut Harvesting"))
+    tree_count = int(b.get("tree_count", 1) or 1)
+    height_category = html.escape(str(b.get("height_category") or "Standard"))
+    taluka = html.escape(str(b.get("taluka") or "North Goa"))
+    address = html.escape(str(b.get("address") or "Goa"))
+    scheduled_at = html.escape(str(b.get("scheduled_at") or "As Scheduled"))
     booking_type = (b.get("booking_type") or "standard").lower()
     is_urgent = booking_type == "urgent"
     quote_amount = float(b.get("quote_amount", 0.0))
-    payment_method = b.get("payment_method") or "UPI"
-    payment_status = b.get("payment_status") or "Paid"
-    hazard_notes = b.get("hazard_notes") or b.get("notes") or ""
-    created_at = b.get("created_at") or datetime.now().strftime("%d %b %Y, %I:%M %p")
+    payment_method = html.escape(str(b.get("payment_method") or "UPI"))
+    payment_status = html.escape(str(b.get("payment_status") or "Paid"))
+    hazard_notes = html.escape(str(b.get("hazard_notes") or b.get("notes") or ""))
+    created_at = html.escape(str(b.get("created_at") or datetime.now().strftime("%d %b %Y, %I:%M %p")))
 
     badge_bg = "#dc2626" if is_urgent else "#059669"
     badge_text = "⚡ URGENT EMERGENCY BOOKING" if is_urgent else "✓ CONFIRMED BOOKING"
@@ -105,7 +108,7 @@ def format_booking_email_html(b: Dict[str, Any]) -> str:
                                 <tr>
                                     <td style="padding: 10px 14px; font-weight: 600; color: #4b5563; border-bottom: 1px solid #f3f4f6;">Mobile Number</td>
                                     <td style="padding: 10px 14px; border-bottom: 1px solid #f3f4f6;">
-                                        <a href="tel:{customer_phone}" style="color: #059669; font-weight: 700; text-decoration: none; font-size: 15px;">{customer_phone}</a>
+                                        <a href="tel:{customer_phone_href}" style="color: #059669; font-weight: 700; text-decoration: none; font-size: 15px;">{customer_phone}</a>
                                     </td>
                                 </tr>
                                 <tr>

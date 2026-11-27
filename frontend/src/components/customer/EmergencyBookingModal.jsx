@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import { bookingsAPI } from '../../services/api';
+import { launchRazorpayCheckout } from '../../services/razorpay';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -75,7 +77,55 @@ export const EmergencyBookingModal = ({ isOpen, onClose, onSuccess }) => {
     };
 
     try {
-      addBooking(payload);
+      const orderRes = await bookingsAPI.createRazorpayOrder({
+        service_id: payload.service_id,
+        service_name: selectedService?.name || 'Urgent Tree Service',
+        tree_count: payload.tree_count,
+        booking_type: 'urgent'
+      });
+
+      const activeKey = orderRes?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (orderRes?.mode === 'razorpay' && activeKey && orderRes?.order_id) {
+        await launchRazorpayCheckout({
+          amount: totalAmount,
+          orderId: orderRes.order_id,
+          serviceName: `${selectedService?.name || 'Urgent Dispatch'} (${payload.tree_count})`,
+          customerName: currentUser?.full_name || '',
+          customerPhone: currentUser?.phone || '',
+          customerEmail: currentUser?.email || '',
+          key: activeKey,
+          onSuccess: async (paymentRecord) => {
+            try {
+              await addBooking({
+                ...payload,
+                razorpay_payment_id: paymentRecord?.payment_id,
+                razorpay_order_id: paymentRecord?.order_id,
+                razorpay_signature: paymentRecord?.signature,
+                payment_id: paymentRecord?.payment_id,
+                payment_method: paymentRecord?.payment_method || 'Razorpay Online'
+              });
+              setIsDispatched(true);
+              setTimeout(() => {
+                setIsDispatched(false);
+                setIsSubmitting(false);
+                onClose();
+                if (onSuccess) onSuccess();
+              }, 1500);
+            } catch (bookErr) {
+              setError(bookErr.message || 'Failed to confirm emergency booking after payment');
+              setIsSubmitting(false);
+            }
+          },
+          onDismiss: () => setIsSubmitting(false),
+          onError: (errMsg) => {
+            setError(errMsg || 'Payment failed for emergency dispatch');
+            setIsSubmitting(false);
+          }
+        });
+        return;
+      }
+
+      await addBooking(payload);
       setIsDispatched(true);
       setTimeout(() => {
         setIsDispatched(false);

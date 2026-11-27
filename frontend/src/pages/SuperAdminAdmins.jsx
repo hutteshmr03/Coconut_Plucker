@@ -39,7 +39,7 @@ export const SuperAdminAdmins = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [taluka, setTaluka] = useState('All Talukas');
-  const [password, setPassword] = useState('admin123');
+  const [password, setPassword] = useState('');
 
   const filteredAdmins = adminAccounts.filter((admin) => {
     if (!searchQuery.trim()) return true;
@@ -61,11 +61,15 @@ export const SuperAdminAdmins = () => {
       const cleanPhone = (rawDigits.length === 12 && rawDigits.startsWith('91')) ? rawDigits.slice(-10) : rawDigits;
       if (!cleanPhone || cleanPhone.length !== 10) throw new Error('Please enter a valid 10-digit mobile number.');
 
+      if (!password.trim() || password.trim().length < 6) {
+        throw new Error('Please set an initial password of at least 6 characters.');
+      }
+
       await createAdminAccount({
         full_name: name.trim(),
         phone: cleanPhone,
         taluka,
-        password: password.trim() || 'admin123'
+        password: password.trim()
       });
 
       setSuccessMessage(`Admin account for "${name}" created successfully!`);
@@ -75,7 +79,7 @@ export const SuperAdminAdmins = () => {
       setName('');
       setPhone('');
       setTaluka('All Talukas');
-      setPassword('admin123');
+      setPassword('');
       setIsCreateModalOpen(false);
     } catch (err) {
       setErrorMessage(err.message || 'Failed to create admin account.');
@@ -403,11 +407,11 @@ export const SuperAdminAdmins = () => {
           <Input
             label="Initial Password"
             type="password"
-            placeholder="Temporary password"
+            placeholder="Minimum 6 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            hint="Default: admin123"
+            hint="Required (minimum 6 characters)"
           />
         </form>
       </Modal>

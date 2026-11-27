@@ -4,10 +4,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.audit import record_audit_log
-from app.core.security import decode_access_token, pwd_context
+from app.core.security import create_access_token, decode_access_token, pwd_context
 from app.models.user import User
 from app.models.audit_log import AuditLog
 from app.schemas.auth import UserOut
@@ -37,7 +38,7 @@ class CreateAdminRequest(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     taluka: Optional[str] = "All Talukas"
-    password: Optional[str] = "admin123"
+    password: str = Field(..., min_length=6)
 
 class StatusUpdateRequest(BaseModel):
     status: str # 'active' | 'deactivated'
@@ -63,7 +64,7 @@ def create_admin(req: CreateAdminRequest, db: Session = Depends(get_db)):
         full_name=req.full_name,
         role="admin",
         status="active",
-        password_hash=pwd_context.hash(req.password or "admin123")
+        password_hash=pwd_context.hash(req.password.strip())
     )
     db.add(admin)
     db.commit()
@@ -133,7 +134,7 @@ def change_password(req: PasswordChangeRequest, db: Session = Depends(get_db)):
     is_valid = False
     if sa.password_hash:
         is_valid = pwd_context.verify(req.current_password, sa.password_hash)
-    elif req.current_password in ["tempPassword123!", "Super@Admin2026!"]:
+    elif settings.DEFAULT_SUPER_ADMIN_PASSWORD and req.current_password == settings.DEFAULT_SUPER_ADMIN_PASSWORD:
         is_valid = True
 
     if not is_valid:
@@ -167,10 +168,14 @@ def super_admin_login(data: dict, db: Session = Depends(get_db)):
     password = data.get("password", "").strip()
     sa = db.query(User).filter(User.role == "super_admin").first()
     if sa and username in ["superadmin", "9999900000"]:
-        ok = pwd_context.verify(password, sa.password_hash) if sa.password_hash else (password in ["tempPassword123!", "Super@Admin2026!"])
+        ok = (
+            pwd_context.verify(password, sa.password_hash)
+            if sa.password_hash
+            else (bool(settings.DEFAULT_SUPER_ADMIN_PASSWORD) and password == settings.DEFAULT_SUPER_ADMIN_PASSWORD)
+        )
         if ok:
             return {
-                "access_token": "token_super_admin_jwt_mock",
+                "access_token": create_access_token(subject=str(sa.id), role="super_admin"),
                 "token_type": "bearer",
                 "user": format_user_out(sa, db)
             }

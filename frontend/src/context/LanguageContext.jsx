@@ -36,7 +36,7 @@ export const TRANSLATIONS = {
     auth_admin_user_label: 'Administrator Mobile Number or Username',
     auth_admin_user_placeholder: 'e.g. 984253XXX4, admin, or superadmin',
     auth_admin_pass_label: 'Password',
-    auth_admin_pass_placeholder: 'Enter password (e.g. admin123 or tempPassword123!)',
+    auth_admin_pass_placeholder: 'Enter administrator password',
     auth_btn_admin_login: 'Log In as Administrator',
     
     // Sign Up
@@ -193,7 +193,7 @@ export const TRANSLATIONS = {
     auth_admin_user_label: 'एडमिन मोबाइल नंबर या यूज़रनेम',
     auth_admin_user_placeholder: 'उदा. 984253XXX4, admin, या superadmin',
     auth_admin_pass_label: 'पासवर्ड',
-    auth_admin_pass_placeholder: 'पासवर्ड दर्ज करें (उदा. admin123)',
+    auth_admin_pass_placeholder: 'पासवर्ड दर्ज करें',
     auth_btn_admin_login: 'एडमिनिस्ट्रेटर के रूप में लॉग इन करें',
 
     // Sign Up
@@ -350,7 +350,7 @@ export const TRANSLATIONS = {
     auth_admin_user_label: 'अ‍ॅडमिन मोबाइल नंबर किंवा युझरनेम',
     auth_admin_user_placeholder: 'उदा. 984253XXX4, admin, किंवा superadmin',
     auth_admin_pass_label: 'पासवर्ड',
-    auth_admin_pass_placeholder: 'पासवर्ड प्रविष्ट करा (उदा. admin123)',
+    auth_admin_pass_placeholder: 'पासवर्ड प्रविष्ट करा',
     auth_btn_admin_login: 'व्यवस्थापक म्हणून लॉग इन करा',
 
     // Sign Up

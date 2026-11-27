@@ -30,11 +30,12 @@ export async function launchRazorpayCheckout({
   customerPhone = '',
   customerEmail = '',
   key = null,
+  orderId = null,
   onSuccess,
   onDismiss,
   onError
 }) {
-  const activeKey = key || import.meta.env.VITE_RAZORPAY_KEY_ID || localStorage.getItem('cp_razorpay_key_id');
+  const activeKey = key || import.meta.env.VITE_RAZORPAY_KEY_ID;
 
   if (!activeKey) {
     throw new Error('NO_KEY');
@@ -51,9 +52,10 @@ export async function launchRazorpayCheckout({
     key: activeKey,
     amount: numAmount,
     currency: 'INR',
+    ...(orderId ? { order_id: orderId } : {}),
     name: 'Paddeli',
     description: serviceName || 'Skilled Height Work On Demand',
-    image: '/assets/logo.png',
+    image: '/logo.png',
     prefill: {
       name: customerName || '',
       contact: customerPhone ? String(customerPhone).replace(/\D/g, '').slice(-10) : '',

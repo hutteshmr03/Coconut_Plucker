@@ -10,7 +10,7 @@ from app.models.booking import Booking
 from app.models.professional import ProfessionalProfile
 from app.models.service import ProfessionalSkill
 from app.schemas.auth import UserOut, UserUpdate
-from app.routers.auth import format_user_out, get_optional_user
+from app.routers.auth import format_user_out, require_professional
 
 router = APIRouter(prefix="/professionals", tags=["Professionals"])
 
@@ -19,23 +19,18 @@ class SkillsUpdate(BaseModel):
 
 @router.get("/me", response_model=UserOut)
 def get_professional_me(
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: User = Depends(require_professional),
     db: Session = Depends(get_db)
 ):
-    user = current_user if (current_user and current_user.role == "professional") else db.query(User).filter(User.role == "professional").first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Professional not found")
-    return format_user_out(user, db)
+    return format_user_out(current_user, db)
 
 @router.put("/me", response_model=UserOut)
 def update_professional_me(
     req: UserUpdate,
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: User = Depends(require_professional),
     db: Session = Depends(get_db)
 ):
-    user = current_user if (current_user and current_user.role == "professional") else db.query(User).filter(User.role == "professional").first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Professional not found")
+    user = current_user
 
     if req.full_name is not None:
         user.full_name = req.full_name
@@ -76,12 +71,10 @@ def update_professional_me(
 @router.put("/me/skills")
 def update_professional_skills(
     req: SkillsUpdate,
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: User = Depends(require_professional),
     db: Session = Depends(get_db)
 ):
-    user = current_user if (current_user and current_user.role == "professional") else db.query(User).filter(User.role == "professional").first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Professional not found")
+    user = current_user
 
     # Clear existing skills and add selected
     db.query(ProfessionalSkill).filter(ProfessionalSkill.professional_id == user.id).delete()
@@ -115,13 +108,15 @@ def _is_customer_data_expired(booking: Booking) -> bool:
 
 @router.get("/me/bookings")
 def get_professional_bookings(
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: User = Depends(require_professional),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Booking).options(joinedload(Booking.service), joinedload(Booking.customer), joinedload(Booking.payment))
-    if current_user and current_user.role == "professional":
-        query = query.filter(Booking.professional_id == current_user.id)
-    bookings = query.all()
+    bookings = (
+        db.query(Booking)
+        .options(joinedload(Booking.service), joinedload(Booking.customer), joinedload(Booking.payment))
+        .filter(Booking.professional_id == current_user.id)
+        .all()
+    )
     results = []
     for b in bookings:
         expired = _is_customer_data_expired(b)
@@ -153,7 +148,11 @@ def get_professional_bookings(
     return results
 
 @router.post("/me/bookings/{booking_id}/start")
-def start_booking(booking_id: str, db: Session = Depends(get_db)):
+def start_booking(
+    booking_id: str,
+    current_user: User = Depends(require_professional),
+    db: Session = Depends(get_db)
+):
     try:
         bid = uuid.UUID(booking_id)
         booking = db.query(Booking).filter(Booking.id == bid).first()
@@ -161,13 +160,19 @@ def start_booking(booking_id: str, db: Session = Depends(get_db)):
         booking = None
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.professional_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this booking")
 
     booking.status = "in_progress"
     db.commit()
     return {"success": True, "status": "in_progress", "message": "Job marked as in progress"}
 
 @router.post("/me/bookings/{booking_id}/complete")
-def complete_booking(booking_id: str, db: Session = Depends(get_db)):
+def complete_booking(
+    booking_id: str,
+    current_user: User = Depends(require_professional),
+    db: Session = Depends(get_db)
+):
     try:
         bid = uuid.UUID(booking_id)
         booking = db.query(Booking).filter(Booking.id == bid).first()
@@ -175,6 +180,8 @@ def complete_booking(booking_id: str, db: Session = Depends(get_db)):
         booking = None
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.professional_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this booking")
 
     now_utc = datetime.now(timezone.utc)
     booking.status = "completed"
@@ -189,14 +196,20 @@ def complete_booking(booking_id: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/me/bookings/{booking_id}")
-def get_professional_booking_detail(booking_id: str, db: Session = Depends(get_db)):
+def get_professional_booking_detail(
+    booking_id: str,
+    current_user: User = Depends(require_professional),
+    db: Session = Depends(get_db)
+):
     try:
         bid = uuid.UUID(booking_id)
         booking = db.query(Booking).filter(Booking.id == bid).first()
     except Exception:
-        booking = db.query(Booking).first()
+        booking = None
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.professional_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this booking")
 
     expired = _is_customer_data_expired(booking)
     return {

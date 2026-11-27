@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 from pydantic import BaseModel, Field
 import uuid
 
@@ -39,6 +39,8 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     taluka: Optional[str] = None
     address: Optional[str] = None
+    addresses: Optional[List[str]] = None
+    addresses_by_taluka: Optional[Dict[str, List[str]]] = None
     experience_years: Optional[int] = None
     safety_cert: Optional[str] = None
     insurance_cover: Optional[bool] = None
@@ -56,6 +58,8 @@ class UserOut(BaseModel):
     email: Optional[str] = None
     taluka: Optional[str] = None
     address: Optional[str] = None
+    addresses: Optional[List[str]] = None
+    addresses_by_taluka: Optional[Dict[str, List[str]]] = None
     experience_years: Optional[int] = None
     safety_cert: Optional[str] = None
     insurance_cover: Optional[bool] = None

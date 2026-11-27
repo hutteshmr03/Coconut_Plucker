@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -5,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.audit import record_audit_log
 from app.core.security import create_access_token, decode_access_token, pwd_context
@@ -29,13 +31,58 @@ def get_optional_user(
         return None
     try:
         uid = uuid.UUID(str(payload["sub"]))
-        return db.query(User).filter(User.id == uid).first()
+        user = db.query(User).filter(User.id == uid).first()
+        if user and user.status == "deactivated":
+            return None
+        return user
     except Exception:
         return None
+
+
+def require_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(auth_bearer),
+    db: Session = Depends(get_db)
+) -> User:
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    payload = decode_access_token(credentials.credentials)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    try:
+        uid = uuid.UUID(str(payload["sub"]))
+        user = db.query(User).filter(User.id == uid).first()
+    except Exception:
+        user = None
+    if not user:
+        raise HTTPException(status_code=401, detail="User account not found")
+    if user.status == "deactivated":
+        raise HTTPException(status_code=403, detail="Account has been deactivated")
+    return user
+
+
+def require_customer(current_user: User = Depends(require_user)) -> User:
+    if current_user.role != "customer":
+        raise HTTPException(status_code=403, detail="Customer privileges required")
+    return current_user
+
+
+def require_professional(current_user: User = Depends(require_user)) -> User:
+    if current_user.role != "professional":
+        raise HTTPException(status_code=403, detail="Professional privileges required")
+    return current_user
+
+
+def require_admin_user(current_user: User = Depends(require_user)) -> User:
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return current_user
+
 
 def format_user_out(user: User, db: Session) -> UserOut:
     taluka = None
     address = None
+    addresses = None
+    addresses_by_taluka = None
     exp_years = None
     safety_cert = None
     insurance_cover = None
@@ -46,6 +93,14 @@ def format_user_out(user: User, db: Session) -> UserOut:
     if user.role == "customer" and user.customer_profile:
         taluka = user.customer_profile.taluka
         address = user.customer_profile.address
+        if user.customer_profile.addresses_json:
+            try:
+                parsed = json.loads(user.customer_profile.addresses_json)
+                if isinstance(parsed, dict):
+                    addresses = parsed.get("addresses")
+                    addresses_by_taluka = parsed.get("addresses_by_taluka")
+            except Exception:
+                pass
     elif user.role == "professional" and user.professional_profile:
         taluka = user.professional_profile.taluka
         exp_years = user.professional_profile.experience_years
@@ -65,6 +120,8 @@ def format_user_out(user: User, db: Session) -> UserOut:
         email=f"{user.phone}@coconutplucker.com",
         taluka=taluka,
         address=address,
+        addresses=addresses,
+        addresses_by_taluka=addresses_by_taluka,
         experience_years=exp_years,
         safety_cert=safety_cert,
         insurance_cover=insurance_cover,
@@ -143,19 +200,18 @@ def verify_otp(req: OTPVerify, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=TokenResponse)
 def register_user(req: UserRegister, db: Session = Depends(get_db)):
+    if req.role not in ("customer", "professional"):
+        raise HTTPException(status_code=403, detail="Administrator accounts cannot be self-registered.")
+
     raw_digits = "".join(filter(str.isdigit, req.phone))
     phone_clean = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
-    
-    # Check if already registered
+    if len(phone_clean) != 10:
+        raise HTTPException(status_code=400, detail="Valid 10-digit mobile phone number is required.")
+
+    # Reject duplicate phone instead of issuing an unauthorized token for an existing user
     existing = db.query(User).filter(User.phone == phone_clean).first()
     if existing:
-        # If already exists, return existing user with token
-        token = create_access_token(subject=str(existing.id), role=existing.role)
-        return TokenResponse(
-            access_token=token,
-            token_type="bearer",
-            user=format_user_out(existing, db)
-        )
+        raise HTTPException(status_code=400, detail="Mobile phone number is already registered. Please log in.")
 
     user_status = "pending_verification" if req.role == "professional" else "active"
     
@@ -224,30 +280,29 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
         user = db.query(User).filter(User.phone.in_(candidates)).first()
 
     if not user:
-        # Match Super Admin or Admin by role/username if requested
+        # Match Super Admin or Admin by role/username and bootstrap only if configured in environment
         if ident in ("superadmin", "super_admin"):
             user = db.query(User).filter(User.role == "super_admin").first()
-            if not user:
-                # Seed super admin in DB
+            if not user and settings.DEFAULT_SUPER_ADMIN_PASSWORD:
                 user = User(
                     phone="9999900000",
                     full_name="Chief Platform Admin",
                     role="super_admin",
                     status="active",
-                    password_hash=pwd_context.hash("tempPassword123!")
+                    password_hash=pwd_context.hash(settings.DEFAULT_SUPER_ADMIN_PASSWORD)
                 )
                 db.add(user)
                 db.commit()
                 db.refresh(user)
         elif ident in ("admin", "9800000001", "9999000000"):
             user = db.query(User).filter(User.role == "admin").first()
-            if not user:
+            if not user and settings.DEFAULT_ADMIN_PASSWORD:
                 user = User(
                     phone="9800000001",
                     full_name="Goa Operations Admin",
                     role="admin",
                     status="active",
-                    password_hash=pwd_context.hash("admin123")
+                    password_hash=pwd_context.hash(settings.DEFAULT_ADMIN_PASSWORD)
                 )
                 db.add(user)
                 db.commit()
@@ -268,16 +323,14 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
                 is_valid = pwd_context.verify(req.password, user.password_hash)
             except Exception:
                 is_valid = False
-        else:
-            # Initial onboarding fallback only when no password_hash is stored yet
-            if user.role == "super_admin" and req.password in ("tempPassword123!", "Super@Admin2026!"):
-                is_valid = True
-                user.password_hash = pwd_context.hash(req.password)
-                db.commit()
-            elif user.role == "admin" and req.password == "admin123":
-                is_valid = True
-                user.password_hash = pwd_context.hash(req.password)
-                db.commit()
+        elif user.role == "super_admin" and settings.DEFAULT_SUPER_ADMIN_PASSWORD and req.password == settings.DEFAULT_SUPER_ADMIN_PASSWORD:
+            is_valid = True
+            user.password_hash = pwd_context.hash(req.password)
+            db.commit()
+        elif user.role == "admin" and settings.DEFAULT_ADMIN_PASSWORD and req.password == settings.DEFAULT_ADMIN_PASSWORD:
+            is_valid = True
+            user.password_hash = pwd_context.hash(req.password)
+            db.commit()
         if not is_valid:
             raise HTTPException(status_code=401, detail="Incorrect password. Please try again.")
 
@@ -298,13 +351,10 @@ def login_user(req: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def get_current_user_profile(
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: User = Depends(require_user),
     db: Session = Depends(get_db)
 ):
-    user = current_user or db.query(User).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return format_user_out(user, db)
+    return format_user_out(current_user, db)
 
 
 class ProfileSelfUpdate(BaseModel):
@@ -353,9 +403,9 @@ def change_own_password(
     is_valid = False
     if current_user.password_hash:
         is_valid = pwd_context.verify(req.current_password, current_user.password_hash)
-    elif current_user.role == "super_admin" and req.current_password in ("tempPassword123!", "Super@Admin2026!"):
+    elif current_user.role == "super_admin" and settings.DEFAULT_SUPER_ADMIN_PASSWORD and req.current_password == settings.DEFAULT_SUPER_ADMIN_PASSWORD:
         is_valid = True
-    elif current_user.role == "admin" and req.current_password == "admin123":
+    elif current_user.role == "admin" and settings.DEFAULT_ADMIN_PASSWORD and req.current_password == settings.DEFAULT_ADMIN_PASSWORD:
         is_valid = True
     if not is_valid:
         raise HTTPException(status_code=400, detail="Current password does not match.")

@@ -219,6 +219,8 @@ export const BookingWizard = ({ onComplete }) => {
 
   // Modals state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
   const [thankYouBooking, setThankYouBooking] = useState(null);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
 
@@ -241,12 +243,30 @@ export const BookingWizard = ({ onComplete }) => {
 
   const activeService = services.find((s) => s.id === selectedServiceId) || services[0];
 
-  // Backend calculation contract: Request quote from backend API only when service is selected
+  // Dynamic calculation for multi-service cart (matching backend 20% urgent surcharge)
+  const currentItems = serviceCart.length > 0 ? serviceCart : (activeService ? [{
+    serviceId: activeService.id,
+    serviceName: activeService.name,
+    icon: activeService.icon,
+    base_rate: Number(activeService.base_rate || 0),
+    unit: activeService.unit,
+    treeCount: Math.max(1, Number(treeCount || 1)),
+    heightCategory: isHeightCategoryRequired ? heightCategory : null,
+    requires_height_category: isHeightCategoryRequired
+  }] : []);
+
+  const totalBase = Math.round(
+    currentItems.reduce((acc, item) => acc + (Number(item.base_rate || 0) * Math.max(1, Number(item.treeCount || 1))), 0) * 100
+  ) / 100;
+  const localSurcharge = bookingType === 'urgent' ? Math.round(totalBase * 0.20 * 100) / 100 : 0;
+  const totalTreeCount = currentItems.reduce((acc, item) => acc + Math.max(1, Number(item.treeCount || 1)), 0);
+
+  // Backend calculation contract: Request authoritative quote from backend API
   useEffect(() => {
     let isMounted = true;
-    if (selectedServiceId && activeService && step > 1) {
+    if (selectedServiceId && activeService && step > 1 && currentItems.length > 0) {
       bookingsAPI
-        .calculateQuote(activeService.id, activeService.base_rate, treeCount, bookingType)
+        .calculateQuote(activeService.id, activeService.base_rate, totalTreeCount, bookingType, currentItems)
         .then((res) => {
           if (isMounted && res) {
             setQuoteData(res);
@@ -259,7 +279,7 @@ export const BookingWizard = ({ onComplete }) => {
     return () => {
       isMounted = false;
     };
-  }, [selectedServiceId, activeService?.id, activeService?.base_rate, treeCount, bookingType, step]);
+  }, [selectedServiceId, activeService?.id, activeService?.base_rate, treeCount, bookingType, step, serviceCart.length, totalBase]);
 
   // Section B.3: Fetch server-driven availability on scheduling steps
   useEffect(() => {
@@ -371,34 +391,35 @@ export const BookingWizard = ({ onComplete }) => {
     return Object.keys(errs).length === 0;
   };
 
-  // Dynamic calculation for multi-service cart
-  const currentItems = serviceCart.length > 0 ? serviceCart : [{
-    serviceId: activeService.id,
-    serviceName: activeService.name,
-    icon: activeService.icon,
-    base_rate: Number(activeService.base_rate || 0),
-    unit: activeService.unit,
-    treeCount: Math.max(1, Number(treeCount || 1)),
-    heightCategory: isHeightCategoryRequired ? heightCategory : null,
-    requires_height_category: isHeightCategoryRequired
-  }];
+  const displayBase = quoteData?.base_amount > 0 ? Number(quoteData.base_amount) : totalBase;
+  const surchargeAmount = bookingType === 'urgent'
+    ? (quoteData?.surcharge_amount > 0 ? Number(quoteData.surcharge_amount) : localSurcharge)
+    : 0;
+  const totalAmount = quoteData?.quote_amount > 0
+    ? Number(quoteData.quote_amount)
+    : Math.round((displayBase + surchargeAmount) * 100) / 100;
 
-  const totalBase = currentItems.reduce((acc, item) => acc + (Number(item.base_rate || 0) * Math.max(1, Number(item.treeCount || 1))), 0);
-  const totalAmount = totalBase;
-  const totalTreeCount = currentItems.reduce((acc, item) => acc + Math.max(1, Number(item.treeCount || 1)), 0);
-
-  // Upfront Payment Gateway Flow (Razorpay)
+  // Upfront Payment Gateway Flow (Razorpay with server-side Order creation)
   const handleOpenPayment = async (e) => {
     if (e) e.preventDefault();
+    setPaymentError('');
+    setIsProcessingPayment(true);
 
-    const activeKey =
-      import.meta.env.VITE_RAZORPAY_KEY_ID ||
-      localStorage.getItem('cp_razorpay_key_id');
+    try {
+      const orderRes = await bookingsAPI.createRazorpayOrder({
+        service_id: currentItems[0].serviceId,
+        service_name: currentItems.map((i) => i.serviceName).join(' + '),
+        services: currentItems,
+        tree_count: totalTreeCount,
+        booking_type: bookingType
+      });
 
-    if (activeKey) {
-      try {
+      const activeKey = orderRes?.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+
+      if (orderRes?.mode === 'razorpay' && activeKey && orderRes?.order_id) {
         await launchRazorpayCheckout({
           amount: totalAmount,
+          orderId: orderRes.order_id,
           serviceName: currentItems.map((i) => `${i.serviceName} (${i.treeCount})`).join(', '),
           customerName: currentUser?.full_name || '',
           customerPhone: currentUser?.phone || '',
@@ -407,21 +428,35 @@ export const BookingWizard = ({ onComplete }) => {
           onSuccess: (paymentRecord) => {
             handlePaymentSuccess(paymentRecord);
           },
+          onDismiss: () => {
+            setIsProcessingPayment(false);
+          },
           onError: (errMsg) => {
-            console.warn('Razorpay checkout error:', errMsg);
-            setIsPaymentModalOpen(true);
+            setIsProcessingPayment(false);
+            const msg = errMsg || 'Payment could not be completed. Please try again.';
+            setPaymentError(msg);
+            if (showToast) showToast(msg, 'error');
           }
         });
         return;
-      } catch (err) {
-        console.warn('Razorpay launch fallback:', err);
       }
-    }
 
-    setIsPaymentModalOpen(true);
+      if (orderRes?.mode === 'dev_simulated' && !import.meta.env.VITE_RAZORPAY_KEY_ID) {
+        setIsProcessingPayment(false);
+        setIsPaymentModalOpen(true);
+        return;
+      }
+
+      throw new Error('Payment gateway could not be initialized. Please try again.');
+    } catch (err) {
+      setIsProcessingPayment(false);
+      const msg = err?.message || 'Unable to start payment. Please check your connection and try again.';
+      setPaymentError(msg);
+      if (showToast) showToast(msg, 'error');
+    }
   };
 
-  const handlePaymentSuccess = (paymentRecord) => {
+  const handlePaymentSuccess = async (paymentRecord) => {
     const scheduledAt = `${scheduledDate}T09:00:00Z`;
     const finalAmount = totalAmount;
 
@@ -437,29 +472,42 @@ export const BookingWizard = ({ onComplete }) => {
       tree_photo: treePhoto,
       scheduled_at: scheduledAt,
       booking_type: bookingType,
-      base_amount: totalBase,
-      surcharge_amount: 0,
+      base_amount: displayBase,
+      surcharge_amount: surchargeAmount,
       gst_amount: 0,
       quote_amount: finalAmount,
       actual_amount: finalAmount,
-      payment_status: 'paid',
-      payment_id: paymentRecord?.payment_id || `pay_rzp_${Date.now().toString(36)}`,
+      payment_status: 'pending',
+      payment_id: paymentRecord?.payment_id || null,
+      razorpay_payment_id: paymentRecord?.payment_id || null,
+      razorpay_order_id: paymentRecord?.order_id || null,
+      razorpay_signature: paymentRecord?.signature || null,
       payment_method: paymentRecord?.payment_method || 'UPI (Razorpay)',
       gateway: 'Razorpay',
       paid_at: paymentRecord?.paid_at || new Date().toISOString()
     };
 
-    addBooking(bookingPayload);
-    setIsPaymentModalOpen(false);
-    setSelectedServiceForBooking(null);
-    setServiceCart([]);
-    setThankYouBooking({
-      serviceName: bookingPayload.service_name,
-      treeCount: bookingPayload.tree_count,
-      taluka: bookingPayload.taluka,
-      scheduledDate,
-      amount: finalAmount
-    });
+    try {
+      await addBooking(bookingPayload);
+      setIsProcessingPayment(false);
+      setIsPaymentModalOpen(false);
+      setPaymentError('');
+      setSelectedServiceForBooking(null);
+      setServiceCart([]);
+      setThankYouBooking({
+        serviceName: bookingPayload.service_name,
+        treeCount: bookingPayload.tree_count,
+        taluka: bookingPayload.taluka,
+        scheduledDate,
+        amount: finalAmount
+      });
+    } catch (err) {
+      setIsProcessingPayment(false);
+      setIsPaymentModalOpen(false);
+      const msg = err?.message || 'Booking could not be confirmed after payment. Please contact support.';
+      setPaymentError(msg);
+      if (showToast) showToast(msg, 'error');
+    }
   };
 
   const handleCloseThankYou = () => {
@@ -1714,8 +1762,14 @@ export const BookingWizard = ({ onComplete }) => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)' }}>
                 <span>Items Subtotal:</span>
-                <span>₹{totalBase.toFixed(2)}</span>
+                <span>₹{displayBase.toFixed(2)}</span>
               </div>
+              {surchargeAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#B45309', fontWeight: '600' }}>
+                  <span>Urgent / Same-Day Surcharge (+20%):</span>
+                  <span>+₹{surchargeAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -1731,6 +1785,21 @@ export const BookingWizard = ({ onComplete }) => {
               </div>
             </div>
           </div>
+
+          {paymentError && (
+            <div style={{
+              marginTop: '14px',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              color: '#991B1B',
+              fontSize: '13px',
+              fontWeight: '600'
+            }}>
+              {paymentError}
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
             <Button

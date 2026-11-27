@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_CUSTOMERS, INITIAL_PROFESSIONALS } from '../services/mockData';
 import { authAPI, superAdminAPI } from '../services/api';
 import { getDisplayName } from '../utils/helpers';
 
@@ -37,66 +36,19 @@ const DEFAULT_USERS = [
 ];
 
 export const AuthProvider = ({ children }) => {
-  // Registered user accounts database with Super Admin singleton guarantee
-  const [registeredUsers, setRegisteredUsers] = useState(() => {
-    const saved = localStorage.getItem('cp_registered_users_v6');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Ensure singleton Super Admin exists and exactly one exists
-        const superAdmins = parsed.filter((u) => u.role === 'super_admin' || u.username === 'superadmin');
-        let cleanList = parsed.filter((u) => u.role !== 'super_admin' && u.username !== 'superadmin');
-        
-        if (superAdmins.length === 0) {
-          cleanList.push(SUPER_ADMIN_USER);
-        } else {
-          // Keep the existing super admin account with its password/reset state
-          cleanList.push({
-            ...SUPER_ADMIN_USER,
-            ...superAdmins[0],
-            full_name:
-              superAdmins[0].full_name === 'Chief Platform Administrator'
-                ? 'Chief Platform Admin'
-                : (superAdmins[0].full_name || 'Chief Platform Admin'),
-            role: 'super_admin'
-          });
-        }
+  // In-memory account list hydrated from backend for admin/super-admin views (no PII or credentials in localStorage)
+  const [registeredUsers, setRegisteredUsers] = useState(DEFAULT_USERS);
 
-        const hasAdmin = cleanList.some((u) => u.role === 'admin' || u.username === 'admin');
-        if (!hasAdmin) {
-          cleanList.push(ADMIN_USER);
-        }
-
-        cleanList = cleanList.map((u) => {
-          if (u.role === 'admin' && u.email) {
-            const { email, ...rest } = u;
-            return rest;
-          }
-          return u;
-        });
-
-        return cleanList;
-      } catch (err) {
-        return DEFAULT_USERS;
-      }
-    }
-    return DEFAULT_USERS;
-  });
-
-  // Current session (prefer tab-isolated sessionStorage so multi-tab roles don't overwrite each other)
+  // Tab-isolated sessionStorage only (never persist tokens or personal data in localStorage)
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = sessionStorage.getItem('cp_auth_user') || localStorage.getItem('cp_auth_user');
+      localStorage.removeItem('cp_auth_user');
+      localStorage.removeItem('cp_auth_token');
+      localStorage.removeItem('cp_registered_users_v6');
+      localStorage.removeItem('cp_razorpay_key_id');
+      const saved = sessionStorage.getItem('cp_auth_user');
       if (!saved || saved === 'undefined' || saved === 'null') return null;
       const parsed = JSON.parse(saved);
-      // Clean up legacy mock sessions
-      if (parsed?.id === 'cus_001' || parsed?.id === 'wrk_001' || parsed?.phone?.startsWith('98221') || parsed?.phone?.startsWith('98222')) {
-        sessionStorage.removeItem('cp_auth_user');
-        sessionStorage.removeItem('cp_auth_token');
-        localStorage.removeItem('cp_auth_user');
-        localStorage.removeItem('cp_auth_token');
-        return null;
-      }
       if (parsed?.role === 'super_admin' && parsed?.full_name === 'Chief Platform Administrator') {
         parsed.full_name = 'Chief Platform Admin';
       }
@@ -107,29 +59,18 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [token, setToken] = useState(() => {
-    return sessionStorage.getItem('cp_auth_token') || localStorage.getItem('cp_auth_token') || null;
+    return sessionStorage.getItem('cp_auth_token') || null;
   });
 
   useEffect(() => {
     try {
-      localStorage.setItem('cp_registered_users_v6', JSON.stringify(registeredUsers));
-    } catch (e) {
-      console.warn('Could not save registered users to localStorage (quota exceeded):', e);
-    }
-  }, [registeredUsers]);
-
-  useEffect(() => {
-    try {
       if (currentUser) {
-        const serialized = JSON.stringify(currentUser);
-        sessionStorage.setItem('cp_auth_user', serialized);
-        localStorage.setItem('cp_auth_user', serialized);
+        sessionStorage.setItem('cp_auth_user', JSON.stringify(currentUser));
       } else {
         sessionStorage.removeItem('cp_auth_user');
-        localStorage.removeItem('cp_auth_user');
       }
     } catch (e) {
-      console.warn('Could not save current user to storage:', e);
+      console.warn('Could not save current user to sessionStorage:', e);
     }
   }, [currentUser]);
 
@@ -137,19 +78,17 @@ export const AuthProvider = ({ children }) => {
     try {
       if (token) {
         sessionStorage.setItem('cp_auth_token', token);
-        localStorage.setItem('cp_auth_token', token);
       } else {
         sessionStorage.removeItem('cp_auth_token');
-        localStorage.removeItem('cp_auth_token');
       }
     } catch (e) {
-      console.warn('Could not save auth token to storage:', e);
+      console.warn('Could not save auth token to sessionStorage:', e);
     }
   }, [token]);
 
   // Sync Super Admin's adminAccounts list from live MySQL backend
   useEffect(() => {
-    if (currentUser?.role === 'super_admin' && token && !String(token).startsWith('token_')) {
+    if (currentUser?.role === 'super_admin' && token) {
       superAdminAPI
         .getAdmins()
         .then((remoteAdmins) => {
@@ -164,19 +103,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, [currentUser?.role, currentUser?.id, token]);
 
-  const login = (user, authToken = 'token_' + Date.now()) => {
-    const finalToken = authToken || ('token_' + Date.now());
+  const login = (user, authToken = null) => {
     try {
-      const serialized = JSON.stringify(user);
-      sessionStorage.setItem('cp_auth_user', serialized);
-      sessionStorage.setItem('cp_auth_token', finalToken);
-      localStorage.setItem('cp_auth_user', serialized);
-      localStorage.setItem('cp_auth_token', finalToken);
+      sessionStorage.setItem('cp_auth_user', JSON.stringify(user));
+      if (authToken) {
+        sessionStorage.setItem('cp_auth_token', authToken);
+      }
     } catch (e) {
       console.warn('Could not persist login session:', e);
     }
     setCurrentUser(user);
-    setToken(finalToken);
+    if (authToken) {
+      setToken(authToken);
+    }
     if (user?.id) {
       setRegisteredUsers((prev) => {
         const exists = prev.some(
@@ -195,50 +134,27 @@ export const AuthProvider = ({ children }) => {
   };
 
   const registerUser = async (newUserData) => {
-    // Hard constraint: Cannot register or create another Super Admin through client UI
-    if (newUserData.role === 'super_admin') {
-      throw new Error('Super Admin accounts cannot be created via the registration portal.');
+    // Hard constraint: Cannot register or create Admin / Super Admin through client UI
+    if (newUserData.role === 'super_admin' || newUserData.role === 'admin') {
+      throw new Error('Administrator accounts cannot be created via public registration.');
     }
 
-    const userId = (newUserData.role === 'professional' ? 'wrk_' : 'cus_') + Date.now().toString(36);
-    let user = {
-      id: userId,
-      status: newUserData.role === 'professional' ? 'pending_verification' : 'active',
-      created_at: new Date().toISOString(),
-      ...newUserData
-    };
-    let authToken = null;
-
-    try {
-      const backendRes = await authAPI.register(newUserData);
-      if (backendRes?.user) {
-        user = {
-          ...user,
-          id: backendRes.user.id || user.id,
-          ...backendRes.user
-        };
-      }
-      if (backendRes?.access_token) {
-        authToken = backendRes.access_token;
-      }
-    } catch (err) {
-      console.warn('[Backend] Register fallback:', err.message);
+    const backendRes = await authAPI.register(newUserData);
+    if (!backendRes?.user || !backendRes?.access_token) {
+      throw new Error('Registration did not return a valid server session.');
     }
-
+    const user = backendRes.user;
     setRegisteredUsers((prev) => [...prev, user]);
-    login(user, authToken || undefined);
+    login(user, backendRes.access_token);
     return user;
   };
 
   const updateCurrentUser = (updates) => {
-    let updatedUserObj = null;
     setCurrentUser((prev) => {
       if (!prev) return null;
-      updatedUserObj = { ...prev, ...updates };
+      const updatedUserObj = { ...prev, ...updates };
       try {
-        const serialized = JSON.stringify(updatedUserObj);
-        sessionStorage.setItem('cp_auth_user', serialized);
-        localStorage.setItem('cp_auth_user', serialized);
+        sessionStorage.setItem('cp_auth_user', JSON.stringify(updatedUserObj));
       } catch (e) {
         console.warn('Could not save cp_auth_user:', e);
       }
@@ -259,7 +175,7 @@ export const AuthProvider = ({ children }) => {
       const targetUsername = currentUser?.username ? currentUser.username.toLowerCase() : '';
       const targetId = currentUser?.id;
 
-      const updatedList = prev.map((u) => {
+      return prev.map((u) => {
         const uPhone = u.phone ? u.phone.replace(/\D/g, '') : '';
         const uUsername = u.username ? u.username.toLowerCase() : '';
         const isMatch = (targetId && u.id === targetId) ||
@@ -267,13 +183,6 @@ export const AuthProvider = ({ children }) => {
                         (targetUsername && uUsername && targetUsername === uUsername);
         return isMatch ? { ...u, ...updates } : u;
       });
-
-      try {
-        localStorage.setItem('cp_registered_users_v6', JSON.stringify(updatedList));
-      } catch (e) {
-        console.warn('Could not save cp_registered_users_v6:', e);
-      }
-      return updatedList;
     });
   };
 
@@ -286,53 +195,41 @@ export const AuthProvider = ({ children }) => {
     const rawDigits = (adminData.phone || '').replace(/\D/g, '');
     const phoneClean = (rawDigits.length === 12 && rawDigits.startsWith('91')) ? rawDigits.slice(-10) : rawDigits;
     const usernameClean = (adminData.username || adminData.email || '').trim().toLowerCase();
+    const passwordClean = (adminData.password || '').trim();
 
-    // Check duplicate
+    if (!passwordClean || passwordClean.length < 6) {
+      throw new Error('An initial password of at least 6 characters is required.');
+    }
+
     const exists = registeredUsers.find(
       (u) => (u.phone && u.phone.replace(/\D/g, '') === phoneClean) ||
-             (u.username && u.username.toLowerCase() === usernameClean)
+             (u.username && usernameClean && u.username.toLowerCase() === usernameClean)
     );
 
     if (exists) {
       throw new Error(`An account with this phone number or User ID (${exists.phone || exists.username}) already exists.`);
     }
 
-    let createdAdmin = {
-      id: 'usr_adm_' + Date.now().toString(36),
-      username: usernameClean || phoneClean,
+    const created = await superAdminAPI.createAdmin({
       full_name: adminData.full_name.trim(),
       phone: phoneClean,
-      role: 'admin',
+      username: usernameClean || phoneClean,
       taluka: adminData.taluka || 'All Talukas',
-      password: adminData.password || 'admin123',
-      status: 'active',
-      created_at: new Date().toISOString()
-    };
-
-    // Persist new Admin to live MySQL backend before returning so admin can log in immediately
-    if (token && !String(token).startsWith('token_')) {
-      const created = await superAdminAPI.createAdmin({
-        full_name: createdAdmin.full_name,
-        phone: createdAdmin.phone,
-        username: createdAdmin.username,
-        taluka: createdAdmin.taluka,
-        password: createdAdmin.password
-      });
-      if (created?.id) {
-        createdAdmin = { ...createdAdmin, ...created };
-      }
-    }
-
-    setRegisteredUsers((prev) => {
-      const updated = [...prev, createdAdmin];
-      try {
-        localStorage.setItem('cp_registered_users_v6', JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not persist new admin to localStorage:', e);
-      }
-      return updated;
+      password: passwordClean
     });
 
+    const createdAdmin = {
+      id: created?.id || ('usr_adm_' + Date.now().toString(36)),
+      username: usernameClean || phoneClean,
+      full_name: created?.full_name || adminData.full_name.trim(),
+      phone: created?.phone || phoneClean,
+      role: 'admin',
+      taluka: created?.taluka || adminData.taluka || 'All Talukas',
+      status: created?.status || 'active',
+      created_at: created?.created_at || new Date().toISOString()
+    };
+
+    setRegisteredUsers((prev) => [...prev, createdAdmin]);
     return createdAdmin;
   };
 
@@ -372,15 +269,7 @@ export const AuthProvider = ({ children }) => {
       created_at: new Date().toISOString()
     };
 
-    setRegisteredUsers((prev) => {
-      const updated = [...prev, newProUser];
-      try {
-        localStorage.setItem('cp_registered_users_v6', JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Could not persist new professional to localStorage:', e);
-      }
-      return updated;
-    });
+    setRegisteredUsers((prev) => [...prev, newProUser]);
     return newProUser;
   };
 
@@ -434,8 +323,8 @@ export const AuthProvider = ({ children }) => {
     );
   };
 
-  // Admin & Super Admin: Profile Password Reset
-  const changeAccountPassword = (currentPassword, newPassword) => {
+  // Admin & Super Admin: Profile Password Reset (verified strictly server-side)
+  const changeAccountPassword = async (currentPassword, newPassword) => {
     if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'admin') {
       throw new Error('Unauthorized: Password change is only for Administrator profiles.');
     }
@@ -451,29 +340,12 @@ export const AuthProvider = ({ children }) => {
       throw new Error('New password must be different from current password.');
     }
 
-    const isMatch =
-      currentUser?.password === curClean ||
-      (currentUser?.role === 'super_admin' && (!currentUser?.password || currentUser?.must_reset_password) && ['tempPassword123!', 'Super@Admin2026!'].includes(curClean)) ||
-      (currentUser?.role === 'admin' && !currentUser?.password && !currentUser?.password_updated_at && curClean === 'admin123');
+    await authAPI.changePassword(curClean, newClean);
 
-    // If local state didn't cache plaintext password (e.g., logged in via live server JWT), let server verify & update
-    if (!isMatch && (!token || String(token).startsWith('token_'))) {
-      throw new Error('Current password does not match.');
-    }
-
-    if (token && !String(token).startsWith('token_')) {
-      authAPI
-        .changePassword(curClean, newClean)
-        .catch((err) => console.warn('[Backend] Password sync warning:', err.message));
-    }
-
-    const updates = {
-      password: newClean,
+    updateCurrentUser({
       must_reset_password: false,
       password_updated_at: new Date().toISOString()
-    };
-
-    updateCurrentUser(updates);
+    });
     return { success: true };
   };
 
@@ -486,6 +358,7 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.removeItem('cp_auth_token');
     localStorage.removeItem('cp_auth_user');
     localStorage.removeItem('cp_auth_token');
+    localStorage.removeItem('cp_registered_users_v6');
   };
 
   // List of all admins for Super Admin management
@@ -512,9 +385,7 @@ export const AuthProvider = ({ children }) => {
         changeAccountPassword,
         logout,
         SUPER_ADMIN_USER,
-        ADMIN_USER,
-        DEMO_CUSTOMERS: INITIAL_CUSTOMERS,
-        DEMO_PROFESSIONALS: INITIAL_PROFESSIONALS
+        ADMIN_USER
       }}
     >
       {children}

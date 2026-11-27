@@ -8,6 +8,7 @@ class CustomerProfile(Base):
 
     user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     address = Column(Text, nullable=True)
+    addresses_json = Column(Text, nullable=True)
     taluka = Column(String(80), nullable=False, index=True)
 
     # Relationships

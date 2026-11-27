@@ -114,7 +114,7 @@ export const AdminProfile = () => {
     }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordError('');
     setPasswordSuccess('');
@@ -141,7 +141,7 @@ export const AdminProfile = () => {
 
     setIsSavingPassword(true);
     try {
-      changeAccountPassword(currentPassword, newPassword);
+      await changeAccountPassword(currentPassword, newPassword);
       setPasswordSuccess('Password successfully updated! Use your new password for future logins.');
       setCurrentPassword('');
       setNewPassword('');

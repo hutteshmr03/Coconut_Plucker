@@ -61,6 +61,7 @@ def init_tables_safely():
                 "ALTER TABLE incidents ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
                 "ALTER TABLE professional_profiles ADD COLUMN insurance_cover TINYINT(1) DEFAULT 0",
                 "ALTER TABLE professional_profiles ADD COLUMN insurance_cover_img MEDIUMTEXT",
+                "ALTER TABLE customer_profiles ADD COLUMN addresses_json TEXT",
                 "UPDATE users SET full_name = 'Chief Platform Admin' WHERE role = 'super_admin' AND full_name = 'Chief Platform Administrator'",
                 "UPDATE audit_logs SET actor = REPLACE(actor, 'Chief Platform Administrator', 'Chief Platform Admin'), target = REPLACE(target, 'Chief Platform Administrator', 'Chief Platform Admin') WHERE actor LIKE '%Chief Platform Administrator%' OR target LIKE '%Chief Platform Administrator%'",
             ]

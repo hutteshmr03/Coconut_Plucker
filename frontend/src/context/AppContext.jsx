@@ -1,12 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import {
-  INITIAL_SERVICES,
-  INITIAL_CUSTOMERS,
-  INITIAL_PROFESSIONALS,
-  INITIAL_BOOKINGS,
-  INITIAL_INCIDENTS
-} from '../services/mockData';
+import { INITIAL_SERVICES } from '../services/mockData';
 import { normalizeTaluka } from '../utils/helpers';
 import {
   superAdminAPI,
@@ -20,8 +14,6 @@ import {
 export { normalizeTaluka };
 
 const AppContext = createContext();
-
-const STORAGE_KEY = "paddeli_state_v1";
 
 const sanitizeServicesList = (list) =>
   list
@@ -43,79 +35,12 @@ const sanitizeServicesList = (list) =>
 export const AppProvider = ({ children }) => {
   const { currentUser, role: authRole, token } = useAuth();
 
-  // Load saved state or use initial seed with strictly normalized talukas and verified service flags
-  const [services, setServices] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + "_services");
-      let list = saved ? JSON.parse(saved) : INITIAL_SERVICES;
-      if (!Array.isArray(list) || list.length === 0) list = INITIAL_SERVICES;
-      // Filter out legacy discontinued services
-      list = list.filter((s) => s.id !== 'svc_orchard' && s.id !== 'svc_waste');
-      // Sanitize icon so base64 strings never leak into icon text
-      list = list.map((s) => {
-        let cleanIcon = s.icon;
-        if (!cleanIcon || cleanIcon.startsWith('data:') || cleanIcon.length > 10) {
-          const defaultSvc = INITIAL_SERVICES.find((init) => init.id === s.id);
-          cleanIcon = defaultSvc?.icon || '🌴';
-        }
-        return {
-          ...s,
-          icon: cleanIcon,
-          image: s.image || (s.icon && s.icon.startsWith('data:image') ? s.icon : null) || s.image_url,
-          image_url: s.image_url || (s.icon && s.icon.startsWith('data:image') ? s.icon : null) || s.image
-        };
-      });
-      return list;
-    } catch {
-      return INITIAL_SERVICES;
-    }
-  });
-
-  const [customers, setCustomers] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + "_customers");
-      const list = saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
-      if (!Array.isArray(list)) return INITIAL_CUSTOMERS;
-      return list.map((c) => ({ ...c, taluka: normalizeTaluka(c?.taluka) }));
-    } catch {
-      return INITIAL_CUSTOMERS;
-    }
-  });
-
-  const [professionals, setProfessionals] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + "_pros");
-      const list = saved ? JSON.parse(saved) : INITIAL_PROFESSIONALS;
-      if (!Array.isArray(list)) return INITIAL_PROFESSIONALS;
-      return list.map((p) => ({ ...p, taluka: normalizeTaluka(p?.taluka) }));
-    } catch {
-      return INITIAL_PROFESSIONALS;
-    }
-  });
-
-  const [bookings, setBookings] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + "_bookings");
-      const list = saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
-      if (!Array.isArray(list)) return INITIAL_BOOKINGS;
-      return list
-        .filter((b) => b.id !== 'bkg_003' && b.booking_number !== 'CP-1003')
-        .map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) }));
-    } catch {
-      return INITIAL_BOOKINGS;
-    }
-  });
-
-  const [incidents, setIncidents] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + "_incidents");
-      const list = saved ? JSON.parse(saved) : INITIAL_INCIDENTS;
-      if (!Array.isArray(list)) return INITIAL_INCIDENTS;
-      return list;
-    } catch {
-      return INITIAL_INCIDENTS;
-    }
-  });
+  // Database-backed state (no PII or demo fallbacks persisted in localStorage)
+  const [services, setServices] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [incidents, setIncidents] = useState([]);
 
   const DEFAULT_SCHEDULING = {
     northDays: ['Monday', 'Tuesday', 'Wednesday'],
@@ -124,13 +49,7 @@ export const AppProvider = ({ children }) => {
     maxDailyBookings: 15
   };
 
-  const [schedulingConfig, setSchedulingConfig] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + "_scheduling");
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return DEFAULT_SCHEDULING;
-  });
+  const [schedulingConfig, setSchedulingConfig] = useState(DEFAULT_SCHEDULING);
 
   const [currentRole, setCurrentRole] = useState("customer"); // 'customer' | 'professional' | 'admin'
   const [currentCustomerId, setCurrentCustomerId] = useState(currentUser?.id || null);
@@ -169,62 +88,34 @@ export const AppProvider = ({ children }) => {
           return prev.map((p) => (p.id === currentUser.id ? { ...p, ...currentUser } : p));
         });
       }
+    } else {
+      setCustomers([]);
+      setProfessionals([]);
+      setBookings([]);
+      setIncidents([]);
+      setCurrentCustomerId(null);
+      setCurrentProfessionalId(null);
     }
   }, [currentUser]);
 
-  // Sync to local storage with defensive try/catch
+  // Purge any legacy localStorage state keys on mount
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY + "_services", JSON.stringify(services));
-    } catch (e) {
-      console.warn("Storage write failed for services:", e);
-    }
-  }, [services]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + "_customers", JSON.stringify(customers));
-    } catch (e) {
-      console.warn("Storage write failed for customers:", e);
-    }
-  }, [customers]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + "_pros", JSON.stringify(professionals));
-    } catch (e) {
-      console.warn("Storage write failed for pros:", e);
-    }
-  }, [professionals]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + "_bookings", JSON.stringify(bookings));
-    } catch (e) {
-      console.warn("Storage write failed for bookings:", e);
-    }
-  }, [bookings]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + "_incidents", JSON.stringify(incidents));
-    } catch (e) {
-      console.warn("Storage write failed for incidents:", e);
-    }
-  }, [incidents]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY + "_scheduling", JSON.stringify(schedulingConfig));
-    } catch (e) {
-      console.warn("Storage write failed for scheduling:", e);
-    }
-  }, [schedulingConfig]);
+      [
+        'paddeli_state_v1_services',
+        'paddeli_state_v1_customers',
+        'paddeli_state_v1_pros',
+        'paddeli_state_v1_bookings',
+        'paddeli_state_v1_incidents',
+        'paddeli_state_v1_scheduling'
+      ].forEach((k) => localStorage.removeItem(k));
+    } catch {}
+  }, []);
 
   // Hydrate live state from MySQL backend (nrlnxfke_paddeli) on load and role/login changes
   useEffect(() => {
     let cancelled = false;
-    const isRealJwt = Boolean(token && !String(token).startsWith('token_'));
+    const isRealJwt = Boolean(token);
 
     const loadFromBackend = async () => {
       // 1. Public/Admin service catalog & regional scheduling
@@ -233,11 +124,11 @@ export const AppProvider = ({ children }) => {
           ? servicesAPI.getAllServicesAdmin()
           : servicesAPI.getActiveServices();
         const remoteServices = await svcCall;
-        if (!cancelled && Array.isArray(remoteServices) && remoteServices.length > 0) {
+        if (!cancelled && Array.isArray(remoteServices)) {
           setServices(sanitizeServicesList(remoteServices));
         }
       } catch (e) {
-        console.warn('[Backend] Services fetch fallback:', e.message);
+        console.warn('[Backend] Services fetch failed:', e.message);
       }
 
       try {
@@ -251,13 +142,13 @@ export const AppProvider = ({ children }) => {
           });
         }
       } catch (e) {
-        console.warn('[Backend] Scheduling config fetch fallback:', e.message);
+        console.warn('[Backend] Scheduling config fetch failed:', e.message);
       }
 
-      if (!currentUser) return;
+      if (!currentUser || !isRealJwt) return;
 
       // 2. Role-specific live data from MySQL
-      if ((authRole === 'admin' || authRole === 'super_admin') && isRealJwt) {
+      if (authRole === 'admin' || authRole === 'super_admin') {
         const [bkRes, custRes, proRes, incRes] = await Promise.allSettled([
           adminAPI.getAllBookings(),
           adminAPI.getCustomers(),
@@ -277,16 +168,23 @@ export const AppProvider = ({ children }) => {
         if (incRes.status === 'fulfilled' && Array.isArray(incRes.value)) {
           setIncidents(incRes.value);
         }
-      } else if (authRole === 'customer' && isRealJwt) {
-        try {
-          const myBk = await bookingsAPI.getMyBookings();
-          if (!cancelled && Array.isArray(myBk)) {
-            setBookings(myBk.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) })));
-          }
-        } catch (e) {
-          console.warn('[Backend] Customer bookings fetch fallback:', e.message);
+      } else if (authRole === 'customer') {
+        const [bkRes, profileRes] = await Promise.allSettled([
+          bookingsAPI.getMyBookings(),
+          customerAPI.getProfile()
+        ]);
+        if (cancelled) return;
+        if (bkRes.status === 'fulfilled' && Array.isArray(bkRes.value)) {
+          setBookings(bkRes.value.map((b) => ({ ...b, taluka: normalizeTaluka(b?.taluka) })));
         }
-      } else if (authRole === 'professional' && isRealJwt) {
+        if (profileRes.status === 'fulfilled' && profileRes.value?.id) {
+          const prof = { ...profileRes.value, taluka: normalizeTaluka(profileRes.value.taluka) };
+          setCustomers((prev) => {
+            const exists = prev.some((c) => c.id === prof.id);
+            return exists ? prev.map((c) => (c.id === prof.id ? { ...c, ...prof } : c)) : [...prev, prof];
+          });
+        }
+      } else if (authRole === 'professional') {
         try {
           const proBk = await professionalAPI.getMyBookings();
           if (!cancelled && Array.isArray(proBk)) {
@@ -352,77 +250,54 @@ export const AppProvider = ({ children }) => {
   const currentProfessional = professionals.find((p) => p.id === currentProfessionalId) || professionals[0] || null;
 
   // Actions
-  const addBooking = (bookingData) => {
-    const newId = "bkg_" + Date.now().toString(36);
-    const bookingNumber = "CP-" + (1000 + bookings.length + 1);
+  const addBooking = async (bookingData) => {
     const isUrgent = bookingData.booking_type === 'urgent';
-    const quoteAmt = Number(bookingData.quote_amount || 0);
     const resolvedCustId = bookingData.customer_id || currentUser?.id || currentCustomerId;
-    const newBooking = {
-      id: newId,
-      booking_number: bookingNumber,
-      customer_id: resolvedCustId,
-      professional_id: null,
-      status: "requested",
+    const custObj = customers.find((c) => c.id === resolvedCustId) || currentUser;
+    const custName = custObj?.full_name || custObj?.name || currentUser?.full_name || currentUser?.name || 'Customer';
+    const custPhone = custObj?.phone || currentUser?.phone || 'N/A';
+    const svcName = bookingData.service_name || (services.find((s) => s.id === bookingData.service_id)?.name) || 'Coconut Harvesting';
+
+    const created = await bookingsAPI.createBooking({
+      customer_id: resolvedCustId ? String(resolvedCustId) : undefined,
+      customer_name: custName,
+      customer_phone: custPhone,
+      service_id: bookingData.service_id ? String(bookingData.service_id) : undefined,
+      service_name: svcName,
+      services: bookingData.services,
+      booking_number: bookingData.booking_number,
+      tree_count: Number(bookingData.tree_count || 1),
+      height_category: bookingData.height_category || null,
+      taluka: bookingData.taluka || 'North Goa',
+      address: bookingData.address || 'Goa',
+      scheduled_at: bookingData.scheduled_at || new Date().toISOString(),
       booking_type: bookingData.booking_type || 'standard',
-      call_confirmed: !isUrgent, // Urgent bookings require Admin confirmation call before assignment
-      base_amount: Number(bookingData.base_amount || bookingData.quote_amount),
-      surcharge_amount: Number(bookingData.surcharge_amount || 0),
-      quote_amount: quoteAmt,
-      actual_amount: bookingData.actual_amount || quoteAmt,
-      payment_status: bookingData.payment_status || "paid",
-      payment_method: bookingData.payment_method || "UPI",
-      paid_at: bookingData.paid_at || new Date().toISOString(),
-      rating: null,
-      comment: null,
-      created_at: new Date().toISOString(),
-      ...bookingData
+      payment_method: bookingData.payment_method || 'UPI',
+      payment_id: bookingData.payment_id || null,
+      razorpay_payment_id: bookingData.razorpay_payment_id || null,
+      razorpay_order_id: bookingData.razorpay_order_id || null,
+      razorpay_signature: bookingData.razorpay_signature || null,
+      hazard_notes: bookingData.hazard_notes || '',
+      tree_photo: bookingData.tree_photo || null
+    });
+
+    const normalizedBooking = {
+      ...bookingData,
+      ...created,
+      taluka: normalizeTaluka(created?.taluka || bookingData.taluka)
     };
-    setBookings((prev) => [newBooking, ...prev]);
+    const quoteAmt = Number(normalizedBooking.quote_amount || bookingData.quote_amount || 0);
+    const bNum = normalizedBooking.booking_number || 'New';
+
+    setBookings((prev) => [normalizedBooking, ...prev]);
     showToast(
       isUrgent
-        ? `⚡ Payment of ₹${quoteAmt.toFixed(2)} received! Urgent Booking ${bookingNumber} placed (Awaiting Admin confirmation call).`
-        : `💳 Payment of ₹${quoteAmt.toFixed(2)} confirmed! Booking ${bookingNumber} placed successfully.`,
+        ? `⚡ Payment of ₹${quoteAmt.toFixed(2)} received! Urgent Booking ${bNum} placed (Awaiting Admin confirmation call).`
+        : `💳 Payment of ₹${quoteAmt.toFixed(2)} confirmed! Booking ${bNum} placed successfully.`,
       isUrgent ? "warning" : "success"
     );
 
-    // Asynchronously notify backend API and dispatch booking notification email to contact@paddeli.com
-    try {
-      const custObj = customers.find((c) => c.id === resolvedCustId) || currentUser;
-      const custName = custObj?.full_name || custObj?.name || currentUser?.full_name || currentUser?.name || 'Customer';
-      const custPhone = custObj?.phone || currentUser?.phone || 'N/A';
-      const svcName = bookingData.service_name || (services.find((s) => s.id === bookingData.service_id)?.name) || 'Coconut Harvesting';
-
-      bookingsAPI.createBooking({
-        customer_id: resolvedCustId ? String(resolvedCustId) : undefined,
-        customer_name: custName,
-        customer_phone: custPhone,
-        service_id: String(bookingData.service_id || 'svc_coconut'),
-        service_name: svcName,
-        booking_number: bookingNumber,
-        tree_count: Number(bookingData.tree_count || 1),
-        height_category: bookingData.height_category || null,
-        taluka: bookingData.taluka || 'North Goa',
-        address: bookingData.address || 'Goa',
-        scheduled_at: bookingData.scheduled_at || new Date().toISOString(),
-        booking_type: bookingData.booking_type || 'standard',
-        payment_method: bookingData.payment_method || 'UPI',
-        hazard_notes: bookingData.hazard_notes || '',
-        tree_photo: bookingData.tree_photo || null
-      }).then((created) => {
-        if (created?.id) {
-          setBookings((prev) =>
-            prev.map((b) => (b.id === newId ? { ...b, ...created, taluka: normalizeTaluka(created.taluka) } : b))
-          );
-        }
-      }).catch((err) => {
-        console.warn('Backend booking sync warning:', err);
-      });
-    } catch (e) {
-      console.warn('Backend booking dispatch error:', e);
-    }
-
-    return newBooking;
+    return normalizedBooking;
   };
 
   const confirmBookingCall = (bookingId, custObj) => {
@@ -697,10 +572,17 @@ export const AppProvider = ({ children }) => {
         full_name: profileData.full_name,
         phone: profileData.phone,
         taluka: profileData.taluka,
-        address: profileData.address
+        address: profileData.address,
+        ...(Array.isArray(profileData.addresses) ? { addresses: profileData.addresses } : {}),
+        ...(profileData.addresses_by_taluka ? { addresses_by_taluka: profileData.addresses_by_taluka } : {})
       })
-      .catch((err) => console.warn('[Backend] Update customer profile sync:', err.message));
-    showToast("Profile updated successfully", "success");
+      .then(() => {
+        showToast("Profile updated successfully", "success");
+      })
+      .catch((err) => {
+        console.warn('[Backend] Update customer profile sync:', err.message);
+        showToast(err?.message || "Failed to save profile to server.", "error");
+      });
   };
 
   const updateProfessionalProfile = (profileData) => {

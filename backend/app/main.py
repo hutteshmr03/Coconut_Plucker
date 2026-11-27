@@ -128,13 +128,21 @@ def serve_spa_fallback(full_path: str):
         raise HTTPException(status_code=404, detail="Endpoint not found")
 
     if FRONTEND_DIR:
+        # Block dotfiles (e.g., .env, .htaccess, .git) and enforce strict path containment
+        if clean_path and any(part.startswith(".") for part in clean_path.split("/") if part):
+            raise HTTPException(status_code=404, detail="Not found")
+
+        base_real = os.path.realpath(FRONTEND_DIR)
+        file_real = os.path.realpath(os.path.join(base_real, clean_path))
+        if not (file_real == base_real or file_real.startswith(base_real + os.sep)):
+            raise HTTPException(status_code=403, detail="Access denied")
+
         # Check if requested path is a real file (e.g., logo.png, manifest.json, sw.js)
-        file_path = os.path.join(FRONTEND_DIR, clean_path)
-        if os.path.isfile(file_path):
-            return FileResponse(file_path)
+        if os.path.isfile(file_real):
+            return FileResponse(file_real)
 
         # Never serve index.html for missing static assets
-        if clean_path.startswith("assets/") or clean_path.endswith((".js", ".css", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp", ".woff2")):
+        if clean_path.startswith("assets/") or clean_path.endswith((".js", ".css", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp", ".woff2", ".env")):
             raise HTTPException(status_code=404, detail="Asset not found")
 
         # Fallback to index.html for React Router SPA routes (e.g. /customer, /admin)

@@ -1,6 +1,13 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
+
+os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("DEFAULT_ADMIN_PASSWORD", "test-adm-secret-1")
+os.environ.setdefault("DEFAULT_SUPER_ADMIN_PASSWORD", "test-sa-secret-2")
+
 from app.main import app
+
 
 @pytest.fixture(scope="module")
 def client():
@@ -36,14 +43,17 @@ def test_user_registration_without_username_or_password(client):
     assert data["user"]["taluka"] == "South Goa"
 
 def test_admin_login_with_username_and_phone(client):
+    adm_pw = os.environ["DEFAULT_ADMIN_PASSWORD"]
+    sa_pw = os.environ["DEFAULT_SUPER_ADMIN_PASSWORD"]
+
     # Test login as admin
-    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    res = client.post("/api/auth/login", json={"username": "admin", "password": adm_pw})
     assert res.status_code == 200
     data = res.json()
     assert data["user"]["role"] == "admin"
 
     # Test login as superadmin
-    res_sa = client.post("/api/auth/login", json={"username": "superadmin", "password": "tempPassword123!"})
+    res_sa = client.post("/api/auth/login", json={"username": "superadmin", "password": sa_pw})
     assert res_sa.status_code == 200
     data_sa = res_sa.json()
     assert data_sa["user"]["role"] == "super_admin"
@@ -72,13 +82,16 @@ def test_regional_scheduling_and_availability(client):
 
 def test_super_admin_admin_provisioning_without_email(client):
     import time
+    sa_pw = os.environ["DEFAULT_SUPER_ADMIN_PASSWORD"]
+    sa_token = client.post("/api/auth/login", json={"username": "superadmin", "password": sa_pw}).json()["access_token"]
+    headers = {"Authorization": f"Bearer {sa_token}"}
+
     test_phone = f"98{int(time.time()) % 100000000:08d}"
-    # Provision new admin without email
-    res = client.post("/api/super-admin/admins", json={
+    res = client.post("/api/super-admin/admins", headers=headers, json={
         "full_name": "Test Regional Admin",
         "phone": test_phone,
         "taluka": "South Goa",
-        "password": "admin123"
+        "password": "TestAdminPass#99"
     })
     assert res.status_code == 200
     data = res.json()
@@ -86,8 +99,12 @@ def test_super_admin_admin_provisioning_without_email(client):
     assert data["role"] == "admin"
 
 def test_scheduling_config_endpoints(client):
+    sa_pw = os.environ["DEFAULT_SUPER_ADMIN_PASSWORD"]
+    sa_token = client.post("/api/auth/login", json={"username": "superadmin", "password": sa_pw}).json()["access_token"]
+    headers = {"Authorization": f"Bearer {sa_token}"}
+
     # Get active config
-    res = client.get("/api/super-admin/scheduling-config")
+    res = client.get("/api/super-admin/scheduling-config", headers=headers)
     assert res.status_code == 200
     data = res.json()
     assert "north_days" in data
@@ -95,7 +112,7 @@ def test_scheduling_config_endpoints(client):
     assert "kushavati_days" in data
 
     # Update active config
-    res_update = client.put("/api/super-admin/scheduling-config", json={
+    res_update = client.put("/api/super-admin/scheduling-config", headers=headers, json={
         "north_days": ["Monday", "Tuesday", "Wednesday"],
         "south_days": ["Wednesday", "Thursday", "Friday"],
         "kushavati_days": ["Saturday"],
