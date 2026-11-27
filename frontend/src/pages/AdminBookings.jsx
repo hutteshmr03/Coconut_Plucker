@@ -283,7 +283,7 @@ export const AdminBookings = () => {
                             icon={UserPlus}
                             onClick={() => setAssigningBooking(b)}
                           >
-                            Assign Pro
+                            Assign Job
                           </Button>
                         )
                       ) : (
@@ -481,7 +481,7 @@ export const AdminBookings = () => {
                         className="btn-block"
                         onClick={() => setAssigningBooking(b)}
                       >
-                        Assign Pro
+                        Assign Job
                       </Button>
                     )
                   ) : (

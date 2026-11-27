@@ -154,6 +154,45 @@ def create_professional_admin(data: dict, db: Session = Depends(get_db)):
     return format_user_out(user, db)
 
 
+@router.delete("/professionals/{pro_id}")
+def delete_professional_admin(pro_id: str, db: Session = Depends(get_db)):
+    try:
+        pid = uuid.UUID(pro_id)
+        user = db.query(User).filter(User.id == pid, User.role == "professional").first()
+    except Exception:
+        user = None
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Professional account not found")
+
+    target_label = f"{user.full_name} ({user.phone})"
+
+    # Detach active or historical references cleanly before removing account
+    db.query(Booking).filter(
+        Booking.professional_id == pid,
+        Booking.status == "assigned"
+    ).update({Booking.professional_id: None, Booking.status: "requested"}, synchronize_session=False)
+    db.query(Booking).filter(Booking.professional_id == pid).update(
+        {Booking.professional_id: None}, synchronize_session=False
+    )
+    db.query(Incident).filter(Incident.reported_by == pid).update(
+        {Incident.reported_by: None}, synchronize_session=False
+    )
+    db.query(ProfessionalSkill).filter(ProfessionalSkill.professional_id == pid).delete(synchronize_session=False)
+    db.query(ProfessionalProfile).filter(ProfessionalProfile.user_id == pid).delete(synchronize_session=False)
+    db.delete(user)
+    db.commit()
+
+    record_audit_log(
+        db,
+        actor="Platform Administrator",
+        action="Deleted Professional Account",
+        target=target_label,
+        details="Professional climber account permanently removed from workforce."
+    )
+    return {"success": True, "message": "Professional deleted successfully"}
+
+
 @router.get("/bookings")
 def get_all_bookings(db: Session = Depends(get_db)):
     bookings = db.query(Booking).options(

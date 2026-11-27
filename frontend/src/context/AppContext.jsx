@@ -636,6 +636,26 @@ export const AppProvider = ({ children }) => {
     return newPro;
   };
 
+  const deleteProfessional = async (proId) => {
+    if (!proId) return;
+    setProfessionals((prev) => prev.filter((p) => p.id !== proId));
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.professional_id === proId
+          ? { ...b, professional_id: null, status: b.status === 'assigned' ? 'requested' : b.status }
+          : b
+      )
+    );
+    if (!String(proId).startsWith('wrk_')) {
+      try {
+        await adminAPI.deleteProfessional(proId);
+      } catch (err) {
+        console.warn('[Backend] Delete professional sync:', err.message);
+      }
+    }
+    showToast("Professional removed from workforce.", "success");
+  };
+
   const addIncident = (incidentData) => {
     const tempId = "inc_" + Date.now().toString(36);
     const newIncident = {
@@ -737,6 +757,7 @@ export const AppProvider = ({ children }) => {
         deleteService,
         verifyProfessional,
         addProfessional,
+        deleteProfessional,
         addIncident,
         resolveIncident,
         updateCustomerProfile,

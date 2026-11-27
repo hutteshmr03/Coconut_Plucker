@@ -164,7 +164,7 @@ export const AdminDashboard = () => {
                             size="sm"
                             onClick={() => setCurrentView('adm-bookings')}
                           >
-                            Assign Pro
+                            Assign Job
                           </Button>
                         )}
                       </div>

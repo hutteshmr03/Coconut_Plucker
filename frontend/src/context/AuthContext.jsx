@@ -419,6 +419,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteProfessionalAccount = (proId, proPhone) => {
+    const cleanPhone = proPhone ? String(proPhone).replace(/\D/g, '') : '';
+    setRegisteredUsers((prev) =>
+      prev.filter((u) => {
+        if (u.role !== 'professional') return true;
+        if (proId && u.id === proId) return false;
+        if (cleanPhone && u.phone && u.phone.replace(/\D/g, '') === cleanPhone) return false;
+        return true;
+      })
+    );
+  };
+
   // Admin & Super Admin: Profile Password Reset
   const changeAccountPassword = (currentPassword, newPassword) => {
     if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'admin') {
@@ -492,6 +504,7 @@ export const AuthProvider = ({ children }) => {
         createProfessionalAccount,
         toggleAdminStatus,
         deleteAdminAccount,
+        deleteProfessionalAccount,
         changeSuperAdminPassword,
         changeAccountPassword,
         logout,

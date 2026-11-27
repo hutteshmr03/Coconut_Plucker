@@ -4,17 +4,19 @@ import { useAuth } from '../context/AuthContext';
 import { getDisplayName } from '../utils/helpers';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
 import { VerificationModal } from '../components/admin/VerificationModal';
 import { CreateProfessionalModal } from '../components/admin/CreateProfessionalModal';
-import { Search, UserCheck, Phone, UserPlus } from 'lucide-react';
+import { Search, UserCheck, Phone, UserPlus, Trash2 } from 'lucide-react';
 
 export const AdminWorkforce = () => {
-  const { professionals, services, verifyProfessional, addProfessional } = useApp();
-  const { createProfessionalAccount } = useAuth();
+  const { professionals, services, verifyProfessional, addProfessional, deleteProfessional } = useApp();
+  const { createProfessionalAccount, deleteProfessionalAccount } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [verifyingPro, setVerifyingPro] = useState(null);
+  const [deletingPro, setDeletingPro] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleCreateProfessional = async (formData) => {
@@ -22,6 +24,13 @@ export const AdminWorkforce = () => {
     const authUser = createProfessionalAccount(formData);
     // 2. Add to active workforce list in AppContext
     addProfessional({ ...formData, id: authUser.id });
+  };
+
+  const handleConfirmDeletePro = async () => {
+    if (!deletingPro) return;
+    deleteProfessionalAccount(deletingPro.id, deletingPro.phone);
+    await deleteProfessional(deletingPro.id);
+    setDeletingPro(null);
   };
 
   const filteredPros = professionals.filter((p) => {
@@ -129,24 +138,35 @@ export const AdminWorkforce = () => {
                   <StatusBadge status={pro.status} />
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  {pro.status === 'pending_verification' ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon={UserCheck}
-                      onClick={() => setVerifyingPro(pro)}
+                  <div className="row-actions" style={{ alignItems: 'center' }}>
+                    {pro.status === 'pending_verification' ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={UserCheck}
+                        onClick={() => setVerifyingPro(pro)}
+                      >
+                        Review & Verify
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setVerifyingPro(pro)}
+                      >
+                        Inspect Profile
+                      </Button>
+                    )}
+                    <button
+                      type="button"
+                      className="icon-btn del"
+                      title="Delete Professional"
+                      aria-label={`Delete ${getDisplayName(pro)}`}
+                      onClick={() => setDeletingPro(pro)}
                     >
-                      Review & Verify
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setVerifyingPro(pro)}
-                    >
-                      Inspect Profile
-                    </Button>
-                  )}
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -201,13 +221,14 @@ export const AdminWorkforce = () => {
               </div>
             )}
 
-            <div className="pro-mobile-card-footer">
+            <div className="pro-mobile-card-footer" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {pro.status === 'pending_verification' ? (
                 <Button
                   variant="primary"
                   size="sm"
                   icon={UserCheck}
                   className="btn-block"
+                  style={{ flex: 1 }}
                   onClick={() => setVerifyingPro(pro)}
                 >
                   Review & Verify
@@ -217,11 +238,21 @@ export const AdminWorkforce = () => {
                   variant="outline"
                   size="sm"
                   className="btn-block"
+                  style={{ flex: 1 }}
                   onClick={() => setVerifyingPro(pro)}
                 >
                   Inspect Profile
                 </Button>
               )}
+              <Button
+                variant="danger"
+                size="sm"
+                icon={Trash2}
+                onClick={() => setDeletingPro(pro)}
+                title="Delete Professional"
+              >
+                Delete
+              </Button>
             </div>
           </div>
         ))}
@@ -241,6 +272,30 @@ export const AdminWorkforce = () => {
         services={services}
         onDecision={verifyProfessional}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deletingPro}
+        onClose={() => setDeletingPro(null)}
+        title="Delete Professional Account Permanently?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeletingPro(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" icon={Trash2} onClick={handleConfirmDeletePro}>
+              Delete Permanently
+            </Button>
+          </>
+        }
+      >
+        <p style={{ fontSize: '13.5px', color: 'var(--ink)' }}>
+          Are you sure you want to permanently delete <b>{getDisplayName(deletingPro)}</b> ({deletingPro?.phone}) from Professional Workforce?
+        </p>
+        <p style={{ marginTop: '10px', fontSize: '12px', color: 'var(--danger)', fontWeight: '600' }}>
+          ⚠️ This action cannot be undone. Any unstarted assigned bookings for this climber will return to Pending Assignment.
+        </p>
+      </Modal>
 
       {/* Onboard / Create Professional Modal */}
       <CreateProfessionalModal

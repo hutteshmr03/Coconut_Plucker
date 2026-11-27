@@ -301,6 +301,7 @@ export const adminAPI = {
   getProfessionals: () => request('/admin/professionals', { noCache: true }),
   createProfessional: (data) => request('/admin/professionals', { method: 'POST', body: JSON.stringify(data) }),
   verifyProfessional: (id, decision, reason) => request(`/admin/professionals/${id}/verify`, { method: 'POST', body: JSON.stringify({ decision, reason }) }),
+  deleteProfessional: (id) => request(`/admin/professionals/${id}`, { method: 'DELETE' }),
   getAllBookings: () => request('/admin/bookings', { noCache: true }),
   confirmBookingCall: (id) => request(`/admin/bookings/${id}/confirm-call`, { method: 'POST' }),
   assignBooking: (id, professionalId) => request(`/admin/bookings/${id}/assign`, { method: 'POST', body: JSON.stringify({ professional_id: professionalId }) }),
