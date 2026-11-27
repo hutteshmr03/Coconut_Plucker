@@ -105,8 +105,8 @@ export const RazorpayPaymentModal = ({
           key: activeKey,
           onSuccess: (paymentRecord) => {
             setIsProcessing(false);
-            setIsSuccess(true);
-            setCompletedRecord(paymentRecord);
+            onClose();
+            if (onPaymentSuccess) onPaymentSuccess(paymentRecord);
           },
           onError: (errMsg) => {
             setIsProcessing(false);
@@ -148,7 +148,6 @@ export const RazorpayPaymentModal = ({
 
     setTimeout(() => {
       setIsProcessing(false);
-      setIsSuccess(true);
 
       const paymentRecord = {
         payment_id: 'pay_rzp_' + Date.now().toString(36),
@@ -159,7 +158,8 @@ export const RazorpayPaymentModal = ({
         gateway: 'Razorpay',
         paid_at: new Date().toISOString()
       };
-      setCompletedRecord(paymentRecord);
+      onClose();
+      if (onPaymentSuccess) onPaymentSuccess(paymentRecord);
     }, 1200);
   };
 

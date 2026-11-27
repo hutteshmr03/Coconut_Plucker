@@ -845,18 +845,6 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow);
 }
 
-.stat-card::before {
-  content: "";
-  position: absolute;
-  left: 18px;
-  top: 0;
-  width: 36px;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: var(--accent, var(--teal));
-  pointer-events: none;
-}
-
 .stat-label {
   font-size: 11px;
   color: var(--ink-soft);

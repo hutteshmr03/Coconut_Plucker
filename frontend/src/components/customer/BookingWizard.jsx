@@ -13,6 +13,7 @@ import { RazorpayPaymentModal } from './RazorpayPaymentModal';
 import { launchRazorpayCheckout } from '../../services/razorpay';
 import {
   Check,
+  CheckCircle,
   ArrowRight,
   ArrowLeft,
   AlertCircle,
@@ -175,6 +176,7 @@ export const BookingWizard = ({ onComplete }) => {
 
   // Modals state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [thankYouBooking, setThankYouBooking] = useState(null);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
 
   useEffect(() => {
@@ -404,8 +406,20 @@ export const BookingWizard = ({ onComplete }) => {
     };
 
     addBooking(bookingPayload);
+    setIsPaymentModalOpen(false);
     setSelectedServiceForBooking(null);
     setServiceCart([]);
+    setThankYouBooking({
+      serviceName: bookingPayload.service_name,
+      treeCount: bookingPayload.tree_count,
+      taluka: bookingPayload.taluka,
+      scheduledDate,
+      amount: finalAmount
+    });
+  };
+
+  const handleCloseThankYou = () => {
+    setThankYouBooking(null);
     if (onComplete) onComplete();
   };
 
@@ -1747,6 +1761,85 @@ export const BookingWizard = ({ onComplete }) => {
           if (onComplete) onComplete();
         }}
       />
+
+      {/* Post-Payment Thank You Card Modal */}
+      {thankYouBooking && (
+        <Modal
+          isOpen={!!thankYouBooking}
+          onClose={handleCloseThankYou}
+          title="Thank You!"
+          maxWidth="440px"
+        >
+          <div style={{ textAlign: 'center', padding: '8px 4px 4px' }}>
+            <div
+              style={{
+                width: '62px',
+                height: '62px',
+                borderRadius: '50%',
+                background: 'rgba(47, 122, 77, 0.12)',
+                border: '2px solid var(--success)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 14px'
+              }}
+            >
+              <CheckCircle size={36} color="var(--success)" />
+            </div>
+
+            <h3 style={{ fontSize: '21px', fontWeight: 700, color: 'var(--ink)', marginBottom: '6px' }}>
+              Thank You for Your Booking!
+            </h3>
+            <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', marginBottom: '18px' }}>
+              Your payment of <b style={{ color: 'var(--teal)' }}>₹{Number(thankYouBooking.amount || 0).toFixed(2)}</b> has been received successfully.
+            </p>
+
+            <div
+              style={{
+                background: 'var(--cream)',
+                border: '1px solid var(--line)',
+                borderRadius: '12px',
+                padding: '14px 16px',
+                textAlign: 'left',
+                marginBottom: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed var(--line)' }}>
+                <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '14px' }}>{thankYouBooking.serviceName}</span>
+                <span className="badge green">✓ Paid</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <span style={{ color: 'var(--ink-soft)' }}>Scheduled Date</span>
+                <b style={{ color: 'var(--ink)' }}>{formatScheduledDateLabel(thankYouBooking.scheduledDate)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <span style={{ color: 'var(--ink-soft)' }}>Location</span>
+                <b style={{ color: 'var(--ink)' }}>{thankYouBooking.taluka}, Goa</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <span style={{ color: 'var(--ink-soft)' }}>Quantity</span>
+                <b style={{ color: 'var(--ink)' }}>{thankYouBooking.treeCount} trees</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', paddingTop: '6px', borderTop: '1px dashed var(--line)' }}>
+                <span style={{ color: 'var(--ink-soft)', fontWeight: 600 }}>Amount Paid</span>
+                <b style={{ color: 'var(--teal)' }}>₹{Number(thankYouBooking.amount || 0).toFixed(2)}</b>
+              </div>
+            </div>
+
+            <Button
+              variant="primary"
+              className="btn-block"
+              onClick={handleCloseThankYou}
+              style={{ width: '100%', padding: '12px 20px', fontSize: '15px', fontWeight: 700 }}
+            >
+              OK
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
