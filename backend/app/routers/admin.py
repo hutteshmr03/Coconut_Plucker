@@ -263,6 +263,8 @@ def assign_booking_professional(booking_id: str, req: AssignRequest, db: Session
 
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.status == "completed":
+        raise HTTPException(status_code=400, detail="Completed bookings cannot be reassigned.")
 
     booking.professional_id = prof.id if prof else None
     booking.status = "assigned"

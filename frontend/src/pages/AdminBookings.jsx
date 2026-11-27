@@ -286,6 +286,21 @@ export const AdminBookings = () => {
                             Assign Job
                           </Button>
                         )
+                      ) : b.status === 'completed' ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: 'var(--success)',
+                            fontWeight: 700,
+                            fontSize: '12.5px'
+                          }}
+                        >
+                          <Check size={14} strokeWidth={2.5} /> Completed
+                        </span>
+                      ) : b.status === 'cancelled' ? (
+                        <span className="cell-muted" style={{ fontWeight: 600 }}>Cancelled</span>
                       ) : (
                         <Button
                           variant="ghost"
@@ -484,6 +499,27 @@ export const AdminBookings = () => {
                         Assign Job
                       </Button>
                     )
+                  ) : b.status === 'completed' ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        background: 'rgba(47, 122, 77, 0.1)',
+                        color: 'var(--success)',
+                        fontWeight: 700,
+                        fontSize: '13px'
+                      }}
+                    >
+                      <Check size={15} strokeWidth={2.5} /> Completed
+                    </div>
+                  ) : b.status === 'cancelled' ? (
+                    <div style={{ textAlign: 'center', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink-soft)' }}>
+                      Cancelled
+                    </div>
                   ) : (
                     <Button
                       variant="outline"
