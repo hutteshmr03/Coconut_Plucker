@@ -243,6 +243,9 @@ export const BookingWizard = ({ onComplete }) => {
 
   const activeService = services.find((s) => s.id === selectedServiceId) || services[0];
 
+  // Section A.1: Height Category strictly gated by service object's requires_height_category flag
+  const isHeightCategoryRequired = activeService?.requires_height_category === true;
+
   // Dynamic calculation for multi-service cart (matching backend 20% urgent surcharge)
   const currentItems = serviceCart.length > 0 ? serviceCart : (activeService ? [{
     serviceId: activeService.id,
@@ -316,9 +319,6 @@ export const BookingWizard = ({ onComplete }) => {
       isMounted = false;
     };
   }, [taluka, activeService?.id, bookingType, schedulingConfig, step]);
-
-  // Section A.1: Height Category strictly gated by service object's requires_height_category flag
-  const isHeightCategoryRequired = activeService?.requires_height_category === true;
 
   // Handle custom advance date input with taluka schedule / urgent booking verification
   const handleAdvanceDateInput = (val) => {
