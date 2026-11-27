@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 _RUNTIME_FALLBACK_SECRET = secrets.token_hex(32)
+_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_ENV_FILE = os.path.join(_BASE_DIR, ".env")
 
 
 class Settings(BaseSettings):
@@ -50,7 +52,7 @@ class Settings(BaseSettings):
     ]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore"
     )

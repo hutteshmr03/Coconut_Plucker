@@ -5,6 +5,10 @@ import traceback
 app_dir = os.path.dirname(os.path.abspath(__file__))
 if app_dir not in sys.path:
     sys.path.insert(0, app_dir)
+try:
+    os.chdir(app_dir)
+except Exception:
+    pass
 
 from app.main import app
 _wsgi_app = None
