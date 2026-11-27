@@ -1,5 +1,8 @@
+import time
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import NullPool
 from app.core.config import settings
 
 db_url = settings.DATABASE_URL.strip() if settings.DATABASE_URL else ""
@@ -13,12 +16,10 @@ if db_url.startswith("sqlite"):
         connect_args={"check_same_thread": False}
     )
 else:
+    # Use NullPool on shared MySQL hosting so idle Passenger/LiteSpeed workers hold 0 open connections
     engine = create_engine(
         db_url,
-        pool_pre_ping=True,
-        pool_size=5,
-        max_overflow=10,
-        pool_recycle=300,
+        poolclass=NullPool,
         connect_args={"connect_timeout": 5}
     )
 
@@ -82,7 +83,21 @@ def init_tables_safely():
 
 def get_db():
     init_tables_safely()
-    db = SessionLocal()
+    db = None
+    last_err = None
+    for attempt in range(3):
+        candidate = SessionLocal()
+        try:
+            candidate.execute(text("SELECT 1"))
+            db = candidate
+            break
+        except OperationalError as exc:
+            last_err = exc
+            candidate.close()
+            if attempt < 2:
+                time.sleep(0.3 * (attempt + 1))
+    if db is None:
+        raise last_err
     try:
         yield db
     finally:

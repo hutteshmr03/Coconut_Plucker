@@ -245,3 +245,35 @@ def test_customer_multi_taluka_addresses_persist_in_db(client):
     assert me_res.status_code == 200
     assert me_res.json()["addresses"] == ["Mapusa Primary House", "Margao Farm Plot"]
     assert me_res.json()["addresses_by_taluka"]["South Goa"] == ["Margao Farm Plot"]
+
+
+def test_get_db_retries_transient_operational_error(monkeypatch):
+    from sqlalchemy.exc import OperationalError
+    import app.core.database as db_mod
+
+    attempts = {"count": 0}
+    closed = {"count": 0}
+
+    class FakeSession:
+        def execute(self, *_args, **_kwargs):
+            attempts["count"] += 1
+            if attempts["count"] < 2:
+                raise OperationalError("SELECT 1", {}, Exception("1040 Too many connections"))
+            return 1
+
+        def close(self):
+            closed["count"] += 1
+
+    monkeypatch.setattr(db_mod, "SessionLocal", lambda: FakeSession())
+    monkeypatch.setattr(db_mod, "init_tables_safely", lambda: None)
+    monkeypatch.setattr(db_mod.time, "sleep", lambda _s: None)
+
+    gen = db_mod.get_db()
+    sess = next(gen)
+    assert isinstance(sess, FakeSession)
+    assert attempts["count"] == 2
+    try:
+        next(gen)
+    except StopIteration:
+        pass
+    assert closed["count"] == 2
