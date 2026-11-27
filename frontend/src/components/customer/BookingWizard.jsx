@@ -1172,15 +1172,10 @@ export const BookingWizard = ({ onComplete }) => {
                   border: isDifferentTaluka ? '1.5px solid var(--teal)' : '1px solid var(--line)'
                 }}
               >
-                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', marginBottom: isDifferentTaluka ? '4px' : '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <MapPin size={14} color="var(--teal)" />
                   <span>{taluka ? `Enter New Address for ${taluka}` : 'Enter New Address'}</span>
                 </div>
-                {isDifferentTaluka && (
-                  <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
-                    Your default profile address is in <b>{defaultTaluka}</b>. Add a service address in <b>{taluka}</b>.
-                  </div>
-                )}
                 <input
                   type="text"
                   placeholder={taluka ? `House No, Village/Town, Landmark, ${taluka}` : 'House No, Village/Town, Landmark, Goa'}
