@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getCleanServiceIcon } from '../../utils/helpers';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
-import { CheckCircle2, XCircle, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Download } from 'lucide-react';
 
 export const VerificationModal = ({ isOpen, onClose, professional, services, onDecision }) => {
+  const [isInsurancePreviewOpen, setIsInsurancePreviewOpen] = useState(false);
   if (!professional) return null;
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -79,12 +81,20 @@ export const VerificationModal = ({ isOpen, onClose, professional, services, onD
           >
             Insurance Cover Document
           </label>
-          <a
-            href={professional.insurance_cover_img}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'inline-block' }}
-            title="Open Insurance Cover image"
+          <button
+            type="button"
+            onClick={() => setIsInsurancePreviewOpen(true)}
+            style={{
+              display: 'inline-flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '6px',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer'
+            }}
+            title="View full Insurance Cover document"
           >
             <img
               src={professional.insurance_cover_img}
@@ -98,7 +108,19 @@ export const VerificationModal = ({ isOpen, onClose, professional, services, onD
                 background: 'var(--cream)'
               }}
             />
-          </a>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: 'var(--teal)'
+              }}
+            >
+              <Eye size={13} /> Click to View Full Document
+            </span>
+          </button>
         </div>
       )}
       <div className="kpi-line">
@@ -141,5 +163,44 @@ export const VerificationModal = ({ isOpen, onClose, professional, services, onD
         </div>
       </div>
     </Modal>
+
+    {isInsurancePreviewOpen && professional.insurance_cover_img && (
+      <Modal
+        isOpen={isInsurancePreviewOpen}
+        onClose={() => setIsInsurancePreviewOpen(false)}
+        title={`Insurance Cover Document · ${professional.full_name}`}
+        footer={
+          <>
+            <a
+              href={professional.insurance_cover_img}
+              download={`insurance-${professional.phone || 'document'}.jpg`}
+              className="btn btn-ghost btn-sm"
+              style={{ textDecoration: 'none' }}
+            >
+              <Download size={14} /> Download
+            </a>
+            <Button variant="primary" size="sm" onClick={() => setIsInsurancePreviewOpen(false)}>
+              Close
+            </Button>
+          </>
+        }
+      >
+        <div style={{ textAlign: 'center' }}>
+          <img
+            src={professional.insurance_cover_img}
+            alt="Insurance Cover Full View"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '70vh',
+              borderRadius: '8px',
+              objectFit: 'contain',
+              border: '1px solid var(--line)',
+              background: 'var(--cream)'
+            }}
+          />
+        </div>
+      </Modal>
+    )}
+    </>
   );
 };
