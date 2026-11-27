@@ -343,6 +343,9 @@ export const AuthProvider = ({ children }) => {
     }
 
     const phoneClean = (proData.phone || '').replace(/\D/g, '');
+    if (phoneClean.length !== 10) {
+      throw new Error('Mobile phone number must be exactly 10 digits.');
+    }
     const exists = registeredUsers.find(
       (u) => u.phone && u.phone.replace(/\D/g, '') === phoneClean
     );

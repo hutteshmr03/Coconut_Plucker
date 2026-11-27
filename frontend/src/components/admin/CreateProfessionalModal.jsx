@@ -70,8 +70,8 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
       setError('Please enter the professional’s full name');
       return;
     }
-    if (!pClean || pClean.length < 10) {
-      setError('Please enter a valid 10-digit mobile phone number');
+    if (!pClean || pClean.length !== 10) {
+      setError('Mobile phone number must be exactly 10 digits');
       return;
     }
     if (!taluka) {
@@ -174,9 +174,10 @@ export const CreateProfessionalModal = ({ isOpen, onClose, services, onCreate })
           <Input
             label="Phone Number"
             type="tel"
+            maxLength={10}
             placeholder="e.g. 9822300004"
             value={phone}
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
             required
           />
 

@@ -108,10 +108,9 @@ def verify_professional(professional_id: str, req: VerifyRequest, db: Session = 
 
 @router.post("/professionals", response_model=UserOut)
 def create_professional_admin(data: dict, db: Session = Depends(get_db)):
-    raw_digits = "".join(filter(str.isdigit, str(data.get("phone", ""))))
-    phone_clean = raw_digits[-10:] if len(raw_digits) >= 10 else raw_digits
-    if not phone_clean or len(phone_clean) < 10:
-        raise HTTPException(status_code=400, detail="Valid 10-digit phone number is required.")
+    phone_clean = "".join(filter(str.isdigit, str(data.get("phone", ""))))
+    if len(phone_clean) != 10:
+        raise HTTPException(status_code=400, detail="Mobile phone number must be exactly 10 digits.")
     exists = db.query(User).filter(User.phone == phone_clean).first()
     if exists:
         raise HTTPException(status_code=400, detail=f"An account with phone number +91 {phone_clean} already exists.")
