@@ -55,14 +55,17 @@ export const BookingWizard = ({ onComplete }) => {
   } = useApp();
 
   const customerProfile = customers?.find((c) => c.id === currentUser?.id || c.phone === currentUser?.phone) || currentUser;
+  const defaultTaluka = customerProfile?.taluka || currentUser?.taluka || 'North Goa';
+  const defaultAddress = customerProfile?.address || currentUser?.address || '';
 
   const allAddressesSource = (Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0)
     ? currentUser.addresses
     : (Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0)
       ? customerProfile.addresses
-      : [currentUser?.address || customerProfile?.address, currentUser?.secondary_address || customerProfile?.secondary_address];
+      : [defaultAddress, currentUser?.secondary_address || customerProfile?.secondary_address];
 
-  const savedAddresses = Array.from(new Set(allAddressesSource.filter(Boolean)));
+  const allSavedAddresses = Array.from(new Set(allAddressesSource.filter(Boolean)));
+  const savedByTaluka = currentUser?.addresses_by_taluka || customerProfile?.addresses_by_taluka || {};
 
   const TALUKAS = [
     { value: '', label: '-- Select one --' },
@@ -84,15 +87,50 @@ export const BookingWizard = ({ onComplete }) => {
   const [serviceCart, setServiceCart] = useState([]);
   const [treeCount, setTreeCount] = useState(1);
   const [heightCategory, setHeightCategory] = useState('medium'); // 'low' | 'medium' | 'high'
-  const [taluka, setTaluka] = useState(
-    customerProfile?.taluka || currentUser?.taluka || 'South Goa'
-  );
-  const [address, setAddress] = useState(
-    customerProfile?.address || currentUser?.address || ''
-  );
+  const [taluka, setTaluka] = useState(defaultTaluka);
+  const [address, setAddress] = useState(defaultAddress);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [newAddressInput, setNewAddressInput] = useState('');
+
+  const isDifferentTaluka = Boolean(taluka && taluka !== defaultTaluka);
+  const savedAddresses = React.useMemo(() => {
+    const talukaSpecific = Array.isArray(savedByTaluka[taluka]) ? savedByTaluka[taluka].filter(Boolean) : [];
+    if (!taluka || taluka === defaultTaluka) {
+      const otherTalukaAddrs = new Set(
+        Object.entries(savedByTaluka)
+          .filter(([tKey]) => tKey !== defaultTaluka)
+          .flatMap(([, list]) => (Array.isArray(list) ? list : []))
+      );
+      const defaultOnly = allSavedAddresses.filter((a) => !otherTalukaAddrs.has(a) || talukaSpecific.includes(a));
+      return Array.from(new Set([...talukaSpecific, ...defaultOnly]));
+    }
+    return Array.from(new Set(talukaSpecific));
+  }, [taluka, defaultTaluka, savedByTaluka, allSavedAddresses]);
+
+  const handleTalukaChange = (nextTaluka) => {
+    setTaluka(nextTaluka);
+    setShowAddressDropdown(false);
+    setErrors((prev) => ({ ...prev, taluka: '', address: '' }));
+
+    if (!nextTaluka) return;
+
+    const talukaSpecific = Array.isArray(savedByTaluka[nextTaluka]) ? savedByTaluka[nextTaluka].filter(Boolean) : [];
+    if (nextTaluka === defaultTaluka) {
+      setAddress(talukaSpecific[0] || defaultAddress);
+      setIsAddingNewAddress(false);
+      setNewAddressInput('');
+    } else if (talukaSpecific.length > 0) {
+      setAddress(talukaSpecific[0]);
+      setIsAddingNewAddress(false);
+      setNewAddressInput('');
+    } else {
+      // Selected a different Taluka with no saved address yet -> prompt customer to add a new address for this Taluka
+      setAddress('');
+      setIsAddingNewAddress(true);
+      setNewAddressInput('');
+    }
+  };
 
   const handleAddNewAddress = (explicitAddr = null) => {
     const raw = typeof explicitAddr === 'string' ? explicitAddr : newAddressInput;
@@ -103,21 +141,26 @@ export const BookingWizard = ({ onComplete }) => {
     setIsAddingNewAddress(false);
     setNewAddressInput('');
     setShowAddressDropdown(false);
+    setErrors((prev) => ({ ...prev, address: '' }));
 
-    // Persist to customer profile for future usage
-    const currentList = Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0
-      ? [...currentUser.addresses]
-      : (Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0)
-        ? [...customerProfile.addresses]
-        : [currentUser?.address || customerProfile?.address].filter(Boolean);
-
+    // Persist to customer profile (preserving primary address & mapping per Taluka)
+    const currentList = [...allSavedAddresses];
     if (!currentList.includes(cleanAddr)) {
       currentList.push(cleanAddr);
     }
 
+    const activeTalukaKey = taluka || defaultTaluka;
+    const nextByTaluka = {
+      ...savedByTaluka,
+      [activeTalukaKey]: Array.from(
+        new Set([...(Array.isArray(savedByTaluka[activeTalukaKey]) ? savedByTaluka[activeTalukaKey] : []), cleanAddr])
+      )
+    };
+
     const updates = {
       addresses: currentList,
-      address: currentList[0] || cleanAddr,
+      addresses_by_taluka: nextByTaluka,
+      address: defaultAddress || currentList[0] || cleanAddr,
       secondary_address: currentList[1] || null
     };
 
@@ -129,7 +172,7 @@ export const BookingWizard = ({ onComplete }) => {
     }
 
     if (showToast) {
-      showToast('New address saved to your profile!', 'success');
+      showToast(`New address saved for ${activeTalukaKey}!`, 'success');
     }
   };
   const [bookingType, setBookingType] = useState('standard'); // 'standard' | 'urgent'
@@ -296,7 +339,7 @@ export const BookingWizard = ({ onComplete }) => {
     const errs = {};
     if (!treeCount || treeCount < 1) errs.treeCount = 'Quantity must be at least 1';
     if (!taluka) errs.taluka = 'Please select a Taluka';
-    if (!address.trim()) errs.address = 'Please enter address';
+    if (!effectiveAddress) errs.address = `Please enter an address${taluka ? ` for ${taluka}` : ''}`;
 
     // Section A.1: Height Category required ONLY when requires_height_category === true
     if (isHeightCategoryRequired && !heightCategory) {
@@ -307,7 +350,8 @@ export const BookingWizard = ({ onComplete }) => {
     return Object.keys(errs).length === 0;
   };
 
-  const isStep2Valid = Number(treeCount) >= 1 && Boolean(taluka) && Boolean(address?.trim()) && (!isHeightCategoryRequired || Boolean(heightCategory));
+  const effectiveAddress = (address || '').trim() || (isAddingNewAddress ? (newAddressInput || '').trim() : '');
+  const isStep2Valid = Number(treeCount) >= 1 && Boolean(taluka) && Boolean(effectiveAddress) && (!isHeightCategoryRequired || Boolean(heightCategory));
 
   // Validation Step 3 (Schedule)
   const validateStep3 = () => {
@@ -893,7 +937,7 @@ export const BookingWizard = ({ onComplete }) => {
             <Select
               label={t('signup_taluka')}
               value={taluka}
-              onChange={(e) => setTaluka(e.target.value)}
+              onChange={(e) => handleTalukaChange(e.target.value)}
               options={TALUKAS}
               required
               error={errors.taluka}
@@ -941,7 +985,7 @@ export const BookingWizard = ({ onComplete }) => {
               <input
                 id="booking-address"
                 type="text"
-                placeholder="House No, Village/Town, Landmark, Goa"
+                placeholder={taluka ? `House No, Village/Town, Landmark, ${taluka}` : 'House No, Village/Town, Landmark, Goa'}
                 value={address}
                 onChange={(e) => {
                   setAddress(e.target.value);
@@ -1014,20 +1058,20 @@ export const BookingWizard = ({ onComplete }) => {
                       overflow: 'hidden'
                     }}
                   >
-                    <div
-                      style={{
-                        padding: '8px 12px',
-                        background: 'var(--cream)',
-                        borderBottom: '1px solid var(--line)',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        color: 'var(--ink-soft)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      Saved Customer Addresses
-                    </div>
+                      <div
+                        style={{
+                          padding: '8px 12px',
+                          background: 'var(--cream)',
+                          borderBottom: '1px solid var(--line)',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          color: 'var(--ink-soft)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        Saved Addresses{taluka ? ` · ${taluka}` : ''}
+                      </div>
                     {savedAddresses.map((savedAddr, sIdx) => {
                       const isSelected = address === savedAddr;
                       return (
@@ -1115,7 +1159,7 @@ export const BookingWizard = ({ onComplete }) => {
                     gap: '6px'
                   }}
                 >
-                  <Plus size={15} /> Add New Address
+                  <Plus size={15} /> {isDifferentTaluka ? `Add New Address for ${taluka}` : 'Add New Address'}
                 </button>
               </div>
             ) : (
@@ -1125,16 +1169,21 @@ export const BookingWizard = ({ onComplete }) => {
                   padding: '14px',
                   background: 'var(--cream)',
                   borderRadius: '8px',
-                  border: '1px solid var(--line)'
+                  border: isDifferentTaluka ? '1.5px solid var(--teal)' : '1px solid var(--line)'
                 }}
               >
-                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', marginBottom: isDifferentTaluka ? '4px' : '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <MapPin size={14} color="var(--teal)" />
-                  <span>Enter New Address</span>
+                  <span>{taluka ? `Enter New Address for ${taluka}` : 'Enter New Address'}</span>
                 </div>
+                {isDifferentTaluka && (
+                  <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
+                    Your default profile address is in <b>{defaultTaluka}</b>. Add a service address in <b>{taluka}</b>.
+                  </div>
+                )}
                 <input
                   type="text"
-                  placeholder="House No, Village/Town, Landmark, Goa"
+                  placeholder={taluka ? `House No, Village/Town, Landmark, ${taluka}` : 'House No, Village/Town, Landmark, Goa'}
                   value={newAddressInput}
                   onChange={(e) => setNewAddressInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -1204,24 +1253,30 @@ export const BookingWizard = ({ onComplete }) => {
               onClick={(e) => {
                 e.preventDefault();
                 if (validateStep2()) {
-                  // Ensure current address is also saved to customer profile if not already there
-                  const cleanCurrentAddr = (address || '').trim();
-                  if (cleanCurrentAddr) {
-                    const currentList = Array.isArray(currentUser?.addresses) && currentUser.addresses.length > 0
-                      ? [...currentUser.addresses]
-                      : (Array.isArray(customerProfile?.addresses) && customerProfile.addresses.length > 0)
-                        ? [...customerProfile.addresses]
-                        : [currentUser?.address || customerProfile?.address].filter(Boolean);
-
-                    if (!currentList.includes(cleanCurrentAddr)) {
-                      currentList.push(cleanCurrentAddr);
-                      const updates = {
-                        addresses: currentList,
-                        address: currentList[0] || cleanCurrentAddr,
-                        secondary_address: currentList[1] || null
-                      };
-                      if (updateCurrentUser) updateCurrentUser(updates);
-                      if (updateCustomerProfile) updateCustomerProfile(updates);
+                  if (!address.trim() && isAddingNewAddress && newAddressInput.trim()) {
+                    handleAddNewAddress(newAddressInput.trim());
+                  } else {
+                    const cleanCurrentAddr = (address || '').trim();
+                    if (cleanCurrentAddr) {
+                      const activeTalukaKey = taluka || defaultTaluka;
+                      const currentTalukaList = Array.isArray(savedByTaluka[activeTalukaKey]) ? savedByTaluka[activeTalukaKey] : [];
+                      if (!allSavedAddresses.includes(cleanCurrentAddr) || !currentTalukaList.includes(cleanCurrentAddr)) {
+                        const nextList = allSavedAddresses.includes(cleanCurrentAddr)
+                          ? [...allSavedAddresses]
+                          : [...allSavedAddresses, cleanCurrentAddr];
+                        const nextByTaluka = {
+                          ...savedByTaluka,
+                          [activeTalukaKey]: Array.from(new Set([...currentTalukaList, cleanCurrentAddr]))
+                        };
+                        const updates = {
+                          addresses: nextList,
+                          addresses_by_taluka: nextByTaluka,
+                          address: defaultAddress || nextList[0] || cleanCurrentAddr,
+                          secondary_address: nextList[1] || null
+                        };
+                        if (updateCurrentUser) updateCurrentUser(updates);
+                        if (updateCustomerProfile) updateCustomerProfile(updates);
+                      }
                     }
                   }
                   setServiceCart((prev) => {
